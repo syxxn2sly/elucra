@@ -1,0 +1,544 @@
+// CLAIRITY — Home / Health Snapshot dashboard
+import { router } from "expo-router";
+import {
+  FileHeart,
+  ScanLine,
+  Shield,
+  Pill,
+  CreditCard,
+  AlertCircle,
+  Calendar,
+  ArrowRight,
+  FileText,
+  Sparkles,
+} from "lucide-react-native";
+import React, { useCallback } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  RefreshControl,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import Colors from "@/constants/colors";
+import { Radius, Space, Type, Weight } from "@/constants/theme";
+import { useTabScrollPadding } from "@/lib/layout";
+import { useClairity } from "@/lib/store";
+import { formatDateDisplay, formatDueCountdown, sortByDueDate } from "@/lib/utils";
+import { PrimaryButton, Card, SectionHeader, Tag, EmptyState } from "@/components/ui";
+
+const C = Colors.light;
+
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const scrollPadding = useTabScrollPadding();
+  const {
+    profile,
+    documents,
+    vaccines,
+    medications,
+    healthCard,
+    loaded,
+  } = useClairity();
+
+  const upcomingVaccines = sortByDueDate(
+    vaccines.filter((v) => v.nextDueDate && v.hasDate),
+  ).slice(0, 3);
+
+  const undatedVaccines = vaccines.filter((v) => !v.hasDate);
+
+  const recentDocs = documents.slice(0, 3);
+
+  const handleSimplify = useCallback(() => {
+    router.push("/simplify");
+  }, []);
+
+  if (loaded && !profile.onboarded) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.welcomeHero}>
+            <View style={styles.welcomeIconWrap}>
+              <FileHeart color={C.textInverse} size={44} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.welcomeTitle}>Welcome to CLAIRITY</Text>
+            <Text style={styles.welcomeMessage}>
+              Your medical documents, made clear. Let's set up your health profile to get
+              personalized help understanding reports, tracking vaccines, and managing your care.
+            </Text>
+            <PrimaryButton
+              label="Get Started"
+              onPress={() => router.push("/onboarding")}
+              style={{ marginTop: 28, width: "100%" }}
+            />
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={!loaded} tintColor={C.primary} />}
+        contentContainerStyle={{ paddingBottom: scrollPadding }}
+      >
+        {/* Hero — Simplify a new document */}
+        <View style={styles.hero}>
+          <Text style={styles.greeting}>
+            {profile.name ? `Hello, ${profile.name.split(" ")[0]}` : "Hello there"}
+          </Text>
+          <Text style={styles.heroSubtitle}>What would you like to understand today?</Text>
+          <Pressable
+            onPress={handleSimplify}
+            style={({ pressed }) => [styles.heroCard, pressed && styles.pressed]}
+          >
+            <View style={styles.heroCardLeft}>
+              <View style={styles.heroIconWrap}>
+                <ScanLine color={C.textInverse} size={28} strokeWidth={2.5} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroCardTitle}>Simplify a Document</Text>
+                <Text style={styles.heroCardSub}>
+                  Scan or upload a report — get plain English in seconds
+                </Text>
+              </View>
+              <ArrowRight color={C.textInverse} size={24} />
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Quick Snapshot Cards */}
+        <SectionHeader title="Health Snapshot" />
+        <View style={styles.snapshotGrid}>
+          <QuickCard
+            icon={<Pill color={C.primary} size={22} strokeWidth={2.5} />}
+            label="Medications"
+            value={medications.length.toString()}
+            sub={medications.length === 1 ? "medication" : "medications"}
+            onPress={() => router.navigate("/(tabs)/medications")}
+          />
+          <QuickCard
+            icon={<Shield color={C.docVaccination} size={22} strokeWidth={2.5} />}
+            label="Vaccines"
+            value={vaccines.length.toString()}
+            sub={undatedVaccines.length > 0 ? `${undatedVaccines.length} need dates` : "tracked"}
+            onPress={() => router.navigate("/(tabs)/vaccines")}
+          />
+          <QuickCard
+            icon={<FileText color={C.docImaging} size={22} strokeWidth={2.5} />}
+            label="Reports"
+            value={documents.length.toString()}
+            sub={documents.length === 1 ? "document" : "documents"}
+            onPress={() => router.push("/simplify")}
+          />
+          <QuickCard
+            icon={<CreditCard color={C.accent} size={22} strokeWidth={2.5} />}
+            label="Health Card"
+            value={healthCard ? "Saved" : "None"}
+            sub={healthCard ? healthCard.issuer : "Add your card"}
+            onPress={() => router.push("/health-card-setup")}
+          />
+        </View>
+
+        {/* Allergies alert */}
+        {profile.allergies ? (
+          <View style={styles.alertRow}>
+            <View style={styles.alertIconWrap}>
+              <AlertCircle color={C.danger} size={20} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.alertText}>
+              <Text style={styles.alertLabel}>Allergies: </Text>
+              {profile.allergies}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Upcoming vaccine reminders */}
+        {upcomingVaccines.length > 0 ? (
+          <>
+            <SectionHeader
+              title="Coming Up"
+              action="See all"
+              onAction={() => router.navigate("/(tabs)/vaccines")}
+            />
+            <View style={styles.section}>
+              {upcomingVaccines.map((vac) => {
+                const countdown = formatDueCountdown(vac.nextDueDate);
+                const isOverdue = countdown === "Overdue";
+                return (
+                  <Card key={vac.id} style={styles.reminderCard} onPress={() => router.push({ pathname: "/vaccine-detail", params: { id: vac.id } })}>
+                    <View style={styles.reminderLeft}>
+                      <View
+                        style={[
+                          styles.reminderIcon,
+                          { backgroundColor: isOverdue ? C.dangerSoft : C.accentSoft },
+                        ]}
+                      >
+                        <Calendar color={isOverdue ? C.danger : C.accent} size={20} strokeWidth={2.5} />
+                      </View>
+                      <View>
+                        <Text style={styles.reminderTitle}>{vac.name}</Text>
+                        <Text style={styles.reminderSub}>{countdown}</Text>
+                      </View>
+                    </View>
+                    <Tag
+                      text={isOverdue ? "OVERDUE" : "DUE"}
+                      color={isOverdue ? C.danger : C.accent}
+                      bg={isOverdue ? C.dangerSoft : C.accentSoft}
+                    />
+                  </Card>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
+
+        {/* Undated vaccines nudge */}
+        {undatedVaccines.length > 0 ? (
+          <View style={styles.nudgeCard}>
+            <View style={styles.nudgeIconWrap}>
+              <Calendar color={C.accent} size={20} strokeWidth={2.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nudgeTitle}>Add dates to {undatedVaccines.length} vaccine{undatedVaccines.length > 1 ? "s" : ""}</Text>
+              <Text style={styles.nudgeText}>
+                You've recorded these but don't have a date. Add a date to get reminders.
+              </Text>
+              <Pressable
+                onPress={() => router.navigate("/(tabs)/vaccines")}
+                hitSlop={8}
+                style={{ marginTop: 8 }}
+              >
+                <Text style={styles.nudgeLink}>Review vaccines →</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {/* Recent reports */}
+        {recentDocs.length > 0 ? (
+          <>
+            <SectionHeader title="Recent Reports" />
+            <View style={styles.section}>
+              {recentDocs.map((doc) => (
+                <Card
+                  key={doc.id}
+                  onPress={() =>
+                    router.push({ pathname: "/document-detail", params: { id: doc.id } })
+                  }
+                  style={styles.docCard}
+                >
+                  <View style={styles.docCardTop}>
+                    <Text style={styles.docCardTitle}>{doc.result.title}</Text>
+                    <Text style={styles.docCardDate}>{formatDateDisplay(doc.createdAt)}</Text>
+                  </View>
+                  <Text style={styles.docCardSummary} numberOfLines={2}>
+                    {doc.result.summary}
+                  </Text>
+                  <View style={styles.docCardTags}>
+                    <Tag
+                      text={doc.result.documentType.replace(/_/g, " ")}
+                      color={C.primary}
+                      bg={C.primarySoft}
+                    />
+                    {doc.result.checklist.length > 0 ? (
+                      <Tag
+                        text={`${doc.result.checklist.filter((i) => i.done).length}/${doc.result.checklist.length} done`}
+                        bg={C.surfaceAlt}
+                      />
+                    ) : null}
+                  </View>
+                </Card>
+              ))}
+            </View>
+          </>
+        ) : (
+          <View style={styles.section}>
+            <EmptyState
+              icon={<FileHeart color={C.primary} size={40} strokeWidth={2.5} />}
+              title="No reports yet"
+              message="Simplify your first medical document to see it here."
+              actionLabel="Simplify a document"
+              onAction={handleSimplify}
+            />
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+function QuickCard({
+  icon,
+  label,
+  value,
+  sub,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
+    >
+      <View style={styles.quickCardIcon}>{icon}</View>
+      <Text style={styles.quickCardValue}>{value}</Text>
+      <Text style={styles.quickCardLabel}>{label}</Text>
+      <Text style={styles.quickCardSub}>{sub}</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: C.background,
+  },
+  pressed: {
+    opacity: 0.78,
+  },
+  // Welcome (pre-onboarding)
+  welcomeHero: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+    paddingVertical: Space.xxxl,
+  },
+  welcomeIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
+    backgroundColor: C.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Space.xl,
+  },
+  welcomeTitle: {
+    ...Type.display,
+    color: C.text,
+    marginBottom: Space.md,
+    textAlign: "center",
+  },
+  welcomeMessage: {
+    ...Type.body,
+    color: C.textMuted,
+    textAlign: "center",
+  },
+  // Hero
+  hero: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+  },
+  greeting: {
+    ...Type.display,
+    color: C.text,
+  },
+  heroSubtitle: {
+    ...Type.body,
+    color: C.textMuted,
+    marginTop: Space.xs,
+    marginBottom: Space.lg,
+  },
+  heroCard: {
+    backgroundColor: C.primary,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+  },
+  heroCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+  },
+  heroIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroCardTitle: {
+    ...Type.title,
+    color: C.textInverse,
+  },
+  heroCardSub: {
+    ...Type.caption,
+    color: "rgba(255,255,255,0.85)",
+    marginTop: Space.xs,
+  },
+  // Snapshot grid
+  snapshotGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: Space.lg,
+    gap: Space.md,
+  },
+  quickCard: {
+    width: "48%",
+    flexGrow: 1,
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  quickCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Space.md,
+  },
+  quickCardValue: {
+    ...Type.display,
+    color: C.text,
+  },
+  quickCardLabel: {
+    ...Type.label,
+    color: C.text,
+    marginTop: Space.xs,
+  },
+  quickCardSub: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.xs,
+  },
+  // Alert
+  alertRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    marginHorizontal: Space.lg,
+    marginTop: Space.lg,
+    backgroundColor: C.dangerSoft,
+    borderRadius: Radius.md,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+  },
+  alertIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: "rgba(239,68,68,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alertText: {
+    flex: 1,
+    ...Type.body,
+    color: C.text,
+  },
+  alertLabel: {
+    fontWeight: Weight.bold,
+    color: C.danger,
+  },
+  // Sections
+  section: {
+    paddingHorizontal: Space.lg,
+    gap: Space.md,
+  },
+  // Reminders
+  reminderCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reminderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    flex: 1,
+  },
+  reminderIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  reminderTitle: {
+    ...Type.body,
+    fontWeight: Weight.semibold,
+    color: C.text,
+  },
+  reminderSub: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.xs,
+  },
+  // Nudge
+  nudgeCard: {
+    marginHorizontal: Space.lg,
+    marginTop: Space.lg,
+    backgroundColor: C.accentSoft,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    flexDirection: "row",
+    gap: Space.md,
+  },
+  nudgeIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nudgeTitle: {
+    ...Type.heading,
+    color: C.text,
+  },
+  nudgeText: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.xs,
+  },
+  nudgeLink: {
+    ...Type.label,
+    color: C.accent,
+  },
+  // Doc cards
+  docCard: {
+    gap: Space.sm,
+  },
+  docCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: Space.md,
+  },
+  docCardTitle: {
+    flex: 1,
+    ...Type.heading,
+    color: C.text,
+  },
+  docCardDate: {
+    ...Type.caption,
+    color: C.textMuted,
+  },
+  docCardSummary: {
+    ...Type.body,
+    color: C.textMuted,
+  },
+  docCardTags: {
+    flexDirection: "row",
+    gap: Space.sm,
+    marginTop: Space.xs,
+  },
+});

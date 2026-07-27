@@ -1,0 +1,574 @@
+// CLAIRITY — Document Simplification flow (capture → AI analysis → result)
+import { router } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
+import { FileText, Camera, Image as ImageIcon, Sparkles, AlertCircle, X, RefreshCw } from "lucide-react-native";
+import React, { useState, useCallback, useRef } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+
+import Colors from "@/constants/colors";
+import { Elevation, Radius, Space, Type } from "@/constants/theme";
+import { useStackScrollPadding } from "@/lib/layout";
+import { useClairity } from "@/lib/store";
+import { analyzeDocument } from "@/lib/ai-service";
+import { resizeForUpload } from "@/lib/resize-for-upload";
+import { generateId } from "@/lib/utils";
+import { PrimaryButton, SecondaryButton, Card, ScreenHeader } from "@/components/ui";
+import type { SavedDocument } from "@/lib/types";
+
+const C = Colors.light;
+
+type Phase = "capture" | "analyzing" | "error";
+
+export default function SimplifyScreen() {
+  const insets = useSafeAreaInsets();
+  const scrollPadding = useStackScrollPadding();
+  const { profile, addDocument } = useClairity();
+  const [phase, setPhase] = useState<Phase>("capture");
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [progressText, setProgressText] = useState("Reading your document…");
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleCamera = useCallback(async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      setErrorMsg("Camera permission is needed to photograph documents. You can grant it in Settings.");
+      setPhase("error");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      quality: 0.9,
+      allowsEditing: false,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+      await processDocument(result.assets[0].uri);
+    }
+  }, []);
+
+  const handleGallery = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.9,
+      allowsEditing: false,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+      await processDocument(result.assets[0].uri);
+    }
+  }, []);
+
+  const handleFile = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        type: ["application/pdf", "image/*"],
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        if (asset.mimeType?.includes("pdf") || asset.name?.endsWith(".pdf")) {
+          setErrorMsg(
+            "PDF files need to be converted to images first. Try taking a photo of the document on screen, or screenshot the PDF page and pick it from your gallery.",
+          );
+          setPhase("error");
+          return;
+        }
+        const uri = asset.uri;
+        setImageUri(uri);
+        await processDocument(uri);
+      }
+    } catch (err) {
+      console.error("[CLAIRITY] Document pick error:", err);
+      setErrorMsg("Couldn't open that file. Please try a photo instead.");
+      setPhase("error");
+    }
+  }, []);
+
+  const processDocument = useCallback(
+    async (uri: string) => {
+      setPhase("analyzing");
+      setProgressText("Preparing your document…");
+
+      try {
+        setProgressText("Reading the text in your document…");
+        const { base64, mimeType } = await resizeForUpload(uri);
+
+        setProgressText("Understanding what it means in plain English…");
+        const result = await analyzeDocument({
+          imageBase64: base64,
+          mimeType,
+          profile: profile as never,
+        });
+
+        const doc: SavedDocument = {
+          id: generateId(),
+          result,
+          imageUri: uri,
+          createdAt: new Date().toISOString(),
+        };
+        addDocument(doc);
+
+        router.replace({ pathname: "/document-detail", params: { id: doc.id } });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+        console.error("[CLAIRITY] Analysis error:", msg);
+        setErrorMsg(msg);
+        setPhase("error");
+      }
+    },
+    [profile, addDocument],
+  );
+
+  const reset = useCallback(() => {
+    setPhase("capture");
+    setImageUri(null);
+    setErrorMsg("");
+  }, []);
+
+  // --- Analyzing phase ---
+  if (phase === "analyzing") {
+    return (
+      // Analysis is a network round-trip that can hang. Without a header this
+      // phase had no exit at all, so a stalled request trapped the user.
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <ScreenHeader title="Analyzing" onBack={reset} />
+        <View style={styles.centerContent}>
+          <View style={styles.analyzingCard}>
+            {imageUri ? (
+              <View style={styles.analyzingImageWrap}>
+                <Image source={{ uri: imageUri }} style={styles.analyzingImage} contentFit="contain" />
+                <View style={styles.analyzingOverlay}>
+                  <ActivityIndicator size="large" color={C.textInverse} />
+                </View>
+              </View>
+            ) : null}
+            <View style={styles.analyzingIconWrap}>
+              <Sparkles color={C.primary} size={28} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.analyzingTitle}>Analyzing your document</Text>
+            <Text style={styles.analyzingSub}>{progressText}</Text>
+            <View style={styles.analyzingDots}>
+              <View style={[styles.dot, styles.dotActive]} />
+              <View style={[styles.dot, styles.dotActive]} />
+              <View style={[styles.dot, styles.dotPulse]} />
+            </View>
+            <Text style={styles.analyzingHint}>This usually takes 15–30 seconds</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // --- Error phase ---
+  if (phase === "error") {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <ScreenHeader title="Simplify a Document" />
+        <View style={styles.centerContent}>
+          <View style={styles.errorCard}>
+            <View style={styles.errorIconWrap}>
+              <AlertCircle color={C.danger} size={36} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.errorTitle}>Couldn&apos;t analyze that</Text>
+            <Text style={styles.errorMsg}>{errorMsg}</Text>
+            <PrimaryButton
+              label="Try Again"
+              onPress={reset}
+              icon={<RefreshCw color={C.textInverse} size={20} strokeWidth={2.5} />}
+              style={{ marginTop: 24, width: "100%" }}
+            />
+            {/* The error state previously offered only a retry, which left no
+                route out if the document simply could not be read. */}
+            <SecondaryButton
+              label="Go back"
+              onPress={() => router.back()}
+              style={{ marginTop: 12, width: "100%" }}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // --- Capture phase ---
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <ScreenHeader title="Simplify a Document" />
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: scrollPadding, flexGrow: 1 }}
+      >
+        <Text style={styles.subtitle}>
+          Photograph, scan, or upload a medical document. CLAIRITY will read it and explain it in
+          plain English — what it means, what to do, and when to worry.
+        </Text>
+
+        {/* Preview if image selected */}
+        {imageUri && (
+          <View style={styles.previewWrap}>
+            <Image source={{ uri: imageUri }} style={styles.preview} contentFit="contain" />
+            <Pressable onPress={() => setImageUri(null)} style={styles.previewClose}>
+              <X color={C.textInverse} size={18} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+        )}
+
+        {/* Capture options */}
+        <View style={styles.options}>
+          <CaptureOption
+            icon={<Camera color={C.primary} size={30} strokeWidth={2.5} />}
+            iconBg={C.primarySoft}
+            title="Take a Photo"
+            sub="Use your camera to photograph a document"
+            onPress={handleCamera}
+          />
+          <CaptureOption
+            icon={<ImageIcon color={C.accent} size={30} strokeWidth={2.5} />}
+            iconBg={C.accentSoft}
+            title="Pick from Gallery"
+            sub="Choose a photo or screenshot from your phone"
+            onPress={handleGallery}
+          />
+          <CaptureOption
+            icon={<FileText color={C.docConsultation} size={30} strokeWidth={2.5} />}
+            iconBg="#E0E7FF"
+            title="Upload a File"
+            sub="Pick a PDF or image from your files"
+            onPress={handleFile}
+          />
+        </View>
+
+        {/* What you'll get */}
+        <View style={styles.expectCard}>
+          <View style={styles.expectHeader}>
+            <View style={styles.expectIconWrap}>
+              <Sparkles color={C.primary} size={18} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.expectTitle}>What you'll get</Text>
+          </View>
+          <ExpectItem text="Plain-English explanation of what the document means" />
+          <ExpectItem text="Action checklist — what to do, in priority order" />
+          <ExpectItem text="Recovery timeline — when each thing happens" />
+          <ExpectItem text="Warning signs — when to seek help immediately" />
+          <ExpectItem text="Communication scripts in English, Punjabi, Hindi & Urdu" />
+        </View>
+
+        {/* Privacy note */}
+        <View style={styles.privacyNote}>
+          <Text style={styles.privacyIcon}>🔒</Text>
+          <Text style={styles.privacyText}>
+            Your document is sent securely to our AI for analysis. It is not stored on any server.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function CaptureOption({
+  icon,
+  iconBg,
+  title,
+  sub,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  sub: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.captureOpt, pressed && styles.pressed]}
+    >
+      <View style={[styles.captureIcon, { backgroundColor: iconBg }]}>{icon}</View>
+      <View style={styles.captureText}>
+        <Text style={styles.captureTitle}>{title}</Text>
+        <Text style={styles.captureSub}>{sub}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function ExpectItem({ text }: { text: string }) {
+  return (
+    <View style={styles.expectItem}>
+      <View style={styles.expectDot} />
+      <Text style={styles.expectText}>{text}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: C.background,
+  },
+  centerContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+  },
+  pressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
+  },
+  titleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    marginTop: Space.lg,
+  },
+  titleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    ...Type.display,
+    color: C.text,
+  },
+  subtitle: {
+    ...Type.body,
+    color: C.textMuted,
+    marginTop: Space.md,
+    marginBottom: Space.xl,
+  },
+  // Preview
+  previewWrap: {
+    position: "relative",
+    marginBottom: Space.lg,
+  },
+  preview: {
+    width: "100%",
+    height: 200,
+    borderRadius: Radius.md,
+    backgroundColor: C.surface,
+  },
+  previewClose: {
+    position: "absolute",
+    top: Space.sm,
+    right: Space.sm,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Options
+  options: {
+    gap: Space.md,
+  },
+  captureOpt: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.lg,
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  captureIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  captureText: {
+    flex: 1,
+  },
+  captureTitle: {
+    ...Type.heading,
+    color: C.text,
+  },
+  captureSub: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.xs,
+  },
+  // Expect card
+  expectCard: {
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    marginTop: Space.xl,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  expectHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    marginBottom: Space.lg,
+  },
+  expectIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  expectTitle: {
+    ...Type.heading,
+    color: C.text,
+  },
+  expectItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Space.md,
+    marginBottom: Space.md,
+  },
+  expectDot: {
+    width: 8,
+    height: 8,
+    borderRadius: Radius.pill,
+    backgroundColor: C.primary,
+    marginTop: Space.sm,
+  },
+  expectText: {
+    flex: 1,
+    ...Type.body,
+    color: C.text,
+  },
+  // Privacy
+  privacyNote: {
+    marginTop: Space.lg,
+    backgroundColor: C.primarySoft,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+  },
+  privacyIcon: {
+    fontSize: 20,
+  },
+  privacyText: {
+    flex: 1,
+    ...Type.caption,
+    color: C.textMuted,
+  },
+  // Analyzing — a focal, dialog-like card; deliberately elevated.
+  analyzingCard: {
+    alignItems: "center",
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.xl,
+    width: "100%",
+    ...Elevation.raised,
+  },
+  analyzingImageWrap: {
+    width: "100%",
+    borderRadius: Radius.md,
+    marginBottom: Space.xl,
+    overflow: "hidden",
+    position: "relative",
+  },
+  analyzingImage: {
+    width: "100%",
+    height: 180,
+    backgroundColor: C.surfaceAlt,
+  },
+  analyzingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(13,148,136,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  analyzingIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Space.lg,
+  },
+  analyzingTitle: {
+    ...Type.title,
+    color: C.text,
+  },
+  analyzingSub: {
+    ...Type.body,
+    color: C.textMuted,
+    textAlign: "center",
+    marginTop: Space.md,
+  },
+  analyzingDots: {
+    flexDirection: "row",
+    gap: Space.sm,
+    marginTop: Space.lg,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: Radius.pill,
+  },
+  dotActive: {
+    backgroundColor: C.primary,
+  },
+  dotPulse: {
+    backgroundColor: C.primary,
+    opacity: 0.5,
+  },
+  analyzingHint: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.md,
+    opacity: 0.7,
+  },
+  // Error — focal, dialog-like card; deliberately elevated.
+  errorCard: {
+    alignItems: "center",
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.xl,
+    width: "100%",
+    ...Elevation.raised,
+  },
+  errorIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.pill,
+    backgroundColor: C.dangerSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Space.lg,
+  },
+  errorTitle: {
+    ...Type.title,
+    color: C.text,
+  },
+  errorMsg: {
+    ...Type.body,
+    color: C.textMuted,
+    textAlign: "center",
+    marginTop: Space.md,
+  },
+});
