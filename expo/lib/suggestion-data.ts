@@ -5,6 +5,17 @@
  * and makes onboarding seamless.
  */
 
+import { VACCINE_CATALOG } from "./vaccine-data";
+
+/**
+ * Vaccine names for the onboarding chip picker.
+ *
+ * Derived from VACCINE_CATALOG rather than retyped, so the names a user taps
+ * during onboarding are exactly the ones the Vaccines tab tracks — otherwise
+ * "Flu shot" and "Influenza (Flu)" become two different records.
+ */
+export const COMMON_VACCINES: string[] = VACCINE_CATALOG.map((v) => v.name);
+
 export const COMMON_CONDITIONS: string[] = [
   "Type 2 Diabetes",
   "Type 1 Diabetes",

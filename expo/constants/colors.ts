@@ -1,81 +1,128 @@
 /**
- * CLAIRITY palette.
+ * CLAIRITY palette — "warm clinical".
  *
- * One primary (clinical blue), one accent, a neutral gray ramp, and three
- * status colors. Everything else is derived. Category colors below are
- * deliberately NOT ten different hues — see the note above `docGeneral`.
+ * Two ideas hold this system together:
+ *
+ * 1. The interface is warm neutrals only. Sand and cocoa, no decorative brand
+ *    hue. `primary` is deliberately the *ink* rather than a colour, which is
+ *    what lets a primary button (background `primary`, label `textInverse`)
+ *    invert correctly between the two themes instead of needing a second token.
+ *
+ * 2. Colour is reserved for clinical meaning — danger / warning / success, i.e.
+ *    overdue, due soon, up to date. Nothing is tinted for decoration, so a
+ *    screen with colour on it is a screen that needs the user. Keep it that way:
+ *    if you reach for a hue here for emphasis alone, use weight or spacing
+ *    instead.
+ *
+ * `light` and `dark` MUST keep identical key sets — document-detail.tsx builds
+ * a palette key at runtime (`doc${PascalCase(type)}`) and indexes into this, so
+ * a key missing from one theme fails silently at the `?? docGeneral` fallback.
  */
 
-// Brand
-const primary = "#075985";
-const primaryDark = "#063F62";
-const primarySoft = "#E7F0F6";
-const accent = "#2F5D8F";
-const accentSoft = "#EDF3F9";
+const light = {
+  // Ink — the primary action colour, not a hue
+  primary: "#2A2119",
+  primaryDark: "#1B1510",
+  primarySoft: "#E9DDC9",
+  accent: "#7C6B57",
+  accentSoft: "#EFE6D6",
 
-// Neutral ramp — warm-tinted gray so the app keeps its calm, paper-like feel
-// without the previous parchment/ivory pair muddying white cards.
-const background = "#F7F6F4";
-const surface = "#FFFFFF";
-const surfaceAlt = "#F1EFEC";
-const border = "#E2E0DC";
-const borderStrong = "#CFCCC7";
-const textDark = "#16242E";
-const textMuted = "#5E6C77";
+  // Clinical status
+  danger: "#BF4A34",
+  dangerSoft: "#F8E3DB",
+  success: "#56704E",
+  successSoft: "#E4EBDE",
+  warning: "#A8760F",
+  warningSoft: "#F9ECD3",
 
-// Status
-const danger = "#B4232D";
-const dangerSoft = "#FBEAEB";
-const success = "#176B50";
-const successSoft = "#E6F2ED";
-const warning = "#8A5310";
-const warningSoft = "#FBF0DE";
+  // Warm neutral ramp
+  background: "#F2E9DA",
+  surface: "#FDF9F1",
+  surfaceAlt: "#E9DDC9",
+  text: "#2A2119",
+  textMuted: "#7C6B57",
+  textInverse: "#FDF9F1",
+  border: "#E6D9C4",
+  borderStrong: "#D9C8AC",
 
-export default {
-  light: {
-    primary,
-    primaryDark,
-    primarySoft,
-    accent,
-    accentSoft,
-    danger,
-    dangerSoft,
-    success,
-    successSoft,
-    warning,
-    warningSoft,
-    background,
-    surface,
-    surfaceAlt,
-    text: textDark,
-    textMuted,
-    textInverse: "#FFFFFF",
-    border,
-    borderStrong,
-    tint: primary,
-    tabIconDefault: "#8A949B",
-    tabIconSelected: primary,
-    shadow: "rgba(15, 42, 58, 0.06)",
-    shadowDeep: "rgba(15, 42, 58, 0.14)",
+  tint: "#2A2119",
+  tabIconDefault: "#A2917B",
+  tabIconSelected: "#2A2119",
 
-    // Document categories.
-    //
-    // These keys are looked up dynamically in document-detail.tsx, so all of
-    // them must exist. But ten competing hues made every report screen read
-    // like a colour chart, so they now collapse onto four meanings:
-    //   danger  — results you may need to act on
-    //   warning — time-sensitive paperwork
-    //   success — medication and immunisation
-    //   accent  — everything routine
-    docBloodWork: danger,
-    docPathology: danger,
-    docImaging: accent,
-    docConsultation: accent,
-    docReferral: accent,
-    docOperative: accent,
-    docGeneral: accent,
-    docDischarge: warning,
-    docPrescription: success,
-    docVaccination: success,
-  },
+  shadow: "rgba(42, 33, 25, 0.07)",
+  shadowDeep: "rgba(42, 33, 25, 0.16)",
+  /** Modal/overlay backdrop. Theme-independent by intent — it dims whatever is behind it. */
+  scrim: "rgba(20, 15, 10, 0.45)",
+
+  // Document categories.
+  //
+  // Ten keys, four meanings — the keys exist because the lookup in
+  // document-detail.tsx is dynamic, not because these are ten design decisions:
+  //   danger  — results you may need to act on
+  //   warning — time-sensitive paperwork
+  //   success — medication and immunisation
+  //   accent  — everything routine
+  docBloodWork: "#BF4A34",
+  docPathology: "#BF4A34",
+  docImaging: "#7C6B57",
+  docConsultation: "#7C6B57",
+  docReferral: "#7C6B57",
+  docOperative: "#7C6B57",
+  docGeneral: "#7C6B57",
+  docDischarge: "#A8760F",
+  docPrescription: "#56704E",
+  docVaccination: "#56704E",
 };
+
+/**
+ * Dark theme. Not an inversion — the ground is warm cocoa rather than black,
+ * and body text is a warm sand rather than white. Pure white on a dark ground
+ * reads as harsh at the sizes this app uses.
+ */
+const dark: typeof light = {
+  primary: "#DFD2BD",
+  primaryDark: "#F2E9DA",
+  primarySoft: "#2F2820",
+  accent: "#A5947E",
+  accentSoft: "#2A241C",
+
+  danger: "#E88C72",
+  dangerSoft: "#3B2018",
+  success: "#A0C094",
+  successSoft: "#212B1E",
+  warning: "#DCA94E",
+  warningSoft: "#3A2C14",
+
+  background: "#1B1510",
+  surface: "#262019",
+  surfaceAlt: "#151009",
+  text: "#DFD2BD",
+  textMuted: "#A5947E",
+  textInverse: "#1B1510",
+  border: "#352B21",
+  borderStrong: "#453A2D",
+
+  tint: "#DFD2BD",
+  tabIconDefault: "#7A6A57",
+  tabIconSelected: "#DFD2BD",
+
+  shadow: "rgba(0, 0, 0, 0.5)",
+  shadowDeep: "rgba(0, 0, 0, 0.75)",
+  scrim: "rgba(0, 0, 0, 0.6)",
+
+  docBloodWork: "#E88C72",
+  docPathology: "#E88C72",
+  docImaging: "#A5947E",
+  docConsultation: "#A5947E",
+  docReferral: "#A5947E",
+  docOperative: "#A5947E",
+  docGeneral: "#A5947E",
+  docDischarge: "#DCA94E",
+  docPrescription: "#A0C094",
+  docVaccination: "#A0C094",
+};
+
+/** The shape every screen styles against. */
+export type Palette = typeof light;
+
+export default { light, dark };

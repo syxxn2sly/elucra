@@ -1,4 +1,6 @@
-// CLAIRITY — Health Card tab (biometric-locked secure storage)
+// CLAIRITY — Health Card viewer (biometric-locked secure storage).
+// Reached from Settings › Health Card once a card is saved; it is a pushed
+// stack screen, not a tab, so it draws its own ScreenHeader for the way back.
 import { router } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
 import { CreditCard, Lock, Shield, Plus, Copy, Check, Eye, EyeOff } from "lucide-react-native";
@@ -19,9 +21,9 @@ import { Image } from "expo-image";
 
 import Colors from "@/constants/colors";
 import { Elevation, HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
-import { useTabScrollPadding } from "@/lib/layout";
+import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { Card, PrimaryButton, EmptyState } from "@/components/ui";
+import { Card, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
 import { deobfuscate, obfuscate } from "@/lib/utils";
 import type { HealthCardData } from "@/lib/types";
 
@@ -31,7 +33,7 @@ const OBFUSCATE_KEY = "clairity_v1_2025";
 
 export default function HealthCardScreen() {
   const insets = useSafeAreaInsets();
-  const scrollPadding = useTabScrollPadding();
+  const scrollPadding = useStackScrollPadding();
   const { healthCard, saveHealthCard, removeHealthCard } = useClairity();
   const [unlocked, setUnlocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -112,9 +114,7 @@ export default function HealthCardScreen() {
   if (!hasCard) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Health Card</Text>
-        </View>
+        <ScreenHeader title="Health Card" fallbackRoute="/(tabs)/settings" />
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1, paddingBottom: scrollPadding }}
           showsVerticalScrollIndicator={false}
@@ -148,9 +148,7 @@ export default function HealthCardScreen() {
   if (!unlocked) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Health Card</Text>
-        </View>
+        <ScreenHeader title="Health Card" fallbackRoute="/(tabs)/settings" />
         <View style={styles.lockedScreen}>
           <View style={styles.lockIcon}>
             <Lock color={C.primary} size={40} strokeWidth={2.5} />
@@ -179,18 +177,23 @@ export default function HealthCardScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Health Card</Text>
-        <Pressable
-          onPress={() => {
-            setUnlocked(false);
-            setCardData(null);
-          }}
-          hitSlop={12}
-        >
-          <Lock color={C.textMuted} size={22} strokeWidth={2.5} />
-        </Pressable>
-      </View>
+      <ScreenHeader
+        title="Health Card"
+        fallbackRoute="/(tabs)/settings"
+        actions={
+          <Pressable
+            onPress={() => {
+              setUnlocked(false);
+              setCardData(null);
+            }}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Lock health card"
+          >
+            <Lock color={C.textMuted} size={22} strokeWidth={2.5} />
+          </Pressable>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -312,17 +315,6 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.88,
     transform: [{ scale: 0.97 }],
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.lg,
-  },
-  headerTitle: {
-    ...Type.display,
-    color: C.text,
   },
   // Empty
   securityNote: {

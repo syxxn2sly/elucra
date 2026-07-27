@@ -111,3 +111,25 @@ export function formatDateDisplay(isoString: string): string {
     day: "numeric",
   });
 }
+
+/**
+ * Medication names captured during onboarding that still have no proper record.
+ *
+ * Onboarding stores medications on the profile as one comma-joined string, while
+ * the Medications tab tracks structured records carrying dose, frequency and
+ * reminders. Someone who listed their medications during setup has therefore
+ * "entered" them without the app being able to remind them of anything — and the
+ * Home count reads zero, which looks like the app lost them. This returns the
+ * names still waiting on those details so the UI can ask for them.
+ */
+export function pendingProfileMedications(
+  profileMedications: string,
+  records: { name: string }[],
+): string[] {
+  const recorded = new Set(records.map((record) => record.name.trim().toLowerCase()));
+  return profileMedications
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .filter((name) => !recorded.has(name.toLowerCase()));
+}

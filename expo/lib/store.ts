@@ -30,6 +30,7 @@ const STORAGE_KEYS = {
   healthCard: "@clairity/healthcard",
   familyDoctor: "@clairity/family-doctor",
   appointments: "@clairity/appointments",
+  favouriteLocation: "@clairity/favourite-location",
 } as const;
 
 const DEFAULT_FAMILY_DOCTOR: FamilyDoctor = {
@@ -65,22 +66,33 @@ function useClairityState() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [healthCard, setHealthCard] = useState<HealthCardData | null>(null);
   const [familyDoctor, setFamilyDoctor] = useState<FamilyDoctor>(DEFAULT_FAMILY_DOCTOR);
+  /** The one place the user goes most often — offered first when booking an appointment. */
+  const [favouriteLocation, setFavouriteLocation] = useState<string>("");
   const [loaded, setLoaded] = useState(false);
 
   // Load all persisted state on mount
   useEffect(() => {
     (async () => {
       try {
-        const [profileStr, docsStr, vaccinesStr, medsStr, cardStr, doctorStr, appointmentsStr] =
-          await Promise.all([
-            AsyncStorage.getItem(STORAGE_KEYS.profile),
-            AsyncStorage.getItem(STORAGE_KEYS.documents),
-            AsyncStorage.getItem(STORAGE_KEYS.vaccines),
-            AsyncStorage.getItem(STORAGE_KEYS.medications),
-            AsyncStorage.getItem(STORAGE_KEYS.healthCard),
-            AsyncStorage.getItem(STORAGE_KEYS.familyDoctor),
-            AsyncStorage.getItem(STORAGE_KEYS.appointments),
-          ]);
+        const [
+          profileStr,
+          docsStr,
+          vaccinesStr,
+          medsStr,
+          cardStr,
+          doctorStr,
+          appointmentsStr,
+          favouriteLocationStr,
+        ] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.profile),
+          AsyncStorage.getItem(STORAGE_KEYS.documents),
+          AsyncStorage.getItem(STORAGE_KEYS.vaccines),
+          AsyncStorage.getItem(STORAGE_KEYS.medications),
+          AsyncStorage.getItem(STORAGE_KEYS.healthCard),
+          AsyncStorage.getItem(STORAGE_KEYS.familyDoctor),
+          AsyncStorage.getItem(STORAGE_KEYS.appointments),
+          AsyncStorage.getItem(STORAGE_KEYS.favouriteLocation),
+        ]);
 
         if (profileStr) setProfile(JSON.parse(profileStr) as HealthProfile);
         if (docsStr) setDocuments(JSON.parse(docsStr) as SavedDocument[]);
@@ -89,6 +101,7 @@ function useClairityState() {
         if (appointmentsStr) setAppointments(JSON.parse(appointmentsStr) as Appointment[]);
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
         if (doctorStr) setFamilyDoctor({ ...DEFAULT_FAMILY_DOCTOR, ...(JSON.parse(doctorStr) as FamilyDoctor) });
+        if (favouriteLocationStr) setFavouriteLocation(favouriteLocationStr);
       } catch (error) {
         console.error("[CLAIRITY] Failed to load state:", error);
       } finally {
@@ -131,6 +144,11 @@ function useClairityState() {
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.familyDoctor, JSON.stringify(familyDoctor));
   }, [familyDoctor, loaded]);
+
+  // Stored as a bare string rather than JSON — it is one free-text place name.
+  useEffect(() => {
+    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.favouriteLocation, favouriteLocation);
+  }, [favouriteLocation, loaded]);
 
   // --- Profile actions ---
   const updateProfile = useCallback((updates: Partial<HealthProfile>) => {
@@ -307,6 +325,10 @@ function useClairityState() {
     setHealthCard(null);
   }, []);
 
+  const saveFavouriteLocation = useCallback((value: string) => {
+    setFavouriteLocation(value.trim());
+  }, []);
+
   return {
     // State
     profile,
@@ -316,12 +338,14 @@ function useClairityState() {
     appointments,
     healthCard,
     familyDoctor,
+    favouriteLocation,
     loaded,
     // Profile
     updateProfile,
     completeOnboarding,
     resetProfile,
     updateFamilyDoctor,
+    saveFavouriteLocation,
     // Documents
     addDocument,
     removeDocument,

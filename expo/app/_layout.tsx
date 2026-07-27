@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="vaccine-detail" />
       <Stack.Screen name="add-medication" options={{ presentation: "modal" }} />
       <Stack.Screen name="health-card-setup" />
+      <Stack.Screen name="healthcard" />
       <Stack.Screen name="travel" />
       <Stack.Screen name="identity" />
       <Stack.Screen name="add-appointment" options={{ presentation: "modal" }} />

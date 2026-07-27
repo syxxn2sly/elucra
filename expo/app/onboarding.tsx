@@ -26,6 +26,7 @@ import {
   COMMON_ALLERGIES,
   COMMON_SURGERIES,
   COMMON_FAMILY_HISTORY,
+  COMMON_VACCINES,
   OCCUPATION_OPTIONS,
   SMOKING_OPTIONS,
   ALCOHOL_OPTIONS,
@@ -150,11 +151,11 @@ const STEPS: Step[] = [
   {
     key: "vaccineStatus",
     title: "Vaccine status?",
-    subtitle: "Any vaccines you remember having. You can add details later in the Vaccines tab.",
+    subtitle: "Tap any you remember having, or add your own. You can add dates later in the Vaccines tab.",
     icon: <Syringe color={C.primary} size={22} strokeWidth={2.5} />,
-    inputType: "multiline",
-    placeholder: "e.g. Flu shot last year, COVID-19 vaccinated",
+    inputType: "multiChip",
     optional: true,
+    suggestions: COMMON_VACCINES,
   },
 ];
 

@@ -4,13 +4,15 @@
  * Reduces user error with tap-to-select suggestions and pickers.
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import * as Haptics from "expo-haptics";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
   Pressable,
+  Platform,
   ScrollView,
   FlatList,
   Modal,
@@ -21,6 +23,19 @@ import Colors from "@/constants/colors";
 import { Elevation, HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
 
 const C = Colors.light;
+
+/**
+ * Age wheel geometry. The highlight band sits one item-height tall, centred in
+ * a container two items taller on each side — so the padding, the band offset
+ * and the snap interval all derive from this one number. Item `i` is centred
+ * under the band exactly when scrollY === ITEM_HEIGHT * i.
+ */
+const ITEM_HEIGHT = 56;
+const WHEEL_VISIBLE_ROWS = 5;
+const WHEEL_HEIGHT = ITEM_HEIGHT * WHEEL_VISIBLE_ROWS;
+const WHEEL_PADDING = (WHEEL_HEIGHT - ITEM_HEIGHT) / 2;
+const MIN_AGE = 1;
+const MAX_AGE = 120;
 
 /** Autocomplete text input with dropdown suggestions. */
 export function AutocompleteInput({
@@ -298,16 +313,63 @@ export function AgeWheel({
   }, []);
 
   const currentAge = parseInt(value, 10);
-  const safeAge = isNaN(currentAge) ? 50 : Math.max(1, Math.min(120, currentAge));
-  const ITEM_HEIGHT = 56;
+  const safeAge = isNaN(currentAge) ? 50 : Math.max(MIN_AGE, Math.min(MAX_AGE, currentAge));
 
-  const handleAgeScroll = useCallback((offsetY: number) => {
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    const nextAge = Math.max(1, Math.min(120, index + 1));
-    setDraftAge(nextAge);
-  }, [ITEM_HEIGHT]);
+  const listRef = useRef<FlatList<number>>(null);
+
+  // Tracks the row currently under the highlight band. Scroll events fire every
+  // frame, so this guard keeps us to one state update (and one haptic tick) per
+  // row crossed rather than one per frame.
+  const settledAge = useRef(safeAge);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+    };
+  }, []);
+
+  /**
+   * Pull the list onto a whole row.
+   *
+   * `snapToInterval` alone is not enough: react-native-web does not implement it
+   * for FlatList, so on web the wheel came to rest between two numbers. Snapping
+   * explicitly makes the behaviour identical on web and native, and on native it
+   * is a no-op because the built-in snap has already landed on the interval.
+   */
+  const snapToNearestRow = useCallback((offsetY: number) => {
+    const index = Math.max(0, Math.min(MAX_AGE - MIN_AGE, Math.round(offsetY / ITEM_HEIGHT)));
+    const target = index * ITEM_HEIGHT;
+    if (Math.abs(offsetY - target) > 0.5) {
+      listRef.current?.scrollToOffset({ offset: target, animated: true });
+    }
+  }, []);
+
+  const handleAgeScroll = useCallback(
+    (offsetY: number) => {
+      const index = Math.round(offsetY / ITEM_HEIGHT);
+      const nextAge = Math.max(MIN_AGE, Math.min(MAX_AGE, index + 1));
+
+      if (nextAge !== settledAge.current) {
+        settledAge.current = nextAge;
+        if (Platform.OS !== "web") {
+          Haptics.selectionAsync().catch(() => {});
+        }
+        setDraftAge(nextAge);
+      }
+
+      // Debounce rather than snapping on the scroll-end events directly: doing it
+      // on release would fight the momentum, and a flick that coasts to a stop
+      // does not reliably fire momentum-end on every platform. Once the wheel has
+      // been quiet briefly, it has stopped — whatever got it there.
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      settleTimer.current = setTimeout(() => snapToNearestRow(offsetY), 120);
+    },
+    [snapToNearestRow],
+  );
 
   const handleOpen = useCallback(() => {
+    settledAge.current = safeAge;
     setDraftAge(safeAge);
     setModalVisible(true);
   }, [safeAge]);
@@ -342,10 +404,23 @@ export function AgeWheel({
             <Text style={styles.modalSub}>Scroll to find your age, then tap Done.</Text>
             <View style={styles.wheelContainer}>
               <FlatList
+                ref={listRef}
                 data={ages}
                 keyExtractor={(item) => String(item)}
                 initialScrollIndex={safeAge - 1}
                 getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
+                // Rest on a whole row every time. `decelerationRate="fast"` is what
+                // gives it the short, weighted glide of a physical dial; leaving
+                // interval momentum on means a hard flick still travels several rows.
+                snapToInterval={ITEM_HEIGHT}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                // Track continuously so the highlighted number follows your finger
+                // instead of only catching up once scrolling stops.
+                onScroll={(event) => handleAgeScroll(event.nativeEvent.contentOffset.y)}
+                scrollEventThrottle={16}
+                // Both end events are kept: rounding is idempotent, and Android
+                // does not reliably fire momentum-end on a zero-velocity release.
                 onMomentumScrollEnd={(event) => handleAgeScroll(event.nativeEvent.contentOffset.y)}
                 onScrollEndDrag={(event) => handleAgeScroll(event.nativeEvent.contentOffset.y)}
                 renderItem={({ item }) => {
@@ -360,7 +435,7 @@ export function AgeWheel({
                   );
                 }}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 112 }}
+                contentContainerStyle={styles.wheelContent}
               />
               <View style={styles.wheelHighlight} pointerEvents="none" />
             </View>
@@ -592,22 +667,25 @@ const styles = StyleSheet.create({
     marginBottom: Space.lg,
   },
   wheelContainer: {
-    height: 280,
+    height: WHEEL_HEIGHT,
     position: "relative",
     justifyContent: "center",
   },
+  wheelContent: {
+    paddingVertical: WHEEL_PADDING,
+  },
   wheelHighlight: {
     position: "absolute",
-    top: 112,
+    top: WHEEL_PADDING,
     left: 0,
     right: 0,
-    height: 56,
+    height: ITEM_HEIGHT,
     backgroundColor: C.primarySoft,
     borderRadius: Radius.md,
     opacity: 0.5,
   },
   wheelItem: {
-    height: 56,
+    height: ITEM_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",

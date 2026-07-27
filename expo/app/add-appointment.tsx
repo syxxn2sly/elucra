@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import { CalendarDays, Check, ChevronDown, Clock3, LocateFixed, MapPin, X } from "lucide-react-native";
 import React, { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton, canGoBackSafe } from "@/components/ui";
@@ -46,7 +46,7 @@ function formatTimeInput(value: Date): string {
 export default function AddAppointmentScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { addAppointment, appointments, familyDoctor } = useClairity();
+  const { addAppointment, appointments, familyDoctor, favouriteLocation, saveFavouriteLocation } = useClairity();
   const initialAppointmentDate = useMemo(() => defaultAppointmentDate(), []);
   const [title, setTitle] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<Date>(initialAppointmentDate);
@@ -59,12 +59,21 @@ export default function AddAppointmentScreen() {
   const [whatToBring, setWhatToBring] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [editingFavourite, setEditingFavourite] = useState<boolean>(false);
+  const [favouriteDraft, setFavouriteDraft] = useState<string>("");
 
   const locationSuggestions = useMemo((): string[] => {
     const doctorLocation = [familyDoctor.clinicName, familyDoctor.address].filter(Boolean).join(" — ");
-    const priorLocations = appointments.map((appointment) => appointment.location).filter(Boolean);
-    return [doctorLocation, ...priorLocations].filter((value, index, values) => values.indexOf(value) === index).slice(0, 4);
-  }, [appointments, familyDoctor.address, familyDoctor.clinicName]);
+    const priorLocations = appointments.map((appointment) => appointment.location);
+    return [doctorLocation, ...priorLocations]
+      // Without this the empty doctor placeholder became a chip with an icon and
+      // no label — an unlabelled pin the user could tap to set nothing.
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .filter((value) => value !== favouriteLocation)
+      .filter((value, index, values) => values.indexOf(value) === index)
+      .slice(0, 4);
+  }, [appointments, familyDoctor.address, familyDoctor.clinicName, favouriteLocation]);
 
   const close = useCallback(() => {
     if (canGoBackSafe()) router.back();
@@ -191,11 +200,111 @@ export default function AddAppointmentScreen() {
         {pickerMode ? <View style={styles.pickerPanel}><DateTimePicker value={appointmentDate} mode={pickerMode} display={Platform.OS === "ios" ? "spinner" : "default"} minimumDate={pickerMode === "date" ? new Date() : undefined} minuteInterval={15} onChange={handlePickerChange} />{Platform.OS === "ios" ? <Pressable onPress={() => setPickerMode(null)} style={styles.donePickerButton}><Text style={styles.donePickerText}>Done</Text></Pressable> : null}</View> : null}
 
         <Text style={styles.label}>Where do you need to go? <Text style={styles.optional}>(optional)</Text></Text>
-        <Text style={styles.helperText}>Choose a saved place, use your current location if your appointment is there, or enter a different clinic.</Text>
-        {locationSuggestions.length > 0 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionList}>{locationSuggestions.map((suggestion) => <Pressable key={suggestion} onPress={() => { setLocation(suggestion); setLocationStatus("Saved location added. Please check it before saving."); }} style={styles.locationChip}><MapPin color={C.primary} size={16} strokeWidth={2.5}/><Text style={styles.locationChipText} numberOfLines={1}>{suggestion}</Text></Pressable>)}</ScrollView> : null}
-        <Pressable onPress={useCurrentLocation} disabled={isFindingLocation} style={[styles.currentLocationButton, isFindingLocation && styles.disabledButton]}><LocateFixed color={C.primary} size={19} strokeWidth={2.5}/><Text style={styles.currentLocationText}>{isFindingLocation ? "Finding your location…" : "Use my current location"}</Text></Pressable>
+        <Text style={styles.helperText}>Use your favourite place, your current location, or enter a different clinic.</Text>
+
+        {/* Favourite and current location sit together — they are the two
+            one-tap ways to fill the field, so they belong on the same row. */}
+        <View style={styles.locationActionRow}>
+          <Pressable
+            onPress={() => {
+              if (favouriteLocation) {
+                setLocation(favouriteLocation);
+                setLocationStatus("Favourite location added. Please check it before saving.");
+              } else {
+                setFavouriteDraft("");
+                setEditingFavourite(true);
+              }
+            }}
+            onLongPress={() => {
+              setFavouriteDraft(favouriteLocation);
+              setEditingFavourite(true);
+            }}
+            delayLongPress={350}
+            style={styles.locationChip}
+            accessibilityRole="button"
+            accessibilityLabel={
+              favouriteLocation
+                ? `Favourite location, ${favouriteLocation}. Hold to edit.`
+                : "Set a favourite location"
+            }
+            accessibilityHint="Press and hold to change your favourite location"
+          >
+            <MapPin color={C.primary} size={16} strokeWidth={2.5} />
+            <Text style={styles.locationChipText} numberOfLines={1}>
+              {favouriteLocation || "Set favourite location"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={useCurrentLocation}
+            disabled={isFindingLocation}
+            style={[styles.currentLocationButton, isFindingLocation && styles.disabledButton]}
+            accessibilityRole="button"
+          >
+            <LocateFixed color={C.primary} size={19} strokeWidth={2.5} />
+            <Text style={styles.currentLocationText} numberOfLines={1}>
+              {isFindingLocation ? "Finding…" : "Use my location"}
+            </Text>
+          </Pressable>
+        </View>
+
+        {favouriteLocation ? (
+          <Text style={styles.favouriteHint}>Hold the favourite to change it.</Text>
+        ) : null}
+
+        {/* Other places worth one tap: the family doctor's clinic and anywhere
+            previous appointments were held. */}
+        {locationSuggestions.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionList}>
+            {locationSuggestions.map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                onPress={() => { setLocation(suggestion); setLocationStatus("Saved location added. Please check it before saving."); }}
+                style={styles.locationChip}
+              >
+                <MapPin color={C.primary} size={16} strokeWidth={2.5} />
+                <Text style={styles.locationChipText} numberOfLines={1}>{suggestion}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+
         <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="Clinic name or address" placeholderTextColor={C.textMuted} autoCapitalize="words" />
         {locationStatus ? <Text style={styles.locationStatus}>{locationStatus}</Text> : null}
+
+        <Modal visible={editingFavourite} transparent animationType="fade" onRequestClose={() => setEditingFavourite(false)}>
+          <Pressable style={styles.favouriteOverlay} onPress={() => setEditingFavourite(false)}>
+            <Pressable style={styles.favouriteSheet} onPress={(event) => event.stopPropagation()}>
+              <Text style={styles.favouriteSheetTitle}>Favourite location</Text>
+              <Text style={styles.favouriteSheetSub}>The place you go to most — offered first whenever you add an appointment.</Text>
+              <TextInput
+                style={styles.input}
+                value={favouriteDraft}
+                onChangeText={setFavouriteDraft}
+                placeholder="e.g. Lakeshore Family Clinic"
+                placeholderTextColor={C.textMuted}
+                autoCapitalize="words"
+                autoFocus
+              />
+              <View style={styles.favouriteSheetActions}>
+                {favouriteLocation ? (
+                  <Pressable
+                    onPress={() => { saveFavouriteLocation(""); setEditingFavourite(false); }}
+                    style={styles.favouriteRemove}
+                  >
+                    <Text style={styles.favouriteRemoveText}>Remove</Text>
+                  </Pressable>
+                ) : <View />}
+                <Pressable
+                  onPress={() => { saveFavouriteLocation(favouriteDraft); setEditingFavourite(false); }}
+                  style={styles.favouriteSave}
+                >
+                  <Text style={styles.favouriteSaveText}>Save</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <TextField label="What should you bring?" value={whatToBring} onChangeText={setWhatToBring} placeholder="e.g. Health card and medication list" multiline />
         <TextField label="Notes (optional)" value={notes} onChangeText={setNotes} placeholder="Anything else to remember" multiline />
@@ -330,9 +439,23 @@ const styles = StyleSheet.create({
   },
   donePickerText: { ...Type.body, fontWeight: Weight.bold, color: C.primary },
   suggestionList: { gap: Space.sm, paddingBottom: Space.md },
+  // Favourite and "use my location" share a row and split it evenly, so neither
+  // reads as the primary choice.
+  locationActionRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: Space.sm,
+    marginBottom: Space.sm,
+  },
+  favouriteHint: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginBottom: Space.md,
+  },
   locationChip: {
+    flex: 1,
     maxWidth: 235,
-    minHeight: 42,
+    minHeight: HIT_TARGET,
     borderRadius: Radius.pill,
     paddingHorizontal: Space.md,
     backgroundColor: C.primarySoft,
@@ -340,17 +463,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Space.xs,
   },
+  favouriteOverlay: {
+    flex: 1,
+    backgroundColor: C.scrim,
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+  },
+  favouriteSheet: {
+    backgroundColor: C.surface,
+    borderRadius: Radius.md,
+    padding: Space.xl,
+    gap: Space.sm,
+  },
+  favouriteSheetTitle: { ...Type.title, color: C.text },
+  favouriteSheetSub: { ...Type.caption, color: C.textMuted, marginBottom: Space.xs },
+  favouriteSheetActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Space.md,
+  },
+  favouriteRemove: {
+    minHeight: HIT_TARGET,
+    justifyContent: "center",
+    paddingHorizontal: Space.sm,
+  },
+  favouriteRemoveText: { ...Type.label, color: C.danger },
+  favouriteSave: {
+    minHeight: HIT_TARGET,
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+    borderRadius: Radius.md,
+    backgroundColor: C.primary,
+  },
+  favouriteSaveText: { ...Type.label, color: C.textInverse },
   locationChipText: { flexShrink: 1, ...Type.caption, fontWeight: Weight.semibold, color: C.primary },
   currentLocationButton: {
+    flex: 1,
     minHeight: HIT_TARGET,
-    borderRadius: Radius.md,
+    borderRadius: Radius.pill,
     paddingHorizontal: Space.md,
-    alignSelf: "flex-start",
     backgroundColor: C.accentSoft,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: Space.sm,
-    marginBottom: Space.md,
   },
   disabledButton: { opacity: 0.6 },
   currentLocationText: { ...Type.caption, fontWeight: Weight.semibold, color: C.primary },

@@ -27,7 +27,12 @@ import Colors from "@/constants/colors";
 import { Radius, Space, Type, Weight } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { formatDateDisplay, formatDueCountdown, sortByDueDate } from "@/lib/utils";
+import {
+  formatDateDisplay,
+  formatDueCountdown,
+  pendingProfileMedications,
+  sortByDueDate,
+} from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader, Tag, EmptyState } from "@/components/ui";
 
 const C = Colors.light;
@@ -51,6 +56,8 @@ export default function HomeScreen() {
   const undatedVaccines = vaccines.filter((v) => !v.hasDate);
 
   const recentDocs = documents.slice(0, 3);
+
+  const pendingMedications = pendingProfileMedications(profile.medications ?? "", medications);
 
   const handleSimplify = useCallback(() => {
     router.push("/simplify");
@@ -122,7 +129,17 @@ export default function HomeScreen() {
             icon={<Pill color={C.primary} size={22} strokeWidth={2.5} />}
             label="Medications"
             value={medications.length.toString()}
-            sub={medications.length === 1 ? "medication" : "medications"}
+            sub={
+              pendingMedications.length > 0
+                ? `${pendingMedications.length} need details`
+                : medications.length === 1
+                  ? "medication"
+                  : "medications"
+            }
+            // Medications listed during onboarding are only a profile note until
+            // they get a dose and schedule. Without this the card just reads "0"
+            // and it looks like the app dropped what they entered.
+            actionNeeded={pendingMedications.length > 0}
             onPress={() => router.navigate("/(tabs)/medications")}
           />
           <QuickCard
@@ -281,23 +298,35 @@ function QuickCard({
   label,
   value,
   sub,
+  actionNeeded,
   onPress,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub: string;
+  /** Draws the caution treatment — something on this card is waiting on the user. */
+  actionNeeded?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
+      accessibilityRole="button"
+      accessibilityLabel={
+        actionNeeded ? `${label}, ${value}. Action needed: ${sub}` : `${label}, ${value}, ${sub}`
+      }
     >
       <View style={styles.quickCardIcon}>{icon}</View>
       <Text style={styles.quickCardValue}>{value}</Text>
       <Text style={styles.quickCardLabel}>{label}</Text>
-      <Text style={styles.quickCardSub}>{sub}</Text>
+      <Text style={[styles.quickCardSub, actionNeeded && styles.quickCardSubAction]}>{sub}</Text>
+      {actionNeeded ? (
+        <View style={styles.actionPill}>
+          <Text style={styles.actionPillText}>Action needed</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -418,6 +447,24 @@ const styles = StyleSheet.create({
     ...Type.caption,
     color: C.textMuted,
     marginTop: Space.xs,
+  },
+  quickCardSubAction: {
+    color: C.warning,
+  },
+  // Colour on a snapshot card means something is waiting on the user — this is
+  // the only place a QuickCard is tinted, so it reads at a glance.
+  actionPill: {
+    alignSelf: "flex-start",
+    marginTop: Space.sm,
+    paddingHorizontal: Space.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.pill,
+    backgroundColor: C.warningSoft,
+  },
+  actionPillText: {
+    ...Type.caption,
+    fontWeight: Weight.semibold,
+    color: C.warning,
   },
   // Alert
   alertRow: {

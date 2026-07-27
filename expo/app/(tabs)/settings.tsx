@@ -186,7 +186,9 @@ export default function SettingsScreen() {
             icon={<CreditCard color={C.primary} size={20} strokeWidth={2.5} />}
             label="Health Card"
             sub={healthCard ? healthCard.cardNumber.slice(0, 4) + " •••• " + healthCard.cardNumber.slice(-4) : "Not set up"}
-            onPress={() => router.push("/health-card-setup")}
+            // Once a card is saved this is the only way into the Face ID-locked
+            // viewer — the Card tab that used to reach it is gone.
+            onPress={() => router.push(healthCard ? "/healthcard" : "/health-card-setup")}
           />
           <QuickLink
             icon={<Shield color={C.accent} size={20} strokeWidth={2.5} />}
