@@ -2,6 +2,7 @@
   "expo": {
     "name": "Clairity",
     "slug": "clairity-health",
+    "owner": "syxxn",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -29,7 +30,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F7F6F4"
       },
-      "package": "app.clairity.health"
+      "package": "app.clairity.health",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -55,6 +60,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c6253d23-fad6-4a9c-b73f-40138ac69163"
+      }
     }
   }
 }
