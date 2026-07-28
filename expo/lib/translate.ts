@@ -23,6 +23,7 @@
  * through byte-identical.
  */
 
+import { translateStrings as translateWithClaude } from "./ai-service";
 import type { SimplificationResult } from "./types";
 
 const KEY = process.env.EXPO_PUBLIC_AZURE_TRANSLATOR_KEY;
@@ -42,25 +43,52 @@ export interface TranslationLanguage {
 }
 
 /**
- * Offered languages, led by the ones most spoken at home in Canada after
- * English. `en` is first and means "leave it as written".
+ * Offered languages.
+ *
+ * Ordered by speakers at home in Canada after English and French, then the
+ * others we were asked to cover. `en` is first and means "leave it as written".
+ *
+ * `english` is not decoration — it is the name handed to Claude as the
+ * translation target, so it has to be the language's ordinary English name.
+ *
+ * Chinese is listed by the dialect people actually name when asked what they
+ * speak, rather than by script. The script still differs underneath — Mandarin
+ * renders Simplified, Cantonese Traditional — which is what `english` carries
+ * to the model.
  */
 export const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
   { code: "en", label: "English", english: "English" },
   { code: "fr", label: "Français", english: "French" },
-  { code: "zh-Hans", label: "简体中文", english: "Chinese (Simplified)" },
+  { code: "zh-Hans", label: "普通话", english: "Mandarin Chinese, in Simplified characters" },
+  { code: "yue", label: "廣東話", english: "Cantonese, in Traditional characters" },
   { code: "pa", label: "ਪੰਜਾਬੀ", english: "Punjabi" },
   { code: "es", label: "Español", english: "Spanish" },
-  { code: "ar", label: "العربية", english: "Arabic" },
   { code: "tl", label: "Tagalog", english: "Tagalog" },
+  { code: "ar", label: "العربية", english: "Arabic" },
+  { code: "it", label: "Italiano", english: "Italian" },
   { code: "hi", label: "हिन्दी", english: "Hindi" },
+  { code: "gu", label: "ગુજરાતી", english: "Gujarati" },
+  { code: "sw", label: "Kiswahili", english: "Swahili" },
   { code: "ur", label: "اردو", english: "Urdu" },
   { code: "vi", label: "Tiếng Việt", english: "Vietnamese" },
   { code: "pt", label: "Português", english: "Portuguese" },
   { code: "ru", label: "Русский", english: "Russian" },
 ];
 
+/** Which engine will actually run. Claude is the default; Azure takes over once configured. */
+export type TranslationProvider = "claude" | "azure" | "none";
+
+export function translationProvider(): TranslationProvider {
+  if (KEY && REGION) return "azure";
+  if (process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) return "claude";
+  return "none";
+}
+
 export function isTranslationConfigured(): boolean {
+  return translationProvider() !== "none";
+}
+
+export function isAzureConfigured(): boolean {
   return Boolean(KEY && REGION);
 }
 
@@ -155,8 +183,25 @@ async function translateBatch(texts: string[], to: string): Promise<string[]> {
  */
 export async function translateTexts(texts: string[], to: string): Promise<string[]> {
   if (to === "en" || texts.length === 0) return texts;
-  if (!isTranslationConfigured()) {
+
+  const provider = translationProvider();
+  if (provider === "none") {
     throw new TranslationError("Translation is not set up in this build.");
+  }
+
+  // Claude is the default engine. It costs tokens where Azure's free tier does
+  // not, but it keeps negations and dosages intact and can explain a term rather
+  // than transliterate it — which is the whole point of this screen.
+  if (provider === "claude") {
+    const language = TRANSLATION_LANGUAGES.find((l) => l.code === to);
+    if (!language) throw new TranslationError("That language is not available.");
+    try {
+      return await translateWithClaude(texts, language.english);
+    } catch (error) {
+      throw new TranslationError(
+        error instanceof Error ? error.message : "We could not translate this document.",
+      );
+    }
   }
 
   const results = [...texts];

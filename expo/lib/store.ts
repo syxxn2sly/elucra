@@ -31,6 +31,7 @@ const STORAGE_KEYS = {
   familyDoctor: "@clairity/family-doctor",
   appointments: "@clairity/appointments",
   favouriteLocation: "@clairity/favourite-location",
+  preferredLanguage: "@clairity/preferred-language",
 } as const;
 
 const DEFAULT_FAMILY_DOCTOR: FamilyDoctor = {
@@ -68,6 +69,8 @@ function useClairityState() {
   const [familyDoctor, setFamilyDoctor] = useState<FamilyDoctor>(DEFAULT_FAMILY_DOCTOR);
   /** The one place the user goes most often — offered first when booking an appointment. */
   const [favouriteLocation, setFavouriteLocation] = useState<string>("");
+  /** Language new documents are translated into. "en" leaves them as written. */
+  const [preferredLanguage, setPreferredLanguage] = useState<string>("en");
   const [loaded, setLoaded] = useState(false);
 
   // Load all persisted state on mount
@@ -83,6 +86,7 @@ function useClairityState() {
           doctorStr,
           appointmentsStr,
           favouriteLocationStr,
+          preferredLanguageStr,
         ] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.profile),
           AsyncStorage.getItem(STORAGE_KEYS.documents),
@@ -92,6 +96,7 @@ function useClairityState() {
           AsyncStorage.getItem(STORAGE_KEYS.familyDoctor),
           AsyncStorage.getItem(STORAGE_KEYS.appointments),
           AsyncStorage.getItem(STORAGE_KEYS.favouriteLocation),
+          AsyncStorage.getItem(STORAGE_KEYS.preferredLanguage),
         ]);
 
         if (profileStr) setProfile(JSON.parse(profileStr) as HealthProfile);
@@ -102,6 +107,7 @@ function useClairityState() {
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
         if (doctorStr) setFamilyDoctor({ ...DEFAULT_FAMILY_DOCTOR, ...(JSON.parse(doctorStr) as FamilyDoctor) });
         if (favouriteLocationStr) setFavouriteLocation(favouriteLocationStr);
+        if (preferredLanguageStr) setPreferredLanguage(preferredLanguageStr);
       } catch (error) {
         console.error("[CLAIRITY] Failed to load state:", error);
       } finally {
@@ -149,6 +155,10 @@ function useClairityState() {
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.favouriteLocation, favouriteLocation);
   }, [favouriteLocation, loaded]);
+
+  useEffect(() => {
+    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.preferredLanguage, preferredLanguage);
+  }, [preferredLanguage, loaded]);
 
   // --- Profile actions ---
   const updateProfile = useCallback((updates: Partial<HealthProfile>) => {
@@ -329,6 +339,10 @@ function useClairityState() {
     setFavouriteLocation(value.trim());
   }, []);
 
+  const savePreferredLanguage = useCallback((code: string) => {
+    setPreferredLanguage(code);
+  }, []);
+
   return {
     // State
     profile,
@@ -339,6 +353,7 @@ function useClairityState() {
     healthCard,
     familyDoctor,
     favouriteLocation,
+    preferredLanguage,
     loaded,
     // Profile
     updateProfile,
@@ -346,6 +361,7 @@ function useClairityState() {
     resetProfile,
     updateFamilyDoctor,
     saveFavouriteLocation,
+    savePreferredLanguage,
     // Documents
     addDocument,
     removeDocument,

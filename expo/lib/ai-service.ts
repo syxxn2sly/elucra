@@ -137,7 +137,18 @@ function toAnthropicRequest(body: UnknownRecord): UnknownRecord {
   return {
     model: asString(body.model) || MODEL_ID,
     max_tokens: asNumber(body.max_tokens, 4000),
-    temperature: asNumber(body.temperature, 0),
+    // NO sampling parameters. Claude Sonnet 5 rejects a non-default
+    // `temperature`, `top_p` or `top_k` with a 400, and this builder previously
+    // defaulted `temperature` to 0 on every request — which failed every call in
+    // the app. Call sites may still pass `temperature`; it is deliberately
+    // dropped here rather than forwarded.
+    //
+    // Thinking is disabled explicitly. On Sonnet 5 adaptive thinking is ON when
+    // the field is omitted, and thinking tokens are drawn from `max_tokens` — a
+    // long extraction could spend the budget reasoning and return truncated
+    // JSON, which fails the parse outright. The accuracy this would have bought
+    // is already covered by the two-stage extract-then-verify pipeline.
+    thinking: { type: "disabled" },
     ...(systemText ? { system: systemText } : {}),
     messages: converted,
   };
@@ -650,4 +661,62 @@ export async function generateDoctorSummary(input: { title: string; facts: Extra
     ],
   });
   return content.trim();
+}
+
+/**
+ * Translate already-simplified text with Claude.
+ *
+ * This is the default translation path. A general-purpose machine-translation
+ * engine is cheaper, but it will happily drop a negation — "do not take with
+ * food" coming back as "take with food" reads perfectly fluent and is dangerous.
+ * The instructions below make the two failure modes that matter explicit, and
+ * because the model is doing the work it can also carry the plain-language
+ * explanation of a medical term across into the target language rather than
+ * transliterating jargon nobody will recognise.
+ *
+ * Order is load-bearing: the caller maps results back positionally, so the model
+ * is told to return exactly one entry per input, in order, translating nothing
+ * into nothing. Any length mismatch is treated as a failure by the caller.
+ */
+export async function translateStrings(texts: string[], languageName: string): Promise<string[]> {
+  if (texts.length === 0) return texts;
+
+  const content = await requestCompletion({
+    model: MODEL_ID,
+    temperature: 0,
+    max_tokens: 8000,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: [
+          `You translate patient-facing medical text from English into ${languageName}.`,
+          "",
+          "Rules, in order of importance:",
+          `1. Never omit information. Every instruction, symptom, dose, date and warning in the English must appear in the ${languageName}.`,
+          "2. Never change a number. Doses, strengths, frequencies, dates, times, temperatures and measurements must appear exactly as written, in Western digits, with the same units.",
+          "3. Never reverse or drop a negation. 'Do not', 'avoid', 'stop taking' must stay negative.",
+          "4. Explain medical terms in plain words the reader will know, rather than transliterating the English term. If a term has no common equivalent, give the plain-language meaning and put the English in brackets after it.",
+          "5. Match the reading level of the English: short sentences, everyday words, second person.",
+          "6. Do not add advice, reassurance, diagnosis or commentary that is not in the English.",
+          "",
+          'Return JSON only: {"translations": ["...", "..."]} — exactly one entry per input string, in the same order. Translate an empty string to an empty string.',
+        ].join("\n"),
+      },
+      {
+        role: "user",
+        content: JSON.stringify({ targetLanguage: languageName, strings: texts }),
+      },
+    ],
+  });
+
+  const parsed = asRecord(JSON.parse(extractJson(content) ?? "{}"));
+  const translations = asArray(parsed.translations).map((value) => asString(value));
+
+  // A short or long array means the model lost alignment; mapping it back
+  // positionally would silently attach the wrong text to the wrong section.
+  if (translations.length !== texts.length) {
+    throw new Error("The translation came back incomplete. Showing this document in English.");
+  }
+  return translations.map((value, index) => value || texts[index]);
 }

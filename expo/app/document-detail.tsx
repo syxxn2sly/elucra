@@ -16,7 +16,7 @@ import {
   MapPin,
   Eye,
 } from "lucide-react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -34,6 +34,7 @@ import Colors from "@/constants/colors";
 import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
+import { languageLabel } from "@/lib/translate";
 import { DOCUMENT_TYPES } from "@/lib/types";
 import { formatDateDisplay } from "@/lib/utils";
 import { Card, Tag, EmptyState, ScreenHeader } from "@/components/ui";
@@ -53,7 +54,27 @@ export default function DocumentDetailScreen() {
   const [doctorLoading, setDoctorLoading] = useState(false);
   const [doctorError, setDoctorError] = useState("");
 
-  const doc = documents.find((d) => d.id === id);
+  const savedDoc = documents.find((d) => d.id === id);
+
+  /**
+   * Translations are not re-verified — the numeric and red-flag checks ran on
+   * the English. Swapping the whole result object here means every section
+   * below renders the English without each one needing to know about it, and
+   * gives anyone helping the patient a way to check a dose against the text the
+   * checks actually passed.
+   */
+  const [showEnglish, setShowEnglish] = useState(false);
+  const translated = Boolean(savedDoc?.originalResult);
+  // Memoised because swapping in the English allocates a new object, and `doc`
+  // is a dependency of three callbacks below — without this they would be
+  // rebuilt on every render.
+  const doc = useMemo(
+    () =>
+      savedDoc && showEnglish && savedDoc.originalResult
+        ? { ...savedDoc, result: savedDoc.originalResult }
+        : savedDoc,
+    [savedDoc, showEnglish],
+  );
 
   const handleDelete = useCallback(() => {
     Alert.alert(
@@ -187,6 +208,30 @@ export default function DocumentDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: scrollPadding }}
       >
+        {/* Only shown on a translated report. The safety checks ran on the
+            English, so it stays one tap away for anyone cross-checking a dose. */}
+        {translated ? (
+          <View style={styles.languageToggleRow}>
+            <Text style={styles.languageToggleLabel}>
+              {showEnglish
+                ? "Showing the original English"
+                : `Translated into ${languageLabel(savedDoc?.language ?? "")}`}
+            </Text>
+            <Pressable
+              onPress={() => setShowEnglish((prev) => !prev)}
+              style={styles.languageToggleBtn}
+              accessibilityRole="button"
+            >
+              <Languages color={C.primary} size={16} strokeWidth={2.5} />
+              <Text style={styles.languageToggleBtnText}>
+                {showEnglish
+                  ? `Show ${languageLabel(savedDoc?.language ?? "")}`
+                  : "Show English"}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {/* Title + type badge */}
         <View style={styles.titleWrap}>
           <View style={[styles.titleIcon, { backgroundColor: docColor + "18" }]}>
@@ -533,6 +578,33 @@ const styles = StyleSheet.create({
     height: HIT_TARGET,
     alignItems: "center",
     justifyContent: "center",
+  },
+  languageToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Space.sm,
+    flexWrap: "wrap",
+    paddingVertical: Space.md,
+  },
+  languageToggleLabel: {
+    ...Type.caption,
+    color: C.textMuted,
+    flexShrink: 1,
+  },
+  languageToggleBtn: {
+    minHeight: HIT_TARGET,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+    paddingHorizontal: Space.md,
+    borderRadius: Radius.pill,
+    backgroundColor: C.primarySoft,
+  },
+  languageToggleBtnText: {
+    ...Type.caption,
+    fontWeight: Weight.semibold,
+    color: C.primary,
   },
   titleWrap: {
     flexDirection: "row",

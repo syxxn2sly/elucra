@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { FileText, Camera, Image as ImageIcon, Sparkles, AlertCircle, X, RefreshCw } from "lucide-react-native";
 import React, { useState, useCallback, useRef } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -16,14 +17,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import Colors from "@/constants/colors";
-import { Elevation, Radius, Space, Type } from "@/constants/theme";
+import { Elevation, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { analyzeDocument } from "@/lib/ai-service";
 import { resizeForUpload } from "@/lib/resize-for-upload";
 import { generateId } from "@/lib/utils";
+import {
+  TRANSLATION_LANGUAGES,
+  languageLabel,
+  translateSimplification,
+} from "@/lib/translate";
 import { PrimaryButton, SecondaryButton, Card, ScreenHeader } from "@/components/ui";
-import type { SavedDocument } from "@/lib/types";
+import type { SavedDocument, SimplificationResult } from "@/lib/types";
 
 const C = Colors.light;
 
@@ -32,11 +38,12 @@ type Phase = "capture" | "analyzing" | "error";
 export default function SimplifyScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { profile, addDocument } = useClairity();
+  const { profile, addDocument, preferredLanguage, savePreferredLanguage } = useClairity();
   const [phase, setPhase] = useState<Phase>("capture");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [progressText, setProgressText] = useState("Reading your document…");
+  const [language, setLanguage] = useState<string>(preferredLanguage);
   const scrollRef = useRef<ScrollView>(null);
 
   const handleCamera = useCallback(async () => {
@@ -105,17 +112,46 @@ export default function SimplifyScreen() {
         const { base64, mimeType } = await resizeForUpload(uri);
 
         setProgressText("Understanding what it means in plain English…");
-        const result = await analyzeDocument({
+        const englishResult = await analyzeDocument({
           imageBase64: base64,
           mimeType,
           profile: profile as never,
         });
+
+        // Translate only after the English has been extracted and verified.
+        // Doing it earlier would mean the safety checks ran against a
+        // machine-rewritten source. If translation fails we still have a
+        // perfectly good English analysis, so keep it rather than losing the
+        // whole document to a translation error.
+        let result = englishResult;
+        let originalResult: SimplificationResult | undefined;
+
+        if (language !== "en") {
+          setProgressText(`Translating into ${languageLabel(language)}…`);
+          try {
+            result = await translateSimplification(englishResult, language);
+            originalResult = englishResult;
+          } catch (translationError) {
+            // The analysis itself succeeded, so keep it rather than throwing the
+            // document away — but say so plainly, because the user asked for
+            // another language and is about to be shown English.
+            const reason =
+              translationError instanceof Error ? translationError.message : "Translation failed.";
+            console.warn("[CLAIRITY] Translation failed, keeping English:", reason);
+            Alert.alert(
+              `Could not translate into ${languageLabel(language)}`,
+              `${reason}\n\nYour document has been saved in English.`,
+            );
+          }
+        }
 
         const doc: SavedDocument = {
           id: generateId(),
           result,
           imageUri: uri,
           createdAt: new Date().toISOString(),
+          language: originalResult ? language : "en",
+          originalResult,
         };
         addDocument(doc);
 
@@ -127,7 +163,7 @@ export default function SimplifyScreen() {
         setPhase("error");
       }
     },
-    [profile, addDocument],
+    [profile, addDocument, language],
   );
 
   const reset = useCallback(() => {
@@ -212,8 +248,44 @@ export default function SimplifyScreen() {
       >
         <Text style={styles.subtitle}>
           Photograph, scan, or upload a medical document. CLAIRITY will read it and explain it in
-          plain English — what it means, what to do, and when to worry.
+          plain language — what it means, what to do, and when to worry.
         </Text>
+
+        {/* Language is chosen before capture, not after: it changes what the
+            result screen shows, and asking afterwards would mean re-running the
+            translation on a document the user is already reading. */}
+        <Text style={styles.languageLabel}>Explain it in</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.languageRow}
+        >
+          {TRANSLATION_LANGUAGES.map((lang) => {
+            const selected = lang.code === language;
+            return (
+              <Pressable
+                key={lang.code}
+                onPress={() => {
+                  setLanguage(lang.code);
+                  savePreferredLanguage(lang.code);
+                }}
+                style={[styles.languageChip, selected && styles.languageChipOn]}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={lang.english}
+              >
+                <Text style={[styles.languageChipText, selected && styles.languageChipTextOn]}>
+                  {lang.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+        {language !== "en" ? (
+          <Text style={styles.languageNote}>
+            The English version is kept too, so you can always check it against the original.
+          </Text>
+        ) : null}
 
         {/* Preview if image selected */}
         {imageUri && (
@@ -350,7 +422,42 @@ const styles = StyleSheet.create({
     ...Type.body,
     color: C.textMuted,
     marginTop: Space.md,
-    marginBottom: Space.xl,
+    marginBottom: Space.lg,
+  },
+  // Language
+  languageLabel: {
+    ...Type.label,
+    color: C.text,
+    marginBottom: Space.sm,
+  },
+  languageRow: {
+    gap: Space.sm,
+    paddingBottom: Space.sm,
+  },
+  languageChip: {
+    minHeight: HIT_TARGET,
+    justifyContent: "center",
+    paddingHorizontal: Space.lg,
+    borderRadius: Radius.pill,
+    backgroundColor: C.surfaceAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  languageChipOn: {
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+  },
+  languageChipText: {
+    ...Type.label,
+    color: C.text,
+  },
+  languageChipTextOn: {
+    color: C.textInverse,
+  },
+  languageNote: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginBottom: Space.lg,
   },
   // Preview
   previewWrap: {

@@ -165,9 +165,20 @@ export interface SimplificationResult {
 
 export interface SavedDocument {
   id: string;
+  /** What the user reads. Translated when `language` is not "en". */
   result: SimplificationResult;
   imageUri: string | null;
   createdAt: string;
+  /** Language code of `result`. Absent on documents saved before translation existed. */
+  language?: string;
+  /**
+   * The English analysis, kept whenever `result` was translated.
+   *
+   * The safety checks run on the English; the translation is not re-verified.
+   * Keeping the original means a pharmacist, nurse or family member can always
+   * cross-check an instruction against the text the checks actually passed.
+   */
+  originalResult?: SimplificationResult;
 }
 
 export interface Medication {
