@@ -36,7 +36,7 @@ import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { languageLabel } from "@/lib/translate";
 import { DOCUMENT_TYPES } from "@/lib/types";
-import { formatDateDisplay } from "@/lib/utils";
+import { formatDateDisplay, confirmDestructive } from "@/lib/utils";
 import { Card, Tag, EmptyState, ScreenHeader } from "@/components/ui";
 import { generateDoctorSummary } from "@/lib/ai-service";
 import type { CommunicationScript } from "@/lib/types";
@@ -77,20 +77,14 @@ export default function DocumentDetailScreen() {
   );
 
   const handleDelete = useCallback(() => {
-    Alert.alert(
+    confirmDestructive(
       "Delete this report?",
       "This will permanently remove the simplified interpretation from your library.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            removeDocument(id);
-            router.back();
-          },
-        },
-      ],
+      "Delete",
+      () => {
+        removeDocument(id);
+        router.back();
+      },
     );
   }, [id, removeDocument]);
 

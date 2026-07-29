@@ -1,3 +1,5 @@
+import { Alert, Platform } from "react-native";
+
 /** CLAIRITY — Utility helpers. */
 
 /**
@@ -149,4 +151,30 @@ export function pendingProfileMedications(
     .map((name) => name.trim())
     .filter(Boolean)
     .filter((name) => !recorded.has(name.toLowerCase()));
+}
+
+/**
+ * Ask before doing something destructive, on every platform.
+ *
+ * `Alert.alert` is literally `static alert() {}` in react-native-web — an empty
+ * function. Every confirm-then-delete in the app therefore did nothing at all in
+ * the browser: the button appeared dead, nothing was removed, and no error was
+ * raised to explain it. Native keeps the real dialog; web falls back to the
+ * browser's own confirm rather than silently dropping the action.
+ */
+export function confirmDestructive(
+  title: string,
+  message: string,
+  confirmLabel: string,
+  onConfirm: () => void,
+): void {
+  if (Platform.OS === "web") {
+    // eslint-disable-next-line no-alert
+    if (typeof window !== "undefined" && window.confirm(`${title}\n\n${message}`)) onConfirm();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: "Cancel", style: "cancel" },
+    { text: confirmLabel, style: "destructive", onPress: onConfirm },
+  ]);
 }

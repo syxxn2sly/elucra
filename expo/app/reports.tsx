@@ -2,14 +2,14 @@
 import { router } from "expo-router";
 import { FileText, Plus, Trash2 } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { formatDateDisplay } from "@/lib/utils";
+import { confirmDestructive, formatDateDisplay } from "@/lib/utils";
 import { Card, EmptyState, PrimaryButton, ScreenHeader, Tag } from "@/components/ui";
 import type { SavedDocument } from "@/lib/types";
 
@@ -29,13 +29,11 @@ export default function ReportsScreen() {
 
   const confirmRemove = useCallback(
     (doc: SavedDocument) => {
-      Alert.alert(
+      confirmDestructive(
         "Delete this report?",
         `"${doc.result.title}" will be permanently removed from your library.`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Delete", style: "destructive", onPress: () => removeDocument(doc.id) },
-        ],
+        "Delete",
+        () => removeDocument(doc.id),
       );
     },
     [removeDocument],
@@ -64,14 +62,32 @@ export default function ReportsScreen() {
               {ordered.length} {ordered.length === 1 ? "report" : "reports"}
             </Text>
 
+            {/*
+              The card is NOT pressable and the two targets are siblings. A
+              Pressable inside a Pressable loses: the outer one claims the touch
+              responder on native, so a delete nested in a tappable card never
+              fires. Same trap as the age dial.
+            */}
             {ordered.map((doc) => (
-              <Card
-                key={doc.id}
-                onPress={() => router.push({ pathname: "/document-detail", params: { id: doc.id } })}
-                style={styles.card}
-              >
+              <Card key={doc.id} style={styles.card}>
                 <View style={styles.cardTop}>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{doc.result.title}</Text>
+                  <Pressable
+                    style={styles.cardBody}
+                    onPress={() => router.push({ pathname: "/document-detail", params: { id: doc.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${doc.result.title}`}
+                  >
+                    <Text style={styles.cardTitle} numberOfLines={2}>{doc.result.title}</Text>
+                    <Text style={styles.cardDate}>{formatDateDisplay(doc.createdAt)}</Text>
+                    <Text style={styles.cardSummary} numberOfLines={2}>{doc.result.summary}</Text>
+                    <View style={styles.cardTags}>
+                      <Tag
+                        text={doc.result.documentType.replace(/_/g, " ")}
+                        color={C.primary}
+                        bg={C.primarySoft}
+                      />
+                    </View>
+                  </Pressable>
                   <Pressable
                     onPress={() => confirmRemove(doc)}
                     hitSlop={10}
@@ -81,15 +97,6 @@ export default function ReportsScreen() {
                   >
                     <Trash2 color={C.danger} size={19} strokeWidth={2.5} />
                   </Pressable>
-                </View>
-                <Text style={styles.cardDate}>{formatDateDisplay(doc.createdAt)}</Text>
-                <Text style={styles.cardSummary} numberOfLines={2}>{doc.result.summary}</Text>
-                <View style={styles.cardTags}>
-                  <Tag
-                    text={doc.result.documentType.replace(/_/g, " ")}
-                    color={C.primary}
-                    bg={C.primarySoft}
-                  />
                 </View>
               </Card>
             ))}
@@ -112,6 +119,7 @@ const styles = StyleSheet.create({
   count: { ...Type.caption, color: C.textMuted, marginBottom: Space.md },
   card: { marginBottom: Space.md },
   cardTop: { flexDirection: "row", alignItems: "flex-start", gap: Space.sm },
+  cardBody: { flex: 1 },
   cardTitle: { ...Type.heading, color: C.text, flex: 1 },
   deleteBtn: { width: HIT_TARGET, height: HIT_TARGET, alignItems: "center", justifyContent: "center", marginTop: -Space.sm, marginRight: -Space.sm },
   cardDate: { ...Type.caption, color: C.textMuted, marginTop: Space.xs },

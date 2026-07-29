@@ -8,7 +8,6 @@ import {
   View,
   ScrollView,
   Pressable,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,6 +15,7 @@ import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
+import { confirmDestructive } from "@/lib/utils";
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
 import type { Medication } from "@/lib/types";
 
@@ -28,17 +28,11 @@ export default function MedicationsScreen() {
 
   const handleRemove = useCallback(
     (med: Medication) => {
-      Alert.alert(
+      confirmDestructive(
         "Remove medication?",
         `Remove ${med.name} from your list?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Remove",
-            style: "destructive",
-            onPress: () => removeMedication(med.id),
-          },
-        ],
+        "Remove",
+        () => removeMedication(med.id),
       );
     },
     [removeMedication],
