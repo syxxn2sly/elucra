@@ -682,6 +682,22 @@ const styles = StyleSheet.create({
   wheelContent: {
     paddingVertical: WHEEL_PADDING,
   },
+  timeColumns: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: Space.sm,
+    // Without an explicit height the columns lay out to their full content —
+    // twelve rows each — and spill out of the sheet, over the form behind it.
+    height: WHEEL_HEIGHT,
+    overflow: "hidden",
+  },
+  timeColon: {
+    ...Type.display,
+    color: C.text,
+    lineHeight: ITEM_HEIGHT,
+    marginTop: WHEEL_PADDING,
+  },
   wheelHighlight: {
     position: "absolute",
     top: WHEEL_PADDING,
@@ -721,3 +737,175 @@ const styles = StyleSheet.create({
     color: C.textInverse,
   },
 });
+
+/**
+ * A single scrollable column of a picker wheel.
+ *
+ * Shared by the time dial's three columns. Behaves like the age wheel: it
+ * snaps to a whole row, and reports the row under the highlight band as it
+ * moves rather than only when it stops.
+ */
+function WheelColumn<T extends string | number>({
+  data,
+  value,
+  onChange,
+  width,
+  format,
+}: {
+  data: T[];
+  value: T;
+  onChange: (next: T) => void;
+  width: number;
+  format?: (item: T) => string;
+}) {
+  const listRef = useRef<FlatList<T>>(null);
+  const settled = useRef(value);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  // Position on the current value once the rows exist.
+  //
+  // `initialScrollIndex` is unreliable on react-native-web and a mount effect
+  // fires before layout, so both left the dial reading 1:00 AM whatever time it
+  // was editing. onContentSizeChange runs when the list can actually be
+  // scrolled; the ref keeps it to the first time, so it never fights the user.
+  const positioned = useRef(false);
+  const positionOnValue = useCallback(() => {
+    if (positioned.current) return;
+    const index = data.indexOf(value);
+    if (index < 0) return;
+    positioned.current = true;
+    listRef.current?.scrollToOffset({ offset: index * ITEM_HEIGHT, animated: false });
+  }, [data, value]);
+
+  const handleScroll = useCallback(
+    (offsetY: number) => {
+      const index = Math.max(0, Math.min(data.length - 1, Math.round(offsetY / ITEM_HEIGHT)));
+      const next = data[index];
+      if (next !== settled.current) {
+        settled.current = next;
+        if (Platform.OS !== "web") Haptics.selectionAsync().catch(() => {});
+        onChange(next);
+      }
+      // Snap once the column has been still for a moment. react-native-web does
+      // not implement snapToInterval for FlatList, so without this the wheel
+      // rests between two rows on web.
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        const target = index * ITEM_HEIGHT;
+        if (Math.abs(offsetY - target) > 0.5) {
+          listRef.current?.scrollToOffset({ offset: target, animated: true });
+        }
+      }, 120);
+    },
+    [data, onChange],
+  );
+
+  return (
+    <FlatList
+      ref={listRef}
+      // Height matters as much as width: without it the list lays out at its
+      // full content height and is merely clipped by the parent, so it is not a
+      // scroll viewport at all and scrollToOffset silently does nothing.
+      style={{ width, height: WHEEL_HEIGHT }}
+      data={data}
+      keyExtractor={(item) => String(item)}
+      initialScrollIndex={Math.max(0, data.indexOf(value))}
+      getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
+      snapToInterval={ITEM_HEIGHT}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      scrollEventThrottle={16}
+      onScroll={(e) => handleScroll(e.nativeEvent.contentOffset.y)}
+      onMomentumScrollEnd={(e) => handleScroll(e.nativeEvent.contentOffset.y)}
+      onScrollEndDrag={(e) => handleScroll(e.nativeEvent.contentOffset.y)}
+      onContentSizeChange={positionOnValue}
+      onLayout={positionOnValue}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.wheelContent}
+      renderItem={({ item }) => (
+        <View style={styles.wheelItem}>
+          <Text style={[styles.wheelItemText, item === value && styles.wheelItemTextSelected]}>
+            {format ? format(item) : String(item)}
+          </Text>
+        </View>
+      )}
+    />
+  );
+}
+
+const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+const PERIODS = ["AM", "PM"] as const;
+
+/**
+ * Pick a time on a dial rather than typing it.
+ *
+ * The form previously took a 24-hour "HH:MM" string, which is a keyboard task
+ * and asks people to convert from the clock they actually read. Hours, minutes
+ * and AM/PM are three columns of the same wheel, so choosing 2:30 PM is three
+ * flicks and no arithmetic. Minutes step by five — appointments are not made to
+ * the minute, and 60 rows to scroll would be its own problem.
+ */
+export function TimeWheel({ value, onChange }: { value: Date; onChange: (next: Date) => void }) {
+  const [open, setOpen] = useState(false);
+
+  const hour24 = value.getHours();
+  const [hour, setHour] = useState(hour24 % 12 === 0 ? 12 : hour24 % 12);
+  const [minute, setMinute] = useState(Math.round(value.getMinutes() / 5) * 5 % 60);
+  const [period, setPeriod] = useState<(typeof PERIODS)[number]>(hour24 >= 12 ? "PM" : "AM");
+
+  const openWheel = useCallback(() => {
+    const h = value.getHours();
+    setHour(h % 12 === 0 ? 12 : h % 12);
+    setMinute(Math.round(value.getMinutes() / 5) * 5 % 60);
+    setPeriod(h >= 12 ? "PM" : "AM");
+    setOpen(true);
+  }, [value]);
+
+  const confirm = useCallback(() => {
+    const next = new Date(value);
+    const h24 = period === "PM" ? (hour === 12 ? 12 : hour + 12) : hour === 12 ? 0 : hour;
+    next.setHours(h24, minute, 0, 0);
+    onChange(next);
+    setOpen(false);
+  }, [hour, minute, period, value, onChange]);
+
+  const display = `${hour24 % 12 === 0 ? 12 : hour24 % 12}:${String(value.getMinutes()).padStart(2, "0")} ${hour24 >= 12 ? "PM" : "AM"}`;
+
+  return (
+    <View>
+      <Pressable
+        onPress={openWheel}
+        accessibilityRole="button"
+        accessibilityLabel={`Time, ${display}. Tap to change.`}
+        style={({ pressed }) => [styles.agePickerBtn, pressed && styles.pressed]}
+      >
+        <Text style={styles.agePickerValue}>{display}</Text>
+        <ChevronDown color={C.primary} size={22} strokeWidth={2.5} />
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select a time</Text>
+            <View style={styles.wheelContainer}>
+              <View style={styles.timeColumns}>
+                <WheelColumn data={HOURS} value={hour} onChange={setHour} width={84} />
+                <Text style={styles.timeColon}>:</Text>
+                <WheelColumn data={MINUTES} value={minute} onChange={setMinute} width={84} format={(m) => String(m).padStart(2, "0")} />
+                <WheelColumn data={[...PERIODS]} value={period} onChange={setPeriod} width={84} />
+              </View>
+              <View style={styles.wheelHighlight} pointerEvents="none" />
+            </View>
+            <Pressable onPress={confirm} style={({ pressed }) => [styles.modalDoneBtn, pressed && styles.pressed]}>
+              <Text style={styles.modalDoneText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}

@@ -1,9 +1,8 @@
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import * as Location from "expo-location";
 import { router } from "expo-router";
-import { CalendarDays, Check, ChevronDown, Clock3, LocateFixed, MapPin, X } from "lucide-react-native";
-import React, { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { CalendarDays, Check, ChevronDown, MapPin, Star, X } from "lucide-react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton, canGoBackSafe } from "@/components/ui";
@@ -11,6 +10,8 @@ import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
+import { searchPlaces, MIN_QUERY_LENGTH } from "@/lib/geocode";
+import { TimeWheel } from "@/components/smart-inputs";
 
 const C = Colors.light;
 type PickerMode = "date" | "time" | null;
@@ -46,7 +47,7 @@ function formatTimeInput(value: Date): string {
 export default function AddAppointmentScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { addAppointment, appointments, familyDoctor, favouriteLocation, saveFavouriteLocation } = useClairity();
+  const { addAppointment, appointments, familyDoctor, favouriteLocations, addFavouriteLocation, removeFavouriteLocation } = useClairity();
   const initialAppointmentDate = useMemo(() => defaultAppointmentDate(), []);
   const [title, setTitle] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<Date>(initialAppointmentDate);
@@ -54,13 +55,10 @@ export default function AddAppointmentScreen() {
   const [timeInput, setTimeInput] = useState<string>(() => formatTimeInput(initialAppointmentDate));
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [location, setLocation] = useState<string>("");
-  const [locationStatus, setLocationStatus] = useState<string>("");
-  const [isFindingLocation, setIsFindingLocation] = useState<boolean>(false);
+  const [placeMatches, setPlaceMatches] = useState<string[]>([]);
   const [whatToBring, setWhatToBring] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [editingFavourite, setEditingFavourite] = useState<boolean>(false);
-  const [favouriteDraft, setFavouriteDraft] = useState<string>("");
 
   const locationSuggestions = useMemo((): string[] => {
     const doctorLocation = [familyDoctor.clinicName, familyDoctor.address].filter(Boolean).join(" — ");
@@ -70,10 +68,40 @@ export default function AddAppointmentScreen() {
       // no label — an unlabelled pin the user could tap to set nothing.
       .map((value) => value.trim())
       .filter(Boolean)
-      .filter((value) => value !== favouriteLocation)
+      .filter((value) => !favouriteLocations.includes(value))
       .filter((value, index, values) => values.indexOf(value) === index)
       .slice(0, 4);
-  }, [appointments, familyDoctor.address, familyDoctor.clinicName, favouriteLocation]);
+  }, [appointments, familyDoctor.address, familyDoctor.clinicName, favouriteLocations]);
+
+  const isFavourite = favouriteLocations.some(
+    (place) => place.toLowerCase() === location.trim().toLowerCase(),
+  );
+
+  /**
+   * Look the typed place up as you go.
+   *
+   * Debounced, and the previous request is aborted when another keystroke
+   * arrives — otherwise a slow response for "lake" can land after the one for
+   * "lakeshore" and replace better results with worse. Skipped entirely once
+   * the field matches a suggestion already taken, so choosing one does not
+   * immediately search for what was chosen.
+   */
+  useEffect(() => {
+    const query = location.trim();
+    if (query.length < MIN_QUERY_LENGTH) {
+      setPlaceMatches([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      const matches = await searchPlaces(query, controller.signal);
+      setPlaceMatches(matches.filter((match) => match.toLowerCase() !== query.toLowerCase()));
+    }, 320);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [location]);
 
   const close = useCallback(() => {
     if (canGoBackSafe()) router.back();
@@ -117,32 +145,6 @@ export default function AddAppointmentScreen() {
     syncAppointmentDate(next);
   }, [appointmentDate, syncAppointmentDate]);
 
-  const useCurrentLocation = useCallback(async () => {
-    setIsFindingLocation(true);
-    setLocationStatus("Finding your current location…");
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== "granted") {
-        setLocationStatus("Location access was not allowed. Choose a saved place or enter the clinic address.");
-        return;
-      }
-      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const matches = await Location.reverseGeocodeAsync({ latitude: current.coords.latitude, longitude: current.coords.longitude });
-      const place = matches[0];
-      const formatted = place ? [place.name, place.street, place.city, place.region, place.postalCode].filter(Boolean).filter((part, index, parts) => parts.indexOf(part) === index).join(", ") : "";
-      if (!formatted) {
-        setLocationStatus("We could not identify an address. Choose a saved place or enter the clinic address.");
-        return;
-      }
-      setLocation(formatted);
-      setLocationStatus("Current location added. Please check that this is where your appointment takes place.");
-    } catch {
-      setLocationStatus("We could not find your location. Choose a saved place or enter the clinic address.");
-    } finally {
-      setIsFindingLocation(false);
-    }
-  }, []);
-
   const save = useCallback(async () => {
     if (!title.trim()) {
       setError("Tell us what this appointment is for.");
@@ -160,14 +162,13 @@ export default function AddAppointmentScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.topBar}><Text style={styles.topBarLabel}>Appointment</Text><Pressable accessibilityRole="button" accessibilityLabel="Close add appointment" onPress={close} hitSlop={12} style={styles.closeButton}><X color={C.text} size={22} strokeWidth={2.7}/><Text style={styles.closeText}>Cancel</Text></Pressable></View>
-        <View style={styles.hero}><View style={styles.heroIcon}><CalendarDays color={C.primary} size={25} strokeWidth={2.5}/></View><View><Text style={styles.title}>Add Appointment</Text><Text style={styles.subtitle}>We’ll remind you 24 hours beforehand.</Text></View></View>
-        <TextField label="What is the appointment for?" value={title} onChangeText={setTitle} placeholder="e.g. Cardiology follow-up" />
+        <View style={styles.hero}><View style={styles.heroIcon}><CalendarDays color={C.primary} size={25} strokeWidth={2.5}/></View><View><Text style={styles.title}>Add Appointment</Text><Text style={styles.subtitle}>Reminder 24 hours before.</Text></View></View>
+        <TextField label="What for?" value={title} onChangeText={setTitle} placeholder="e.g. Cardiology follow-up" />
 
-        <Text style={styles.label}>When is it?</Text>
-        {Platform.OS === "web" ? (
-          <View style={styles.webDateTimeRow}>
-            <View style={styles.webFieldWrap}>
-              <Text style={styles.label}>Date</Text>
+        <Text style={styles.label}>When</Text>
+        <View style={styles.whenRow}>
+          <View style={styles.whenField}>
+            {Platform.OS === "web" ? (
               <TextInput
                 style={styles.webInput}
                 value={dateInput}
@@ -177,139 +178,105 @@ export default function AddAppointmentScreen() {
                 keyboardType="numeric"
                 autoCapitalize="none"
               />
-            </View>
-            <View style={styles.webFieldWrap}>
-              <Text style={styles.label}>Time</Text>
-              <TextInput
-                style={styles.webInput}
-                value={timeInput}
-                onChangeText={handleWebTimeChange}
-                placeholder="HH:MM"
-                placeholderTextColor={C.textMuted}
-                keyboardType="numeric"
-                autoCapitalize="none"
+            ) : (
+              <PickerButton
+                icon={<CalendarDays color={C.primary} size={20} strokeWidth={2.4} />}
+                label="Date"
+                value={formatDate(appointmentDate)}
+                onPress={() => setPickerMode("date")}
               />
-            </View>
+            )}
           </View>
-        ) : (
-          <View style={styles.pickerRow}>
-            <PickerButton icon={<CalendarDays color={C.primary} size={20} strokeWidth={2.4}/>} label="Date" value={formatDate(appointmentDate)} onPress={() => setPickerMode("date")} />
-            <PickerButton icon={<Clock3 color={C.primary} size={20} strokeWidth={2.4}/>} label="Time" value={formatTime(appointmentDate)} onPress={() => setPickerMode("time")} />
+          {/* Time is a dial on every platform: the 24-hour text field asked
+              people to convert from the clock they actually read. */}
+          <View style={styles.whenField}>
+            <TimeWheel value={appointmentDate} onChange={syncAppointmentDate} />
           </View>
-        )}
-        {pickerMode ? <View style={styles.pickerPanel}><DateTimePicker value={appointmentDate} mode={pickerMode} display={Platform.OS === "ios" ? "spinner" : "default"} minimumDate={pickerMode === "date" ? new Date() : undefined} minuteInterval={15} onChange={handlePickerChange} />{Platform.OS === "ios" ? <Pressable onPress={() => setPickerMode(null)} style={styles.donePickerButton}><Text style={styles.donePickerText}>Done</Text></Pressable> : null}</View> : null}
-
-        <Text style={styles.label}>Where do you need to go? <Text style={styles.optional}>(optional)</Text></Text>
-        <Text style={styles.helperText}>Use your favourite place, your current location, or enter a different clinic.</Text>
-
-        {/* Favourite and current location sit together — they are the two
-            one-tap ways to fill the field, so they belong on the same row. */}
-        <View style={styles.locationActionRow}>
-          <Pressable
-            onPress={() => {
-              if (favouriteLocation) {
-                setLocation(favouriteLocation);
-                setLocationStatus("Favourite location added. Please check it before saving.");
-              } else {
-                setFavouriteDraft("");
-                setEditingFavourite(true);
-              }
-            }}
-            onLongPress={() => {
-              setFavouriteDraft(favouriteLocation);
-              setEditingFavourite(true);
-            }}
-            delayLongPress={350}
-            style={styles.locationChip}
-            accessibilityRole="button"
-            accessibilityLabel={
-              favouriteLocation
-                ? `Favourite location, ${favouriteLocation}. Hold to edit.`
-                : "Set a favourite location"
-            }
-            accessibilityHint="Press and hold to change your favourite location"
-          >
-            <MapPin color={C.primary} size={16} strokeWidth={2.5} />
-            <Text style={styles.locationChipText} numberOfLines={1}>
-              {favouriteLocation || "Set favourite location"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={useCurrentLocation}
-            disabled={isFindingLocation}
-            style={[styles.currentLocationButton, isFindingLocation && styles.disabledButton]}
-            accessibilityRole="button"
-          >
-            <LocateFixed color={C.primary} size={19} strokeWidth={2.5} />
-            <Text style={styles.currentLocationText} numberOfLines={1}>
-              {isFindingLocation ? "Finding…" : "Use my location"}
-            </Text>
-          </Pressable>
         </View>
-
-        {favouriteLocation ? (
-          <Text style={styles.favouriteHint}>Hold the favourite to change it.</Text>
+        {pickerMode === "date" ? (
+          <View style={styles.pickerPanel}>
+            <DateTimePicker
+              value={appointmentDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              minimumDate={new Date()}
+              onChange={handlePickerChange}
+            />
+            {Platform.OS === "ios" ? (
+              <Pressable onPress={() => setPickerMode(null)} style={styles.donePickerButton}>
+                <Text style={styles.donePickerText}>Done</Text>
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
 
-        {/* Other places worth one tap: the family doctor's clinic and anywhere
-            previous appointments were held. */}
-        {locationSuggestions.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionList}>
-            {locationSuggestions.map((suggestion) => (
+        <Text style={styles.label}>Where <Text style={styles.optional}>(optional)</Text></Text>
+
+        {favouriteLocations.length > 0 ? (
+          <View style={styles.favouriteRow}>
+            {favouriteLocations.map((place) => (
               <Pressable
-                key={suggestion}
-                onPress={() => { setLocation(suggestion); setLocationStatus("Saved location added. Please check it before saving."); }}
+                key={place}
+                onPress={() => setLocation(place)}
+                onLongPress={() => removeFavouriteLocation(place)}
+                delayLongPress={400}
                 style={styles.locationChip}
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${place}. Hold to remove from favourites.`}
               >
-                <MapPin color={C.primary} size={16} strokeWidth={2.5} />
-                <Text style={styles.locationChipText} numberOfLines={1}>{suggestion}</Text>
+                <Star color={C.primary} size={15} strokeWidth={2.5} fill={C.primary} />
+                <Text style={styles.locationChipText} numberOfLines={1}>{place}</Text>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         ) : null}
 
-        <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="Clinic name or address" placeholderTextColor={C.textMuted} autoCapitalize="words" />
-        {locationStatus ? <Text style={styles.locationStatus}>{locationStatus}</Text> : null}
-
-        <Modal visible={editingFavourite} transparent animationType="fade" onRequestClose={() => setEditingFavourite(false)}>
-          {/* Dismiss target sits behind the sheet, not around it — see AgeWheel. */}
-          <View style={styles.favouriteOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditingFavourite(false)} />
-            <View style={styles.favouriteSheet}>
-              <Text style={styles.favouriteSheetTitle}>Favourite location</Text>
-              <Text style={styles.favouriteSheetSub}>The place you go to most — offered first whenever you add an appointment.</Text>
-              <TextInput
-                style={styles.input}
-                value={favouriteDraft}
-                onChangeText={setFavouriteDraft}
-                placeholder="e.g. Lakeshore Family Clinic"
-                placeholderTextColor={C.textMuted}
-                autoCapitalize="words"
-                autoFocus
+        <View style={styles.locationInputRow}>
+          <TextInput
+            style={[styles.input, styles.locationInput]}
+            value={location}
+            onChangeText={setLocation}
+            placeholder="Clinic name or address"
+            placeholderTextColor={C.textMuted}
+            autoCapitalize="words"
+          />
+          {location.trim() ? (
+            <Pressable
+              onPress={() => (isFavourite ? removeFavouriteLocation(location.trim()) : addFavouriteLocation(location))}
+              hitSlop={10}
+              style={styles.starButton}
+              accessibilityRole="button"
+              accessibilityLabel={isFavourite ? "Remove from favourites" : "Save as favourite"}
+            >
+              <Star
+                color={C.primary}
+                size={21}
+                strokeWidth={2.5}
+                fill={isFavourite ? C.primary : "transparent"}
               />
-              <View style={styles.favouriteSheetActions}>
-                {favouriteLocation ? (
-                  <Pressable
-                    onPress={() => { saveFavouriteLocation(""); setEditingFavourite(false); }}
-                    style={styles.favouriteRemove}
-                  >
-                    <Text style={styles.favouriteRemoveText}>Remove</Text>
-                  </Pressable>
-                ) : <View />}
-                <Pressable
-                  onPress={() => { saveFavouriteLocation(favouriteDraft); setEditingFavourite(false); }}
-                  style={styles.favouriteSave}
-                >
-                  <Text style={styles.favouriteSaveText}>Save</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
+            </Pressable>
+          ) : null}
+        </View>
 
-        <TextField label="What should you bring?" value={whatToBring} onChangeText={setWhatToBring} placeholder="e.g. Health card and medication list" multiline />
-        <TextField label="Notes (optional)" value={notes} onChangeText={setNotes} placeholder="Anything else to remember" multiline />
+        {/* Places found as you type, plus your clinic and anywhere you have been before. */}
+        {placeMatches.length > 0 || locationSuggestions.length > 0 ? (
+          <View style={styles.placeList}>
+            {[...placeMatches, ...locationSuggestions].slice(0, 6).map((place) => (
+              <Pressable
+                key={place}
+                onPress={() => { setLocation(place); setPlaceMatches([]); }}
+                style={({ pressed }) => [styles.placeRow, pressed && styles.placePressed]}
+              >
+                <MapPin color={C.textMuted} size={16} strokeWidth={2.5} />
+                <Text style={styles.placeText} numberOfLines={2}>{place}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+
+        <TextField label="Bring" value={whatToBring} onChangeText={setWhatToBring} placeholder="e.g. Health card, medication list" multiline />
+        <TextField label="Notes" value={notes} onChangeText={setNotes} placeholder="Optional" multiline />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PrimaryButton label="Save Appointment" onPress={save} disabled={!title.trim()} icon={<Check color={C.textInverse} size={21} strokeWidth={2.5}/>} style={styles.save}/>
       </ScrollView>
@@ -440,20 +407,8 @@ const styles = StyleSheet.create({
     margin: Space.sm,
   },
   donePickerText: { ...Type.body, fontFamily: Font.headBold, color: C.primary },
-  suggestionList: { gap: Space.sm, paddingBottom: Space.md },
   // Favourite and "use my location" share a row and split it evenly, so neither
   // reads as the primary choice.
-  locationActionRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: Space.sm,
-    marginBottom: Space.sm,
-  },
-  favouriteHint: {
-    ...Type.caption,
-    color: C.textMuted,
-    marginBottom: Space.md,
-  },
   locationChip: {
     flex: 1,
     maxWidth: 235,
@@ -465,55 +420,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Space.xs,
   },
-  favouriteOverlay: {
-    flex: 1,
-    backgroundColor: C.scrim,
-    justifyContent: "center",
-    paddingHorizontal: Space.xl,
-  },
-  favouriteSheet: {
-    backgroundColor: C.surface,
-    borderRadius: Radius.md,
-    padding: Space.xl,
-    gap: Space.sm,
-  },
-  favouriteSheetTitle: { ...Type.title, color: C.text },
-  favouriteSheetSub: { ...Type.caption, color: C.textMuted, marginBottom: Space.xs },
-  favouriteSheetActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: Space.md,
-  },
-  favouriteRemove: {
-    minHeight: HIT_TARGET,
-    justifyContent: "center",
-    paddingHorizontal: Space.sm,
-  },
-  favouriteRemoveText: { ...Type.label, color: C.danger },
-  favouriteSave: {
-    minHeight: HIT_TARGET,
-    justifyContent: "center",
-    paddingHorizontal: Space.xl,
-    borderRadius: Radius.md,
-    backgroundColor: C.primary,
-  },
-  favouriteSaveText: { ...Type.label, color: C.textInverse },
   locationChipText: { flexShrink: 1, ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
-  currentLocationButton: {
-    flex: 1,
-    minHeight: HIT_TARGET,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Space.md,
-    backgroundColor: C.accentSoft,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Space.sm,
-  },
-  disabledButton: { opacity: 0.6 },
-  currentLocationText: { ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
-  locationStatus: { ...Type.caption, color: C.textMuted, marginTop: Space.sm },
+  whenRow: { flexDirection: "row", gap: Space.md, marginBottom: Space.md },
+  whenField: { flex: 1 },
+  favouriteRow: { flexDirection: "row", flexWrap: "wrap", gap: Space.sm, marginBottom: Space.sm },
+  locationInputRow: { flexDirection: "row", alignItems: "center", gap: Space.sm },
+  locationInput: { flex: 1, marginBottom: 0 },
+  starButton: { width: HIT_TARGET, height: HIT_TARGET, alignItems: "center", justifyContent: "center" },
+  placeList: { marginTop: Space.sm, borderRadius: Radius.md, backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, overflow: "hidden" },
+  placeRow: { flexDirection: "row", alignItems: "center", gap: Space.sm, paddingVertical: Space.md, paddingHorizontal: Space.md },
+  placePressed: { backgroundColor: C.surfaceAlt },
+  placeText: { ...Type.body, color: C.text, flex: 1 },
   error: { color: C.danger, ...Type.caption, fontFamily: Font.bodySemi, marginTop: Space.lg },
   save: { width: "100%", marginTop: Space.lg },
 });

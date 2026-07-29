@@ -34,6 +34,9 @@ const STORAGE_KEYS = {
   preferredLanguage: "@clairity/preferred-language",
 } as const;
 
+/** Enough for a GP, a specialist and a lab without becoming a list to scroll. */
+export const MAX_FAVOURITE_LOCATIONS = 3;
+
 const DEFAULT_FAMILY_DOCTOR: FamilyDoctor = {
   doctorName: "",
   clinicName: "",
@@ -67,8 +70,8 @@ function useClairityState() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [healthCard, setHealthCard] = useState<HealthCardData | null>(null);
   const [familyDoctor, setFamilyDoctor] = useState<FamilyDoctor>(DEFAULT_FAMILY_DOCTOR);
-  /** The one place the user goes most often — offered first when booking an appointment. */
-  const [favouriteLocation, setFavouriteLocation] = useState<string>("");
+  /** Places pinned for one-tap reuse when booking an appointment. */
+  const [favouriteLocations, setFavouriteLocations] = useState<string[]>([]);
   /** Language new documents are translated into. "en" leaves them as written. */
   const [preferredLanguage, setPreferredLanguage] = useState<string>("en");
   const [loaded, setLoaded] = useState(false);
@@ -106,7 +109,20 @@ function useClairityState() {
         if (appointmentsStr) setAppointments(JSON.parse(appointmentsStr) as Appointment[]);
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
         if (doctorStr) setFamilyDoctor({ ...DEFAULT_FAMILY_DOCTOR, ...(JSON.parse(doctorStr) as FamilyDoctor) });
-        if (favouriteLocationStr) setFavouriteLocation(favouriteLocationStr);
+        // Stored as a bare string when there was only one favourite; the array
+        // form is JSON. Read both so an existing favourite survives the upgrade.
+        if (favouriteLocationStr) {
+          try {
+            const parsed: unknown = JSON.parse(favouriteLocationStr);
+            setFavouriteLocations(
+              Array.isArray(parsed)
+                ? (parsed as string[]).filter((entry) => typeof entry === "string" && entry.trim()).slice(0, MAX_FAVOURITE_LOCATIONS)
+                : [favouriteLocationStr],
+            );
+          } catch {
+            setFavouriteLocations([favouriteLocationStr]);
+          }
+        }
         if (preferredLanguageStr) setPreferredLanguage(preferredLanguageStr);
       } catch (error) {
         console.error("[CLAIRITY] Failed to load state:", error);
@@ -151,10 +167,9 @@ function useClairityState() {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.familyDoctor, JSON.stringify(familyDoctor));
   }, [familyDoctor, loaded]);
 
-  // Stored as a bare string rather than JSON — it is one free-text place name.
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.favouriteLocation, favouriteLocation);
-  }, [favouriteLocation, loaded]);
+    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.favouriteLocation, JSON.stringify(favouriteLocations));
+  }, [favouriteLocations, loaded]);
 
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.preferredLanguage, preferredLanguage);
@@ -461,8 +476,24 @@ function useClairityState() {
     setHealthCard(null);
   }, []);
 
-  const saveFavouriteLocation = useCallback((value: string) => {
-    setFavouriteLocation(value.trim());
+  /**
+   * Pin a place for one-tap reuse. Most people alternate between a GP, a
+   * specialist and a lab, so three covers the pattern without the list becoming
+   * something to scroll. Adding a fourth replaces the oldest rather than
+   * failing, which is what "favourite" implies — a rolling shortlist, not a
+   * quota to manage.
+   */
+  const addFavouriteLocation = useCallback((value: string) => {
+    const cleaned = value.trim();
+    if (!cleaned) return;
+    setFavouriteLocations((prev) => {
+      const withoutDuplicate = prev.filter((entry) => entry.toLowerCase() !== cleaned.toLowerCase());
+      return [cleaned, ...withoutDuplicate].slice(0, MAX_FAVOURITE_LOCATIONS);
+    });
+  }, []);
+
+  const removeFavouriteLocation = useCallback((value: string) => {
+    setFavouriteLocations((prev) => prev.filter((entry) => entry !== value));
   }, []);
 
   const savePreferredLanguage = useCallback((code: string) => {
@@ -478,7 +509,9 @@ function useClairityState() {
     appointments,
     healthCard,
     familyDoctor,
-    favouriteLocation,
+    favouriteLocations,
+    addFavouriteLocation,
+    removeFavouriteLocation,
     preferredLanguage,
     loaded,
     // Profile
@@ -486,7 +519,6 @@ function useClairityState() {
     completeOnboarding,
     resetProfile,
     updateFamilyDoctor,
-    saveFavouriteLocation,
     savePreferredLanguage,
     // Documents
     addDocument,
