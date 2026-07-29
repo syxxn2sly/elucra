@@ -398,8 +398,16 @@ export function AgeWheel({
       </Pressable>
 
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+        {/*
+          The dismiss-on-tap-outside target is a sibling behind the sheet, not a
+          parent wrapping it. Wrapping the sheet in a Pressable and calling
+          stopPropagation works on web, where these are DOM events, but on native
+          the outer Pressable claims the touch responder and the wheel below it
+          never receives the pan — the dial simply would not turn on device.
+        */}
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalVisible(false)} />
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select your age</Text>
             <Text style={styles.modalSub}>Scroll to find your age, then tap Done.</Text>
             <View style={styles.wheelContainer}>
@@ -445,8 +453,8 @@ export function AgeWheel({
             >
               <Text style={styles.modalDoneText}>Done</Text>
             </Pressable>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </View>
   );

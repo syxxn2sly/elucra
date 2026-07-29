@@ -165,8 +165,99 @@ function useClairityState() {
     setProfile((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  /**
+   * Finish onboarding, turning the answers into records the rest of the app can
+   * see.
+   *
+   * The questionnaire stores medications and vaccines on the profile as plain
+   * comma-separated text, but every surface that counts them — the dashboard
+   * tiles, the Meds tab, the Vaccines tab — reads the `medications` and
+   * `vaccines` collections. Writing only the profile meant a user could answer
+   * the questions, watch their answers appear in Settings, and still be told
+   * they had nothing tracked. The strings stay on the profile as the record of
+   * what was said; these are the entries built from them.
+   *
+   * Medications arrive as a bare name, so they are created without dose or
+   * frequency and surface as "needs details" until the user fills them in.
+   * Vaccines are matched to the catalogue by name and recorded without a date,
+   * which is what the onboarding copy promises ("you can add dates later").
+   */
   const completeOnboarding = useCallback((finalProfile: HealthProfile) => {
     setProfile({ ...finalProfile, onboarded: true });
+
+    const names = (value: string): string[] =>
+      value
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+
+    const now = new Date().toISOString();
+
+    setMedications((prev) => {
+      const existing = new Set(prev.map((med) => med.name.trim().toLowerCase()));
+      const additions: Medication[] = [];
+      for (const name of names(finalProfile.medications ?? "")) {
+        if (existing.has(name.toLowerCase())) continue;
+        existing.add(name.toLowerCase());
+        additions.push({
+          id: generateId(),
+          name,
+          dose: "",
+          frequency: "",
+          notes: "",
+          // No reminder: we have no dose or schedule yet, and scheduling a
+          // notification the user never asked for would be worse than none.
+          reminderEnabled: false,
+          reminderTime: "09:00",
+          notificationId: null,
+          createdAt: now,
+        });
+      }
+      return additions.length ? [...prev, ...additions] : prev;
+    });
+
+    setVaccines((prev) => {
+      const existing = new Set(prev.map((record) => record.vaccineId));
+      const additions: VaccineRecord[] = [];
+
+      // The chip input joins selections with ", " and several catalogue names
+      // contain commas of their own — "Tetanus, Diphtheria, Pertussis (Tdap)"
+      // being the obvious one. Splitting on commas therefore shreds exactly the
+      // vaccines most people select. Match catalogue names against the whole
+      // string instead, longest first so a long name is never mistaken for a
+      // shorter one nested inside it, consuming each match so it cannot be
+      // counted twice.
+      let remaining = (finalProfile.vaccineStatus ?? "").toLowerCase();
+      const byLongestName = [...VACCINE_CATALOG].sort((a, b) => b.name.length - a.name.length);
+
+      for (const info of byLongestName) {
+        const needle = info.name.toLowerCase();
+        if (!needle || !remaining.includes(needle)) continue;
+        remaining = remaining.split(needle).join(" ");
+
+        // Anything typed in by hand that is not in the catalogue is left on the
+        // profile text only — a record needs a catalogue id to drive its
+        // schedule, and inventing one would break the next-due calculation.
+        if (existing.has(info.id)) continue;
+        existing.add(info.id);
+        additions.push({
+          id: generateId(),
+          vaccineId: info.id,
+          name: info.name,
+          category: info.category,
+          monthReceived: null,
+          yearReceived: null,
+          hasDate: false,
+          proofImageUri: null,
+          verified: false,
+          nextDueDate: null,
+          isTravel: false,
+          travelDestination: null,
+          createdAt: now,
+        });
+      }
+      return additions.length ? [...prev, ...additions] : prev;
+    });
   }, []);
 
   const resetProfile = useCallback(() => {

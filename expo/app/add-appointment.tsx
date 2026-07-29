@@ -273,8 +273,10 @@ export default function AddAppointmentScreen() {
         {locationStatus ? <Text style={styles.locationStatus}>{locationStatus}</Text> : null}
 
         <Modal visible={editingFavourite} transparent animationType="fade" onRequestClose={() => setEditingFavourite(false)}>
-          <Pressable style={styles.favouriteOverlay} onPress={() => setEditingFavourite(false)}>
-            <Pressable style={styles.favouriteSheet} onPress={(event) => event.stopPropagation()}>
+          {/* Dismiss target sits behind the sheet, not around it — see AgeWheel. */}
+          <View style={styles.favouriteOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditingFavourite(false)} />
+            <View style={styles.favouriteSheet}>
               <Text style={styles.favouriteSheetTitle}>Favourite location</Text>
               <Text style={styles.favouriteSheetSub}>The place you go to most — offered first whenever you add an appointment.</Text>
               <TextInput
@@ -302,8 +304,8 @@ export default function AddAppointmentScreen() {
                   <Text style={styles.favouriteSaveText}>Save</Text>
                 </Pressable>
               </View>
-            </Pressable>
-          </Pressable>
+            </View>
+          </View>
         </Modal>
 
         <TextField label="What should you bring?" value={whatToBring} onChangeText={setWhatToBring} placeholder="e.g. Health card and medication list" multiline />
