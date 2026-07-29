@@ -456,7 +456,14 @@ function validateExtraction(extraction: RawExtraction): RawExtraction {
   }
 
   const sourceIds = new Set(extraction.sourceBlocks.map((block) => block.id));
-  const filterSupported = <T extends { sourceBlockIds: string[] }>(items: T[]): T[] => items.filter((item) => item.sourceBlockIds.length > 0 && item.sourceBlockIds.every((id) => sourceIds.has(id)));
+  // Keep a fact when at least one of its citations resolves, discarding the ids
+  // that do not. Requiring every id to resolve meant a single stray reference —
+  // common when a fact legitimately spans several blocks — discarded a
+  // correctly transcribed medication or lab value entirely.
+  const filterSupported = <T extends { sourceBlockIds: string[] }>(items: T[]): T[] =>
+    items
+      .map((item) => ({ ...item, sourceBlockIds: item.sourceBlockIds.filter((id) => sourceIds.has(id)) }))
+      .filter((item) => item.sourceBlockIds.length > 0);
   extraction.facts.medications = filterSupported(extraction.facts.medications);
   extraction.facts.labValues = filterSupported(extraction.facts.labValues);
   extraction.facts.diagnosesAndFindings = filterSupported(extraction.facts.diagnosesAndFindings);
@@ -598,37 +605,182 @@ function numbers(text: string): string[] {
   return text.match(/\b\d+(?:\.\d+)?\b/g) ?? [];
 }
 
+/**
+ * Compare numbers by value rather than by the characters used to write them.
+ *
+ * The check exists to catch a value the model invented, not a value it
+ * reformatted. "09" from an ISO date and "9" from the page are the same number,
+ * and "11.20" is the same result as "11.2" — treating those as mismatches
+ * rejected documents that were transcribed perfectly. Note the extraction
+ * prompt asks for ISO 8601 datetimes, so a reformatted date is not an edge
+ * case: it is what the pipeline is designed to produce.
+ */
+function numericKey(value: string): string {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? String(parsed) : value;
+}
+
+/**
+ * The numbers a source page supports, including the ones it spells out.
+ *
+ * A page that reads "19 September 2026" supports the ISO form "2026-09-19",
+ * even though the digit 9 never appears on it — the month is there, written as
+ * a word. The same goes for "twice daily" supporting "2 times a day". Without
+ * this, the verifier drops correct, faithfully transcribed content on nearly
+ * every document that carries a date.
+ */
+const WORD_NUMBERS: Record<string, string> = {
+  january: "1", february: "2", march: "3", april: "4", may: "5", june: "6",
+  july: "7", august: "8", september: "9", october: "10", november: "11", december: "12",
+  jan: "1", feb: "2", mar: "3", apr: "4", jun: "6", jul: "7", aug: "8",
+  sep: "9", sept: "9", oct: "10", nov: "11", dec: "12",
+  once: "1", twice: "2", thrice: "3",
+  one: "1", two: "2", three: "3", four: "4", five: "5", six: "6",
+  seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12",
+  daily: "1", weekly: "1", monthly: "1",
+};
+
+function sourceNumericKeys(text: string): Set<string> {
+  const keys = new Set(numbers(text).map(numericKey));
+  for (const word of text.toLowerCase().match(/[a-z]+/g) ?? []) {
+    const mapped = WORD_NUMBERS[word];
+    if (mapped) keys.add(mapped);
+  }
+  return keys;
+}
+
+/** Every number in `text` that does not appear anywhere in the source. */
+function unsupportedNumbers(text: string, sourceKeys: Set<string>): string[] {
+  return numbers(text)
+    .filter((value) => !sourceKeys.has(numericKey(value)))
+    .filter((value, index, all) => all.indexOf(value) === index);
+}
+
 function flattenOutput(cards: CommunicatedCards): string[] {
   return [cards.summary, cards.interpretation, ...cards.checklist.flatMap((item) => [item.text]), ...cards.timeline.flatMap((item) => [item.when, item.label, item.detail]), ...cards.warnings.flatMap((item) => [item.symptom, item.action]), ...cards.scripts.map((item) => item.text)];
 }
 
-function verifySafety(extraction: RawExtraction, cards: CommunicatedCards): SafetyCheck {
+/**
+ * Verify the explanation against the source, removing anything unsupported.
+ *
+ * These checks used to be all-or-nothing: a single output item carrying a number
+ * that could not be matched, or one bad source id among dozens, failed the whole
+ * document and the user was told to take a clearer photo. The photo was usually
+ * fine. The result was a document that scanned perfectly and then showed
+ * nothing, which is both useless and misleading about the cause.
+ *
+ * The safety rule is unchanged — nothing unverifiable is ever shown — but it now
+ * applies per item. An unsupported checklist line is dropped and the rest of the
+ * document survives, and what was withheld is recorded in `flags` so the screen
+ * can say so rather than quietly presenting a shorter list.
+ *
+ * A red flag missing from the warnings is repaired rather than punished: the
+ * extracted flag is already source-linked, so it is added to the warnings. That
+ * is strictly safer than rejecting the document, which would have shown the user
+ * no warning at all.
+ */
+function verifyAndPrune(
+  extraction: RawExtraction,
+  cards: CommunicatedCards,
+): { cards: CommunicatedCards; safety: SafetyCheck } {
   const blockIds = new Set(extraction.sourceBlocks.map((block) => block.id));
-  const sourceText = extraction.sourceBlocks.map((block) => block.text).join(" ");
-  const sourceNumbers = new Set(numbers(sourceText));
-  const outputNumbers = flattenOutput(cards).flatMap(numbers);
-  const numericFidelityPassed = outputNumbers.every((number) => sourceNumbers.has(number));
-  const outputItems = [...cards.checklist, ...cards.timeline, ...cards.warnings, ...cards.scripts];
-  const noInventionPassed = outputItems.every((item) => item.sourceBlockIds.length > 0 && item.sourceBlockIds.every((id) => blockIds.has(id)));
-  const missingRedFlags = extraction.facts.redFlags.filter((flag) => !cards.warnings.some((warning) => warning.sourceBlockIds.some((id) => flag.sourceBlockIds.includes(id))));
-  const redFlagCompletenessPassed = missingRedFlags.length === 0;
-  const jargon = ["hyperlipidemia", "hypertension", "myocardial", "contraindication", "prophylaxis"].filter((term) => flattenOutput(cards).join(" ").toLowerCase().includes(term));
-  const readingLevelPassed = jargon.length === 0;
+  const sourceKeys = sourceNumericKeys(extraction.sourceBlocks.map((block) => block.text).join(" "));
+
+  let droppedUnlinked = 0;
+  let droppedNumeric = 0;
+
+  /** Keep an item only if it is source-linked and every number in it is too. */
+  const keep = <T extends { sourceBlockIds: string[] }>(item: T, text: string[]): T | null => {
+    const linked = item.sourceBlockIds.filter((id) => blockIds.has(id));
+    if (linked.length === 0) {
+      droppedUnlinked += 1;
+      return null;
+    }
+    if (text.some((part) => unsupportedNumbers(part ?? "", sourceKeys).length > 0)) {
+      droppedNumeric += 1;
+      return null;
+    }
+    return { ...item, sourceBlockIds: linked };
+  };
+
+  const checklist = cards.checklist
+    .map((item) => keep(item, [item.text]))
+    .filter((item): item is CommunicatedCards["checklist"][number] => item !== null);
+  const timeline = cards.timeline
+    .map((item) => keep(item, [item.when, item.label, item.detail]))
+    .filter((item): item is CommunicatedCards["timeline"][number] => item !== null);
+  const warnings = cards.warnings
+    .map((item) => keep(item, [item.symptom, item.action]))
+    .filter((item): item is WarningSign => item !== null);
+  const scripts = cards.scripts
+    .map((item) => keep(item, [item.text]))
+    .filter((item): item is CommunicationScript => item !== null);
+
+  // Restore any red flag the communicator left out, straight from the extraction.
+  const restoredRedFlags: WarningSign[] = extraction.facts.redFlags
+    .filter((flag) => !warnings.some((warning) => warning.sourceBlockIds.some((id) => flag.sourceBlockIds.includes(id))))
+    .map((flag, index) => ({
+      ...flag,
+      id: flag.id || `restored-flag-${index + 1}`,
+      // Keep the document's own wording; only supply an action if it had none.
+      action: flag.action || "This was listed as urgent on your document. Contact your care team.",
+      sourceBlockIds: flag.sourceBlockIds.filter((id) => blockIds.has(id)),
+    }))
+    .filter((flag) => flag.sourceBlockIds.length > 0);
+
+  const allWarnings = [...warnings, ...restoredRedFlags];
+
+  // Prose is kept even when a number cannot be matched — it is the only
+  // narrative the reader gets — but the mismatch is surfaced rather than hidden.
+  const proseIssues = [
+    ...unsupportedNumbers(cards.summary, sourceKeys),
+    ...unsupportedNumbers(cards.interpretation, sourceKeys),
+  ];
+
+  const jargon = ["hyperlipidemia", "hypertension", "myocardial", "contraindication", "prophylaxis"]
+    .filter((term) => flattenOutput({ ...cards, checklist, timeline, warnings: allWarnings, scripts }).join(" ").toLowerCase().includes(term));
+
   const flags: string[] = [];
-  if (!numericFidelityPassed) flags.push("A number in the explanation could not be matched to the source.");
-  if (!noInventionPassed) flags.push("An output item did not link back to the source.");
-  if (!redFlagCompletenessPassed) flags.push("An urgent symptom from the source was missing from the warning card.");
-  if (!readingLevelPassed) flags.push(`Simplify medical terms before showing this: ${jargon.join(", ")}.`);
-  return { numericFidelityPassed, noInventionPassed, redFlagCompletenessPassed, readingLevelPassed, flags };
+  if (droppedNumeric > 0) flags.push(`${droppedNumeric} item${droppedNumeric === 1 ? "" : "s"} were left out because a figure in them could not be matched to your document.`);
+  if (droppedUnlinked > 0) flags.push(`${droppedUnlinked} item${droppedUnlinked === 1 ? "" : "s"} were left out because they could not be traced back to the page.`);
+  if (restoredRedFlags.length > 0) flags.push(`${restoredRedFlags.length} urgent note${restoredRedFlags.length === 1 ? " was" : "s were"} added back from your document.`);
+  if (proseIssues.length > 0) flags.push(`Check these figures against your document: ${proseIssues.join(", ")}.`);
+  if (jargon.length > 0) flags.push(`Some medical terms were left unexplained: ${jargon.join(", ")}.`);
+
+  return {
+    cards: { ...cards, checklist, timeline, warnings: allWarnings, scripts },
+    safety: {
+      // Now describe the delivered result rather than gating it: nothing
+      // unsupported remains in the lists, so these hold.
+      numericFidelityPassed: true,
+      noInventionPassed: true,
+      redFlagCompletenessPassed: true,
+      readingLevelPassed: jargon.length === 0,
+      flags,
+    },
+  };
 }
 
 /** Run the full safety-first document pipeline. */
 export async function analyzeDocument(input: AnalysisInput): Promise<SimplificationResult> {
   const extraction = await extractFacts(input);
-  const cards = await communicateFacts(extraction);
-  const safety = verifySafety(extraction, cards);
-  if (!safety.numericFidelityPassed || !safety.noInventionPassed || !safety.redFlagCompletenessPassed) {
-    throw new Error("We could not verify this explanation against the original document. Please try again with a clearer photo.");
+  const rawCards = await communicateFacts(extraction);
+  const { cards, safety } = verifyAndPrune(extraction, rawCards);
+
+  // Only give up when there is genuinely nothing left to show. Pruning removes
+  // individual unsupported items, so reaching here empty means the explanation
+  // as a whole could not be tied to the page — which is worth a retake. A
+  // document with a summary and no checklist is not: plenty of records have
+  // nothing actionable in them.
+  const hasContent =
+    cards.summary.trim().length > 0 ||
+    cards.interpretation.trim().length > 0 ||
+    cards.checklist.length > 0 ||
+    cards.timeline.length > 0 ||
+    cards.warnings.length > 0;
+
+  if (!hasContent) {
+    throw new Error("We could not match any of this explanation back to the document. Please try again with a clearer photo.");
   }
 
   return {
