@@ -638,6 +638,12 @@ const WORD_NUMBERS: Record<string, string> = {
   one: "1", two: "2", three: "3", four: "4", five: "5", six: "6",
   seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12",
   daily: "1", weekly: "1", monthly: "1",
+  // Prescription dosing shorthand. A handwritten script says "BID"; the
+  // explanation says "2 times a day". Without these the frequency — the single
+  // most safety-critical field on a prescription — is dropped as unsupported
+  // whenever the wording lands on a digit rather than a word.
+  bid: "2", bd: "2", tid: "3", tds: "3", qid: "4", qds: "4",
+  qd: "1", od: "1", om: "1", on: "1", qhs: "1", nocte: "1", hs: "1",
 };
 
 function sourceNumericKeys(text: string): Set<string> {
