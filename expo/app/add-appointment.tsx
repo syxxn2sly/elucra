@@ -56,6 +56,7 @@ export default function AddAppointmentScreen() {
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [location, setLocation] = useState<string>("");
   const [placeMatches, setPlaceMatches] = useState<string[]>([]);
+  const [showPlaces, setShowPlaces] = useState<boolean>(false);
   const [whatToBring, setWhatToBring] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -76,6 +77,26 @@ export default function AddAppointmentScreen() {
   const isFavourite = favouriteLocations.some(
     (place) => place.toLowerCase() === location.trim().toLowerCase(),
   );
+
+  /**
+   * What the dropdown offers, in the order it is useful: places you pinned,
+   * then places you have been, then whatever the lookup found. Deduplicated,
+   * and capped so the list never becomes the whole screen.
+   */
+  const dropdownPlaces = useMemo(() => {
+    const seen = new Set<string>();
+    const rows: { place: string; saved: boolean }[] = [];
+    const push = (place: string, saved: boolean) => {
+      const key = place.trim().toLowerCase();
+      if (!place.trim() || seen.has(key)) return;
+      seen.add(key);
+      rows.push({ place, saved });
+    };
+    favouriteLocations.forEach((place) => push(place, true));
+    locationSuggestions.forEach((place) => push(place, false));
+    placeMatches.forEach((place) => push(place, false));
+    return rows.slice(0, 6);
+  }, [favouriteLocations, locationSuggestions, placeMatches]);
 
   /**
    * Look the typed place up as you go.
@@ -199,6 +220,10 @@ export default function AddAppointmentScreen() {
               value={appointmentDate}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
+              // The iOS spinner follows the system theme, so on a phone set to
+              // dark mode it drew white text on this light sheet and the date
+              // was invisible. The app is light-only for now, so pin it.
+              themeVariant="light"
               minimumDate={new Date()}
               onChange={handlePickerChange}
             />
@@ -212,25 +237,6 @@ export default function AddAppointmentScreen() {
 
         <Text style={styles.label}>Where <Text style={styles.optional}>(optional)</Text></Text>
 
-        {favouriteLocations.length > 0 ? (
-          <View style={styles.favouriteRow}>
-            {favouriteLocations.map((place) => (
-              <Pressable
-                key={place}
-                onPress={() => setLocation(place)}
-                onLongPress={() => removeFavouriteLocation(place)}
-                delayLongPress={400}
-                style={styles.locationChip}
-                accessibilityRole="button"
-                accessibilityLabel={`Use ${place}. Hold to remove from favourites.`}
-              >
-                <Star color={C.primary} size={15} strokeWidth={2.5} fill={C.primary} />
-                <Text style={styles.locationChipText} numberOfLines={1}>{place}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-
         <View style={styles.locationInputRow}>
           <TextInput
             style={[styles.input, styles.locationInput]}
@@ -239,6 +245,9 @@ export default function AddAppointmentScreen() {
             placeholder="Clinic name or address"
             placeholderTextColor={C.textMuted}
             autoCapitalize="words"
+            onFocus={() => setShowPlaces(true)}
+            // Delayed so a tap on a row below lands before the list closes.
+            onBlur={() => setTimeout(() => setShowPlaces(false), 180)}
           />
           {location.trim() ? (
             <Pressable
@@ -258,22 +267,33 @@ export default function AddAppointmentScreen() {
           ) : null}
         </View>
 
-        {/* Places found as you type, plus your clinic and anywhere you have been before. */}
-        {placeMatches.length > 0 || locationSuggestions.length > 0 ? (
+        {/*
+          One list rather than a row of chips above the field: saved places,
+          then anywhere you have been, then whatever the lookup finds. The chips
+          crowded the screen and duplicated what this already shows.
+        */}
+        {(showPlaces || placeMatches.length > 0) && dropdownPlaces.length > 0 ? (
           <View style={styles.placeList}>
-            {[...placeMatches, ...locationSuggestions].slice(0, 6).map((place) => (
+            {dropdownPlaces.map(({ place, saved }) => (
               <Pressable
                 key={place}
-                onPress={() => { setLocation(place); setPlaceMatches([]); }}
+                onPress={() => { setLocation(place); setShowPlaces(false); setPlaceMatches([]); }}
+                onLongPress={saved ? () => removeFavouriteLocation(place) : undefined}
+                delayLongPress={400}
                 style={({ pressed }) => [styles.placeRow, pressed && styles.placePressed]}
+                accessibilityRole="button"
+                accessibilityLabel={saved ? `${place}. Saved place, hold to remove.` : place}
               >
-                <MapPin color={C.textMuted} size={16} strokeWidth={2.5} />
+                {saved ? (
+                  <Star color={C.primary} size={16} strokeWidth={2.5} fill={C.primary} />
+                ) : (
+                  <MapPin color={C.textMuted} size={16} strokeWidth={2.5} />
+                )}
                 <Text style={styles.placeText} numberOfLines={2}>{place}</Text>
               </Pressable>
             ))}
           </View>
         ) : null}
-
 
         <TextField label="Bring" value={whatToBring} onChangeText={setWhatToBring} placeholder="e.g. Health card, medication list" multiline />
         <TextField label="Notes" value={notes} onChangeText={setNotes} placeholder="Optional" multiline />
@@ -423,7 +443,6 @@ const styles = StyleSheet.create({
   locationChipText: { flexShrink: 1, ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
   whenRow: { flexDirection: "row", gap: Space.md, marginBottom: Space.md },
   whenField: { flex: 1 },
-  favouriteRow: { flexDirection: "row", flexWrap: "wrap", gap: Space.sm, marginBottom: Space.sm },
   locationInputRow: { flexDirection: "row", alignItems: "center", gap: Space.sm },
   locationInput: { flex: 1, marginBottom: 0 },
   starButton: { width: HIT_TARGET, height: HIT_TARGET, alignItems: "center", justifyContent: "center" },
