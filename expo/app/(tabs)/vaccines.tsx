@@ -20,7 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { VACCINE_CATALOG } from "@/lib/vaccine-data";
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   },
   mainTabText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   mainTabTextActive: {
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   },
   catTabText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   catTabTextActive: {
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.success,
   },
   // Undated
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   },
   catalogCadence: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   trackBtn: {
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   },
   trackedText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.success,
   },
 });

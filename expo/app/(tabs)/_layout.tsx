@@ -11,7 +11,7 @@ import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { Space } from "@/constants/theme";
+import { Font, Space } from "@/constants/theme";
 
 const C = Colors.light;
 
@@ -45,8 +45,11 @@ export default function TabLayout() {
           elevation: 0,
         },
         tabBarLabelStyle: {
+          // React Navigation styles this label directly, and there is no Type
+          // level at 11px — so the family has to be named explicitly or the tab
+          // bar is the one place left rendering in the system font.
+          fontFamily: Font.bodySemi,
           fontSize: 11,
-          fontWeight: "600",
         },
       }}
     >

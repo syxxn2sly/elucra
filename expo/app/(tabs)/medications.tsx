@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignSelf: "flex-start",
   },
-  reminderText: { ...Type.caption, fontWeight: Weight.semibold, color: C.success },
+  reminderText: { ...Type.caption, fontFamily: Font.bodySemi, color: C.success },
   freqRow: {
     flexDirection: "row",
     alignItems: "center",

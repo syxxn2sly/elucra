@@ -27,7 +27,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/components/ui";
 import Colors from "@/constants/colors";
 import { useStackScrollPadding } from "@/lib/layout";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useClairity } from "@/lib/store";
 import {
   cdcDestinationUrl,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   rowName: {
     flex: 1,
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   rowNameExpanded: {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   },
   vaccineName: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   vaccineProtects: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   },
   trackedText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.success,
   },
   trackButton: {
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   trackText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   hint: {

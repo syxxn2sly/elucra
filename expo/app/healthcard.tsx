@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import Colors from "@/constants/colors";
-import { Elevation, HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { Card, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   numberLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: "rgba(255,255,255,0.7)",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -477,12 +477,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   detailValue: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
     textAlign: "right",
     flex: 1,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.danger,
   },
 });

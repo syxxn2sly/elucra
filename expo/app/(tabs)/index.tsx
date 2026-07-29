@@ -24,7 +24,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import {
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   actionPillText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.warning,
   },
   // Alert
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     color: C.text,
   },
   alertLabel: {
-    fontWeight: Weight.bold,
+    fontFamily: Font.headBold,
     color: C.danger,
   },
   // Sections
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   },
   reminderTitle: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   reminderSub: {

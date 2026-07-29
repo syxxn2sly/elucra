@@ -17,7 +17,7 @@ import {
 import type { StyleProp, ViewStyle } from "react-native";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
 const C = Colors.light;
 
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   navRowLabel: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   navRowSub: {
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textInverse,
   },
   header: {
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   empty: {

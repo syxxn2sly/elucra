@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { normalizeMedicationWithRxNorm, searchMedicationAutocomplete } from "@/lib/ai-service";
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   suggestionTitle: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     marginBottom: Space.sm,
   },
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     minHeight: HIT_TARGET,
     paddingHorizontal: Space.md,
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
 });

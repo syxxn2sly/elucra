@@ -31,7 +31,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { languageLabel } from "@/lib/translate";
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   languageToggleBtnText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   titleWrap: {
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   },
   verificationText: {
     ...Type.caption,
-    fontWeight: Weight.bold,
+    fontFamily: Font.headBold,
     color: C.success,
   },
   languageText: {
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   },
   imageToggleText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   originalImage: {
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   sourceBlockLabel: {
     ...Type.caption,
-    fontWeight: Weight.bold,
+    fontFamily: Font.headBold,
     color: C.primary,
     textTransform: "uppercase",
     letterSpacing: 0.25,
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
   // Checklist
   subsectionLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.3,
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   },
   appointmentCandidateTitle: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   appointmentCandidateText: {
@@ -836,14 +836,14 @@ const styles = StyleSheet.create({
   },
   timelineWhen: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
     textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   timelineLabel: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
     marginTop: Space.xs,
   },
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   },
   emergencyHeader: {
     ...Type.body,
-    fontWeight: Weight.bold,
+    fontFamily: Font.headBold,
     color: C.danger,
     marginBottom: Space.md,
   },
@@ -874,12 +874,12 @@ const styles = StyleSheet.create({
   },
   warningSymptomEmergency: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.danger,
   },
   warningSymptom: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   warningAction: {
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   },
   medName: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   medDetail: {
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
   },
   scriptLang: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   scriptText: {
@@ -968,7 +968,7 @@ const styles = StyleSheet.create({
   },
   doctorGenerateText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textInverse,
   },
   doctorLoadingBox: {

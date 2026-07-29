@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import type { Appointment } from "@/lib/types";
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   appointmentTitle: { ...Type.heading, color: C.text },
   dateText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
     marginTop: Space.xs,
   },
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   detail: { flexDirection: "row", gap: Space.sm, alignItems: "flex-start" },
   detailText: { flex: 1, ...Type.body, color: C.text },
-  detailLabel: { fontWeight: Weight.bold },
+  detailLabel: { fontFamily: Font.headBold },
   notes: { ...Type.caption, color: C.textMuted },
   reminderPill: {
     alignSelf: "flex-start",
@@ -118,6 +118,6 @@ const styles = StyleSheet.create({
     paddingVertical: Space.xs,
     borderRadius: Radius.pill,
   },
-  reminderPillText: { ...Type.caption, fontWeight: Weight.bold, color: C.success },
+  reminderPillText: { ...Type.caption, fontFamily: Font.headBold, color: C.success },
   addAnother: { marginTop: Space.lg, width: "100%" },
 });

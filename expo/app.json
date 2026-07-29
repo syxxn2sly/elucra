@@ -12,7 +12,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7F6F4"
+      "backgroundColor": "#F2E9DA"
     },
     "ios": {
       "supportsTablet": false,
@@ -28,7 +28,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#F7F6F4"
+        "backgroundColor": "#F2E9DA"
       },
       "package": "app.clairity.health",
       "permissions": [
@@ -54,7 +54,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#075985"
+          "color": "#2A2119"
         }
       ]
     ],

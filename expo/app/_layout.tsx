@@ -1,5 +1,8 @@
 // CLAIRITY root layout — wraps app in QueryClient + ClairityProvider
+import { Nunito_600SemiBold, Nunito_700Bold } from "@expo-google-fonts/nunito";
+import { NunitoSans_400Regular, NunitoSans_600SemiBold } from "@expo-google-fonts/nunito-sans";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -42,9 +45,25 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  // Every Type level names a bundled family, so rendering before these load
+  // would flash the whole app in the system font and then reflow. Hold the
+  // splash until they are ready.
+  const [fontsLoaded, fontError] = useFonts({
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    NunitoSans_400Regular,
+    NunitoSans_600SemiBold,
+  });
+
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    // Hide on error too — a missing font should degrade to the system face,
+    // not leave the user staring at a splash screen forever.
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>

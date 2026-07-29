@@ -24,7 +24,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { VACCINE_CATALOG } from "@/lib/vaccine-data";
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   // Description
   descLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.3,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
   pickerLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     marginBottom: Space.sm,
     marginTop: Space.md,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   dueLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   dueDate: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.success,
   },
   removeProofBtn: {
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
   travelLabel: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.text,
   },
   travelText: {

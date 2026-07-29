@@ -30,7 +30,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import Colors from "@/constants/colors";
-import { Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { PrimaryButton, ScreenHeader } from "@/components/ui";
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   cardPickerLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     marginBottom: Space.sm,
   },

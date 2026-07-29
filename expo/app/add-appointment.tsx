@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton, canGoBackSafe } from "@/components/ui";
 import Colors from "@/constants/colors";
-import { HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   subtitle: { marginTop: Space.xs, ...Type.body, color: C.textMuted },
   field: { marginTop: Space.lg },
   label: { ...Type.label, color: C.text, marginBottom: Space.sm },
-  optional: { color: C.textMuted, fontWeight: Weight.regular },
+  optional: { color: C.textMuted, fontFamily: Font.bodyRegular },
   helperText: { ...Type.caption, color: C.textMuted, marginBottom: Space.md },
   input: {
     minHeight: 56,
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pickerCopy: { flex: 1 },
-  pickerLabel: { ...Type.caption, fontWeight: Weight.semibold, color: C.textMuted },
+  pickerLabel: { ...Type.caption, fontFamily: Font.bodySemi, color: C.textMuted },
   pickerValue: { ...Type.label, color: C.text, marginTop: Space.xs },
   pickerPanel: {
     backgroundColor: C.surface,
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     margin: Space.sm,
   },
-  donePickerText: { ...Type.body, fontWeight: Weight.bold, color: C.primary },
+  donePickerText: { ...Type.body, fontFamily: Font.headBold, color: C.primary },
   suggestionList: { gap: Space.sm, paddingBottom: Space.md },
   // Favourite and "use my location" share a row and split it evenly, so neither
   // reads as the primary choice.
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.primary,
   },
   favouriteSaveText: { ...Type.label, color: C.textInverse },
-  locationChipText: { flexShrink: 1, ...Type.caption, fontWeight: Weight.semibold, color: C.primary },
+  locationChipText: { flexShrink: 1, ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
   currentLocationButton: {
     flex: 1,
     minHeight: HIT_TARGET,
@@ -510,8 +510,8 @@ const styles = StyleSheet.create({
     gap: Space.sm,
   },
   disabledButton: { opacity: 0.6 },
-  currentLocationText: { ...Type.caption, fontWeight: Weight.semibold, color: C.primary },
+  currentLocationText: { ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
   locationStatus: { ...Type.caption, color: C.textMuted, marginTop: Space.sm },
-  error: { color: C.danger, ...Type.caption, fontWeight: Weight.semibold, marginTop: Space.lg },
+  error: { color: C.danger, ...Type.caption, fontFamily: Font.bodySemi, marginTop: Space.lg },
   save: { width: "100%", marginTop: Space.lg },
 });

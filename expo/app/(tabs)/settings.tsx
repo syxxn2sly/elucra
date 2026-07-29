@@ -34,7 +34,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
-import { Radius, Space, Type, Weight } from "@/constants/theme";
+import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { PrimaryButton, Card, SectionHeader } from "@/components/ui";
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   profileMeta: {
     ...Type.label,
-    fontWeight: Weight.regular,
+    fontFamily: Font.bodyRegular,
     color: C.textMuted,
     marginTop: Space.xs,
   },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   profileStatLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   // Quick links
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
     marginBottom: Space.xs,
   },
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   },
   editCancelText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textMuted,
   },
   editSaveBtn: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   },
   editSaveText: {
     ...Type.body,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.textInverse,
   },
   // Danger zone

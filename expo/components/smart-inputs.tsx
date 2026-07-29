@@ -20,7 +20,7 @@ import {
 import { ChevronDown, Check, X, Plus } from "lucide-react-native";
 
 import Colors from "@/constants/colors";
-import { Elevation, HIT_TARGET, Radius, Space, Type, Weight } from "@/constants/theme";
+import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
 const C = Colors.light;
 
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   addCustomBtn: {
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
   },
   addCustomText: {
     ...Type.caption,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.bodySemi,
     color: C.primary,
   },
   customRow: {
@@ -694,7 +694,7 @@ const styles = StyleSheet.create({
   wheelItemSelected: {},
   wheelItemText: {
     ...Type.title,
-    fontWeight: Weight.semibold,
+    fontFamily: Font.headSemi,
     color: C.textMuted,
   },
   wheelItemTextSelected: {

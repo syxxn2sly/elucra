@@ -12,6 +12,8 @@
     "build:ios": "node scripts/ship.mjs --no-submit"
   },
   "dependencies": {
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "@expo-google-fonts/nunito-sans": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
     "@nkzw/create-context-hook": "^1.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
