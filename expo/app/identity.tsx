@@ -53,10 +53,35 @@ export default function IdentityScreen() {
           </View>
 
           <Field label="Doctor's name" value={draft.doctorName} onChangeText={(value) => setField("doctorName", value)} placeholder="e.g. Dr. A. Patel" />
-          <PlaceField label="Clinic or practice" value={draft.clinicName} onChangeText={(value) => setField("clinicName", value)} placeholder="e.g. Lakeside Family Health Team" />
+          <PlaceField
+            label="Clinic or practice"
+            value={draft.clinicName}
+            onChangeText={(value) => setField("clinicName", value)}
+            placeholder="e.g. Lakeside Family Health Team"
+            /*
+              Choosing a clinic fills both fields. The lookup already knows the
+              name and the address separately; putting the whole one-line label
+              in this field left the address box empty and the name box holding
+              an address it was not asking for.
+            */
+            onPickPlace={(place) => {
+              setDraft((prev) => ({
+                ...prev,
+                clinicName: place.name || place.label,
+                // Never blank an address the user has already written.
+                address: place.address || prev.address,
+              }));
+            }}
+          />
           <Field label="Clinic phone" value={draft.phone} onChangeText={(value) => setField("phone", value)} placeholder="e.g. 416 555 1234" keyboardType="phone-pad" />
           <Field label="Clinic fax (optional)" value={draft.fax} onChangeText={(value) => setField("fax", value)} placeholder="e.g. 416 555 5678" keyboardType="phone-pad" />
-          <PlaceField label="Clinic address (optional)" value={draft.address} onChangeText={(value) => setField("address", value)} placeholder="Street, city, postal code" />
+          <PlaceField
+            label="Clinic address (optional)"
+            value={draft.address}
+            onChangeText={(value) => setField("address", value)}
+            placeholder="Street, city, postal code"
+            onPickPlace={(place) => setField("address", place.address || place.label)}
+          />
           <Field label="After-hours instructions (optional)" value={draft.afterHoursInstructions} onChangeText={(value) => setField("afterHoursInstructions", value)} placeholder="e.g. Call the clinic's after-hours line" multiline />
 
           <View style={styles.note}>

@@ -50,14 +50,35 @@ interface PhotonProperties {
  * rest are comma-separated, so a result reads the way an address is written
  * rather than as a list of fields.
  */
-function toLabel(props: PhotonProperties): string {
-  const street = [props.housenumber, props.street].filter(Boolean).join(" ");
-  return [props.name, street, props.city, props.state]
+/**
+ * A found place, kept in parts.
+ *
+ * The name and the address are wanted separately — a clinic record has a field
+ * for each — so flattening to one string here would throw away information the
+ * lookup already has and force the caller to guess where the name ends.
+ */
+export interface PlaceResult {
+  /** One line, for showing in a list. */
+  label: string;
+  /** The place's own name, e.g. "Copper Ridge Medical Centre". Empty for a plain address. */
+  name: string;
+  /** Street, city and region, without the name. */
+  address: string;
+}
+
+const dedupe = (parts: (string | undefined)[]): string[] =>
+  parts
     .map((part) => part?.trim())
     .filter((part): part is string => Boolean(part))
     // A named place often repeats its own street or city; drop the duplicates.
-    .filter((part, index, all) => all.findIndex((other) => other.toLowerCase() === part.toLowerCase()) === index)
-    .join(", ");
+    .filter((part, index, all) => all.findIndex((other) => other.toLowerCase() === part.toLowerCase()) === index);
+
+function toPlace(props: PhotonProperties & { formatted?: string; address_line1?: string; address_line2?: string }): PlaceResult {
+  const street = [props.housenumber, props.street].filter(Boolean).join(" ");
+  const name = (props.name ?? "").trim();
+  const address = dedupe([street || props.address_line2, props.city, props.state, props.postcode]).join(", ");
+  const label = props.formatted?.trim() || dedupe([name, street, props.city, props.state]).join(", ");
+  return { label, name, address };
 }
 
 /**
@@ -78,7 +99,7 @@ export async function searchPlaces(
   query: string,
   signal?: AbortSignal,
   near?: Coords | null,
-): Promise<string[]> {
+): Promise<PlaceResult[]> {
   const trimmed = query.trim();
   if (trimmed.length < MIN_QUERY_LENGTH) return [];
 
@@ -99,18 +120,16 @@ export async function searchPlaces(
     if (!response.ok) return [];
 
     const data = (await response.json()) as {
-      features?: { properties?: PhotonProperties & { formatted?: string } }[];
+      features?: { properties?: PhotonProperties & { formatted?: string; address_line1?: string; address_line2?: string } }[];
     };
 
-    const labels = (data.features ?? [])
-      .map((feature) => {
-        const props = feature.properties ?? {};
-        // Geoapify hands back a ready-made one-liner; Photon returns parts.
-        return props.formatted?.trim() || toLabel(props);
-      })
-      .filter((label) => label.length > 0);
+    const places = (data.features ?? [])
+      .map((feature) => toPlace(feature.properties ?? {}))
+      .filter((place) => place.label.length > 0);
 
-    return labels.filter((label, index) => labels.indexOf(label) === index).slice(0, 5);
+    return places
+      .filter((place, index) => places.findIndex((other) => other.label === place.label) === index)
+      .slice(0, 5);
   } catch {
     return [];
   }

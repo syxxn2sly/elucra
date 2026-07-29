@@ -142,7 +142,9 @@ export default function AddAppointmentScreen() {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       const matches = await searchPlaces(query, controller.signal, near);
-      setPlaceMatches(matches.filter((match) => match.toLowerCase() !== query.toLowerCase()));
+      setPlaceMatches(
+        matches.map((match) => match.label).filter((label) => label.toLowerCase() !== query.toLowerCase()),
+      );
     }, 320);
     return () => {
       clearTimeout(timer);
