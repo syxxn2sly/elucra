@@ -30,7 +30,7 @@ import { useClairity } from "@/lib/store";
 import {
   formatDateDisplay,
   formatDueCountdown,
-  pendingProfileMedications,
+  incompleteMedications,
   sortByDueDate,
 } from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader, Tag, EmptyState } from "@/components/ui";
@@ -57,7 +57,10 @@ export default function HomeScreen() {
 
   const recentDocs = documents.slice(0, 3);
 
-  const pendingMedications = pendingProfileMedications(profile.medications ?? "", medications);
+  // Onboarding now creates a record for everything the user listed, so "needs
+  // details" no longer means "not recorded yet" — every name is recorded. What
+  // is missing is the dose and schedule, which is what makes a record usable.
+  const pendingMedications = incompleteMedications(medications);
 
   const handleSimplify = useCallback(() => {
     router.push("/simplify");
@@ -131,7 +134,7 @@ export default function HomeScreen() {
             value={medications.length.toString()}
             sub={
               pendingMedications.length > 0
-                ? `${pendingMedications.length} need details`
+                ? `${pendingMedications.length} ${pendingMedications.length === 1 ? "needs" : "need"} details`
                 : medications.length === 1
                   ? "medication"
                   : "medications"

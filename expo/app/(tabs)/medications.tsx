@@ -1,6 +1,6 @@
 // CLAIRITY — Medications tab
 import { router } from "expo-router";
-import { Pill, Plus, Trash2, Clock, FileText } from "lucide-react-native";
+import { Pill, Plus, Trash2, Clock, FileText, Pencil, AlertCircle } from "lucide-react-native";
 import React, { useCallback } from "react";
 import {
   StyleSheet,
@@ -83,24 +83,60 @@ export default function MedicationsScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            {medications.map((med) => (
+            {medications.map((med) => {
+              // Recorded during onboarding as a bare name: it counts, but there
+              // is nothing to remind anyone about until it has a dose and a
+              // schedule. Say so on the row rather than leaving a silent gap.
+              const needsDetails = !med.dose.trim() || !med.frequency.trim();
+              return (
               <Card key={med.id} style={styles.medCard}>
                 <View style={styles.medHeader}>
                   <View style={styles.medIcon}>
                     <Pill color={C.docPrescription} size={20} strokeWidth={2.5} />
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <Pressable
+                    style={{ flex: 1 }}
+                    onPress={() => router.push({ pathname: "/add-medication", params: { id: med.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${med.name}`}
+                  >
                     <Text style={styles.medName}>{med.name}</Text>
                     {med.dose ? <Text style={styles.medDose}>{med.dose}</Text> : null}
-                  </View>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push({ pathname: "/add-medication", params: { id: med.id } })}
+                    hitSlop={12}
+                    style={styles.editBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${med.name}`}
+                  >
+                    <Pencil color={C.primary} size={19} strokeWidth={2.5} />
+                  </Pressable>
                   <Pressable
                     onPress={() => handleRemove(med)}
                     hitSlop={12}
                     style={styles.deleteBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${med.name}`}
                   >
                     <Trash2 color={C.danger} size={20} strokeWidth={2.5} />
                   </Pressable>
                 </View>
+                {needsDetails ? (
+                  <Pressable
+                    style={styles.needsDetailsRow}
+                    onPress={() => router.push({ pathname: "/add-medication", params: { id: med.id } })}
+                  >
+                    <AlertCircle color={C.warning} size={16} strokeWidth={2.5} />
+                    <Text style={styles.needsDetailsText}>
+                      {!med.dose.trim() && !med.frequency.trim()
+                        ? "Add dose and how often you take it"
+                        : !med.dose.trim()
+                          ? "Add the dose"
+                          : "Add how often you take it"}
+                    </Text>
+                  </Pressable>
+                ) : null}
                 {med.reminderEnabled ? (
                   <View style={styles.reminderRow}>
                     <Clock color={C.success} size={16} strokeWidth={2.5} />
@@ -115,7 +151,8 @@ export default function MedicationsScreen() {
                 ) : null}
                 {med.notes ? <Text style={styles.medNotes}>{med.notes}</Text> : null}
               </Card>
-            ))}
+              );
+            })}
 
             <PrimaryButton
               label="Add another medication"
@@ -203,6 +240,27 @@ const styles = StyleSheet.create({
     height: HIT_TARGET,
     alignItems: "center",
     justifyContent: "center",
+  },
+  editBtn: {
+    width: HIT_TARGET,
+    height: HIT_TARGET,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  needsDetailsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.sm,
+    marginTop: Space.sm,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.md,
+    backgroundColor: C.warningSoft,
+    borderRadius: Radius.sm,
+  },
+  needsDetailsText: {
+    ...Type.caption,
+    color: C.warning,
+    flex: 1,
   },
   reminderRow: {
     flexDirection: "row",

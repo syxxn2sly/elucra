@@ -122,6 +122,23 @@ export function formatDateDisplay(isoString: string): string {
  * Home count reads zero, which looks like the app lost them. This returns the
  * names still waiting on those details so the UI can ask for them.
  */
+/**
+ * Medications that exist but are not yet usable.
+ *
+ * Onboarding records what the user typed — a bare drug name, with no dose or
+ * schedule. That is enough to count and to show, but not enough to remind
+ * anyone to take anything, so these need finishing. This is what drives the
+ * "needs details" prompt on the dashboard and the badge on the Meds tab.
+ *
+ * Deliberately not a check for "no reminder": choosing not to be reminded about
+ * a medication you have fully described is a valid, finished state.
+ */
+export function incompleteMedications<T extends { dose: string; frequency: string }>(
+  records: T[],
+): T[] {
+  return records.filter((record) => !record.dose.trim() || !record.frequency.trim());
+}
+
 export function pendingProfileMedications(
   profileMedications: string,
   records: { name: string }[],

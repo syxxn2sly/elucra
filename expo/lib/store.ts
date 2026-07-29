@@ -390,6 +390,41 @@ function useClairityState() {
     setMedications((prev) => [...prev, savedRecord]);
   }, []);
 
+  /**
+   * Edit an existing medication.
+   *
+   * The reminder is rebuilt rather than patched: it encodes the name, dose and
+   * time, so leaving the old notification in place would keep announcing the
+   * old dose. Cancelling first also covers the case where the user has just
+   * turned the reminder off — otherwise a switched-off reminder would keep
+   * firing. A medication added during onboarding has no dose or schedule yet,
+   * so this is the path that gives it one.
+   */
+  const updateMedication = useCallback(
+    async (id: string, changes: Partial<Omit<Medication, "id" | "createdAt">>) => {
+      // Read the current record out of the setter rather than closing over
+      // `medications`, which would go stale between edits.
+      let current: Medication | undefined;
+      setMedications((prev) => {
+        current = prev.find((item) => item.id === id);
+        return prev;
+      });
+      if (!current) return;
+
+      const updated: Medication = { ...current, ...changes, id: current.id, createdAt: current.createdAt };
+
+      await cancelReminder(current.notificationId).catch(() => {});
+      const notificationId = updated.reminderEnabled
+        ? await scheduleMedicationReminder(updated).catch(() => null)
+        : null;
+
+      setMedications((prev) =>
+        prev.map((item) => (item.id === id ? { ...updated, notificationId } : item)),
+      );
+    },
+    [],
+  );
+
   const removeMedication = useCallback((id: string) => {
     setMedications((prev) => {
       const medication = prev.find((item) => item.id === id);
@@ -465,6 +500,7 @@ function useClairityState() {
     removeVaccine,
     // Medications
     addMedication,
+    updateMedication,
     removeMedication,
     // Appointments
     addAppointment,

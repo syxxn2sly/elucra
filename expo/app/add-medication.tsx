@@ -1,7 +1,7 @@
-// CLAIRITY — Add medication modal
-import { router } from "expo-router";
+// CLAIRITY — Add / edit medication modal
+import { router, useLocalSearchParams } from "expo-router";
 import { Check, Pill } from "lucide-react-native";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -27,14 +27,43 @@ const C = Colors.light;
 export default function AddMedicationScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { addMedication } = useClairity();
-  const [name, setName] = useState("");
-  const [dose, setDose] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [notes, setNotes] = useState("");
-  const [reminderEnabled, setReminderEnabled] = useState(true);
-  const [reminderTime, setReminderTime] = useState("08:00");
+  const { addMedication, updateMedication, medications } = useClairity();
+
+  // Passed by the Meds list when editing. Absent when adding.
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const existing = id ? medications.find((med) => med.id === id) : undefined;
+  const isEditing = Boolean(existing);
+
+  const [name, setName] = useState(existing?.name ?? "");
+  const [dose, setDose] = useState(existing?.dose ?? "");
+  const [frequency, setFrequency] = useState(existing?.frequency ?? "");
+  const [notes, setNotes] = useState(existing?.notes ?? "");
+  // A medication captured during onboarding has no schedule yet, so a reminder
+  // cannot be on by default when editing — only when adding one from scratch.
+  const [reminderEnabled, setReminderEnabled] = useState(existing?.reminderEnabled ?? true);
+  const [reminderTime, setReminderTime] = useState(existing?.reminderTime || "08:00");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  /**
+   * Fill the form once the record is available.
+   *
+   * The store hydrates from AsyncStorage asynchronously, so on the first render
+   * `medications` is still empty and `existing` is undefined — the useState
+   * initialisers above therefore start blank even when editing. Copy the values
+   * across when the record actually arrives, guarded by id so this runs once per
+   * medication and never overwrites what the user is typing.
+   */
+  const hydratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!existing || hydratedFor.current === existing.id) return;
+    hydratedFor.current = existing.id;
+    setName(existing.name);
+    setDose(existing.dose);
+    setFrequency(existing.frequency);
+    setNotes(existing.notes);
+    setReminderEnabled(existing.reminderEnabled);
+    setReminderTime(existing.reminderTime || "08:00");
+  }, [existing]);
 
   useEffect(() => {
     const cleaned = name.trim();
@@ -69,7 +98,7 @@ export default function AddMedicationScreen() {
       normalizedMetadata = null;
     }
 
-    await addMedication({
+    const fields = {
       name: normalizedMetadata?.normalizedName ?? cleanedName,
       dose: dose.trim(),
       frequency: frequency.trim(),
@@ -81,13 +110,22 @@ export default function AddMedicationScreen() {
       openFdaBrandName: normalizedMetadata?.openFdaBrandName,
       openFdaGenericName: normalizedMetadata?.openFdaGenericName,
       fhirResource: normalizedMetadata?.fhirResource,
-    });
+    };
+
+    if (existing) {
+      await updateMedication(existing.id, fields);
+    } else {
+      await addMedication(fields);
+    }
     router.back();
-  }, [name, dose, frequency, notes, reminderEnabled, reminderTime, addMedication]);
+  }, [name, dose, frequency, notes, reminderEnabled, reminderTime, addMedication, updateMedication, existing]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <ScreenHeader title="Add Medication" fallbackRoute="/(tabs)/medications" />
+      <ScreenHeader
+        title={isEditing ? "Edit Medication" : "Add Medication"}
+        fallbackRoute="/(tabs)/medications"
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -101,11 +139,12 @@ export default function AddMedicationScreen() {
             <View style={styles.titleIcon}>
               <Pill color={C.primary} size={24} strokeWidth={2.5} />
             </View>
-            <Text style={styles.title}>Add a Medication</Text>
+            <Text style={styles.title}>{isEditing ? name || "Edit Medication" : "Add a Medication"}</Text>
           </View>
           <Text style={styles.subtitle}>
-            Enter the medication name and dose. You can add details like how often you take it
-            and any notes.
+            {isEditing
+              ? "Add the dose and how often you take it, so CLAIRITY can remind you and include it in your records."
+              : "Enter the medication name and dose. You can add details like how often you take it and any notes."}
           </Text>
 
           <View style={styles.form}>
