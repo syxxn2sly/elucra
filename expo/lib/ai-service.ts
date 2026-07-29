@@ -490,9 +490,7 @@ const EXTRACTION_SCHEMA: UnknownRecord = {
 async function extractFacts(input: AnalysisInput): Promise<RawExtraction> {
   const content = await requestCompletion({
     model: MODEL_ID,
-    temperature: 0,
     max_tokens: 7000,
-    response_format: { type: "json_schema", json_schema: { name: "clairity_medical_extraction", strict: false, schema: EXTRACTION_SCHEMA } },
     messages: [
       {
         role: "system",
@@ -538,9 +536,7 @@ function factsOnly(extraction: RawExtraction): UnknownRecord {
 async function communicateFacts(extraction: RawExtraction): Promise<CommunicatedCards> {
   const content = await requestCompletion({
     model: MODEL_ID,
-    temperature: 0.1,
     max_tokens: 4000,
-    response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
@@ -637,9 +633,7 @@ export async function analyzeDocument(input: AnalysisInput): Promise<Simplificat
 export async function extractHealthCard(input: { imageBase64: string; mimeType: string }): Promise<Partial<HealthCardData>> {
   const content = await requestCompletion({
     model: MODEL_ID,
-    temperature: 0,
     max_tokens: 700,
-    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "Read only the visible fields on this health card. Return JSON: cardNumber, name, versionCode, expiry, issuer. Use an empty string when a field is not visible. Never guess." },
       { role: "user", content: [{ type: "image_url", image_url: { url: `data:${input.mimeType};base64,${input.imageBase64}` } }, { type: "text", text: "Extract visible health-card fields." }] },
@@ -653,7 +647,6 @@ export async function extractHealthCard(input: { imageBase64: string; mimeType: 
 export async function generateDoctorSummary(input: { title: string; facts: ExtractedFacts; profile: HealthProfile }): Promise<string> {
   const content = await requestCompletion({
     model: MODEL_ID,
-    temperature: 0.1,
     max_tokens: 900,
     messages: [
       { role: "system", content: "Write a concise clinician-to-clinician handoff from the supplied structured facts only. Do not infer, diagnose, recommend medication changes, or add facts. Preserve explicit medication and follow-up wording. Return plain text under 220 words." },
@@ -683,9 +676,7 @@ export async function translateStrings(texts: string[], languageName: string): P
 
   const content = await requestCompletion({
     model: MODEL_ID,
-    temperature: 0,
     max_tokens: 8000,
-    response_format: { type: "json_object" },
     messages: [
       {
         role: "system",

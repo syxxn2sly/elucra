@@ -16,7 +16,10 @@ import { Font, Space } from "@/constants/theme";
 const C = Colors.light;
 
 /** Bar height above the home indicator. The indicator's inset is added on top. */
-const TAB_BAR_CONTENT_HEIGHT = 56;
+// Icon + label + the padding above them. 56 was sized against the system font;
+// NunitoSans sits on a taller line box at the same point size, which clipped
+// the descenders on every label.
+const TAB_BAR_CONTENT_HEIGHT = 62;
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();

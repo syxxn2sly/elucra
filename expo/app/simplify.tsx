@@ -35,6 +35,37 @@ const C = Colors.light;
 
 type Phase = "capture" | "analyzing" | "error";
 
+/**
+ * Turn anything a `catch` can receive into a sentence worth showing.
+ *
+ * Not every rejection is an Error: a native module can reject with a plain
+ * `{ code, message }` object, and those used to collapse into a generic
+ * "Something went wrong", which hid the actual cause. Anything with a usable
+ * message wins; a bare object is serialized rather than stringified, because
+ * `String({})` is "[object Object]" and tells nobody anything.
+ */
+function describeThrown(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string" && err.trim()) return err.trim();
+
+  if (err && typeof err === "object") {
+    const rec = err as Record<string, unknown>;
+    const message = typeof rec.message === "string" ? rec.message.trim() : "";
+    const code = typeof rec.code === "string" ? rec.code : "";
+    if (message) return code ? `${message} (${code})` : message;
+    try {
+      const json = JSON.stringify(err);
+      if (json && json !== "{}") return `Something went wrong: ${json}`;
+    } catch {
+      // Circular or otherwise unserializable — fall through to the label below.
+    }
+    const label = rec.constructor && typeof rec.constructor === "function" ? rec.constructor.name : "object";
+    return `Something went wrong (unrecognised ${label}). Please try again.`;
+  }
+
+  return `Something went wrong (${String(err)}). Please try again.`;
+}
+
 export default function SimplifyScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
@@ -157,8 +188,12 @@ export default function SimplifyScreen() {
 
         router.replace({ pathname: "/document-detail", params: { id: doc.id } });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
-        console.error("[CLAIRITY] Analysis error:", msg);
+        // Not everything thrown is an Error — a rejected native module can hand
+        // back a plain object, and reporting those as "Something went wrong"
+        // hid the real cause. Keep a readable sentence for the user, but never
+        // discard what was actually thrown.
+        const msg = describeThrown(err);
+        console.error("[CLAIRITY] Analysis error:", err);
         setErrorMsg(msg);
         setPhase("error");
       }
