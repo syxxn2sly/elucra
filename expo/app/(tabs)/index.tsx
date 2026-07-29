@@ -12,7 +12,7 @@ import {
   FileText,
   Sparkles,
 } from "lucide-react-native";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -55,7 +55,12 @@ export default function HomeScreen() {
 
   const undatedVaccines = vaccines.filter((v) => !v.hasDate);
 
-  const recentDocs = documents.slice(0, 3);
+  // Newest first: documents are appended as they are analysed, so reading the
+  // stored order straight showed the three oldest under "Recent Reports".
+  const recentDocs = useMemo(
+    () => [...documents].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3),
+    [documents],
+  );
 
   // Onboarding now creates a record for everything the user listed, so "needs
   // details" no longer means "not recorded yet" — every name is recorded. What
@@ -157,7 +162,7 @@ export default function HomeScreen() {
             label="Reports"
             value={documents.length.toString()}
             sub={documents.length === 1 ? "document" : "documents"}
-            onPress={() => router.push("/simplify")}
+            onPress={() => router.push("/reports")}
           />
           <QuickCard
             icon={<CreditCard color={C.accent} size={22} strokeWidth={2.5} />}
@@ -246,7 +251,7 @@ export default function HomeScreen() {
         {/* Recent reports */}
         {recentDocs.length > 0 ? (
           <>
-            <SectionHeader title="Recent Reports" />
+            <SectionHeader title="Recent Reports" action="See all" onAction={() => router.push("/reports")} />
             <View style={styles.section}>
               {recentDocs.map((doc) => (
                 <Card

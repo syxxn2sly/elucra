@@ -224,7 +224,7 @@ export default function HealthCardScreen() {
         <View style={styles.numberCard}>
           <Text style={styles.numberLabel}>Card Number</Text>
           <Pressable onPress={handleCopy} style={styles.numberRow}>
-            <Text style={styles.cardNumber}>
+            <Text style={styles.cardNumber} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               {showNumber ? displayCard.cardNumber : "•••• •••• •••• ••••"}
             </Text>
             <View style={styles.numberActions}>
@@ -443,9 +443,12 @@ const styles = StyleSheet.create({
   },
   cardNumber: {
     flex: 1,
-    ...Type.display,
+    // One step down from display. An Ontario number with its dashes wrapped to
+    // a second line at 28px, which broke the grouping that makes it readable
+    // and readable-aloud. Tracking drops with it so the digits stay grouped.
+    ...Type.title,
     color: C.textInverse,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   numberActions: {
     flexDirection: "row",

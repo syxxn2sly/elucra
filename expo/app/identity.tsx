@@ -9,6 +9,7 @@ import Colors from "@/constants/colors";
 import { Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { PrimaryButton, ScreenHeader } from "@/components/ui";
+import { PlaceField } from "@/components/place-field";
 import { useClairity } from "@/lib/store";
 import type { FamilyDoctor } from "@/lib/types";
 
@@ -52,10 +53,10 @@ export default function IdentityScreen() {
           </View>
 
           <Field label="Doctor's name" value={draft.doctorName} onChangeText={(value) => setField("doctorName", value)} placeholder="e.g. Dr. A. Patel" />
-          <Field label="Clinic or practice" value={draft.clinicName} onChangeText={(value) => setField("clinicName", value)} placeholder="e.g. Lakeside Family Health Team" />
+          <PlaceField label="Clinic or practice" value={draft.clinicName} onChangeText={(value) => setField("clinicName", value)} placeholder="e.g. Lakeside Family Health Team" />
           <Field label="Clinic phone" value={draft.phone} onChangeText={(value) => setField("phone", value)} placeholder="e.g. 416 555 1234" keyboardType="phone-pad" />
           <Field label="Clinic fax (optional)" value={draft.fax} onChangeText={(value) => setField("fax", value)} placeholder="e.g. 416 555 5678" keyboardType="phone-pad" />
-          <Field label="Clinic address (optional)" value={draft.address} onChangeText={(value) => setField("address", value)} placeholder="Street, city, postal code" multiline />
+          <PlaceField label="Clinic address (optional)" value={draft.address} onChangeText={(value) => setField("address", value)} placeholder="Street, city, postal code" />
           <Field label="After-hours instructions (optional)" value={draft.afterHoursInstructions} onChangeText={(value) => setField("afterHoursInstructions", value)} placeholder="e.g. Call the clinic's after-hours line" multiline />
 
           <View style={styles.note}>
