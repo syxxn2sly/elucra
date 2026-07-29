@@ -69,13 +69,30 @@ function toLabel(props: PhotonProperties): string {
  *
  * Pass an AbortSignal so a keystroke can cancel the request it superseded.
  */
-export async function searchPlaces(query: string, signal?: AbortSignal): Promise<string[]> {
+export interface Coords {
+  latitude: number;
+  longitude: number;
+}
+
+export async function searchPlaces(
+  query: string,
+  signal?: AbortSignal,
+  near?: Coords | null,
+): Promise<string[]> {
   const trimmed = query.trim();
   if (trimmed.length < MIN_QUERY_LENGTH) return [];
 
+  // Bias towards a point when we have one. This is the whole value of knowing
+  // where the user is: "lifelabs" unbiased returns Ottawa, Kanata and Vancouver,
+  // and biased returns four branches in their own city. The coordinates are used
+  // for ranking only — never stored, and never written into the field.
+  const bias = GEOAPIFY_KEY
+    ? near ? `&bias=proximity:${near.longitude},${near.latitude}` : ""
+    : near ? `&lat=${near.latitude}&lon=${near.longitude}` : "";
+
   const url = GEOAPIFY_KEY
-    ? `${GEOAPIFY_ENDPOINT}?text=${encodeURIComponent(trimmed)}&limit=5&format=geojson&apiKey=${GEOAPIFY_KEY}`
-    : `${PHOTON_ENDPOINT}?q=${encodeURIComponent(trimmed)}&limit=5&lang=en`;
+    ? `${GEOAPIFY_ENDPOINT}?text=${encodeURIComponent(trimmed)}&limit=5&format=geojson&apiKey=${GEOAPIFY_KEY}${bias}`
+    : `${PHOTON_ENDPOINT}?q=${encodeURIComponent(trimmed)}&limit=5&lang=en${bias}`;
 
   try {
     const response = await fetch(url, { signal });

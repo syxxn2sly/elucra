@@ -1,6 +1,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
-import { CalendarDays, Check, ChevronDown, MapPin, Star, X } from "lucide-react-native";
+import { CalendarDays, Check, ChevronDown, Crosshair, MapPin, Star, X } from "lucide-react-native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,7 +10,8 @@ import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { searchPlaces, MIN_QUERY_LENGTH } from "@/lib/geocode";
+import * as Location from "expo-location";
+import { searchPlaces, MIN_QUERY_LENGTH, type Coords } from "@/lib/geocode";
 import { TimeWheel } from "@/components/smart-inputs";
 
 const C = Colors.light;
@@ -57,6 +58,8 @@ export default function AddAppointmentScreen() {
   const [location, setLocation] = useState<string>("");
   const [placeMatches, setPlaceMatches] = useState<string[]>([]);
   const [showPlaces, setShowPlaces] = useState<boolean>(false);
+  const [near, setNear] = useState<Coords | null>(null);
+  const [nearState, setNearState] = useState<"idle" | "finding" | "denied">("idle");
   const [whatToBring, setWhatToBring] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -99,6 +102,29 @@ export default function AddAppointmentScreen() {
   }, [favouriteLocations, locationSuggestions, placeMatches]);
 
   /**
+   * Ask for a location only to rank results, and only when asked to.
+   *
+   * The coordinates never reach the field or storage — they are a search bias,
+   * which is the one thing knowing the user's position is genuinely good for
+   * here. "lifelabs" without it returns branches in other provinces.
+   */
+  const useNearMe = useCallback(async () => {
+    setNearState("finding");
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        setNearState("denied");
+        return;
+      }
+      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+      setNear({ latitude: current.coords.latitude, longitude: current.coords.longitude });
+      setNearState("idle");
+    } catch {
+      setNearState("denied");
+    }
+  }, []);
+
+  /**
    * Look the typed place up as you go.
    *
    * Debounced, and the previous request is aborted when another keystroke
@@ -115,14 +141,14 @@ export default function AddAppointmentScreen() {
     }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
-      const matches = await searchPlaces(query, controller.signal);
+      const matches = await searchPlaces(query, controller.signal, near);
       setPlaceMatches(matches.filter((match) => match.toLowerCase() !== query.toLowerCase()));
     }, 320);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [location]);
+  }, [location, near]);
 
   const close = useCallback(() => {
     if (canGoBackSafe()) router.back();
@@ -249,6 +275,22 @@ export default function AddAppointmentScreen() {
             // Delayed so a tap on a row below lands before the list closes.
             onBlur={() => setTimeout(() => setShowPlaces(false), 180)}
           />
+          <Pressable
+            onPress={useNearMe}
+            disabled={nearState === "finding"}
+            hitSlop={10}
+            style={styles.starButton}
+            accessibilityRole="button"
+            accessibilityLabel={
+              near ? "Showing places near you" : "Show places near me"
+            }
+          >
+            <Crosshair
+              color={near ? C.primary : C.textMuted}
+              size={20}
+              strokeWidth={2.5}
+            />
+          </Pressable>
           {location.trim() ? (
             <Pressable
               onPress={() => (isFavourite ? removeFavouriteLocation(location.trim()) : addFavouriteLocation(location))}
@@ -266,6 +308,14 @@ export default function AddAppointmentScreen() {
             </Pressable>
           ) : null}
         </View>
+
+        {nearState === "finding" ? (
+          <Text style={styles.nearNote}>Finding your area…</Text>
+        ) : nearState === "denied" ? (
+          <Text style={styles.nearNote}>Location off — results are not narrowed to your area.</Text>
+        ) : near ? (
+          <Text style={styles.nearNote}>Showing places near you first.</Text>
+        ) : null}
 
         {/*
           One list rather than a row of chips above the field: saved places,
@@ -450,6 +500,7 @@ const styles = StyleSheet.create({
   placeRow: { flexDirection: "row", alignItems: "center", gap: Space.sm, paddingVertical: Space.md, paddingHorizontal: Space.md },
   placePressed: { backgroundColor: C.surfaceAlt },
   placeText: { ...Type.body, color: C.text, flex: 1 },
+  nearNote: { ...Type.caption, color: C.textMuted, marginTop: Space.xs },
   error: { color: C.danger, ...Type.caption, fontFamily: Font.bodySemi, marginTop: Space.lg },
   save: { width: "100%", marginTop: Space.lg },
 });
