@@ -62,6 +62,11 @@ const DEFAULT_PROFILE: HealthProfile = {
   onboarded: false,
 };
 
+/** Split one of the profile's comma-separated free-text lists. */
+function profileList(value: string): string[] {
+  return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+}
+
 function useClairityState() {
   const [profile, setProfile] = useState<HealthProfile>(DEFAULT_PROFILE);
   const [documents, setDocuments] = useState<SavedDocument[]>([]);
@@ -176,10 +181,6 @@ function useClairityState() {
   }, [preferredLanguage, loaded]);
 
   // --- Profile actions ---
-  const updateProfile = useCallback((updates: Partial<HealthProfile>) => {
-    setProfile((prev) => ({ ...prev, ...updates }));
-  }, []);
-
   /**
    * Finish onboarding, turning the answers into records the rest of the app can
    * see.
@@ -197,8 +198,7 @@ function useClairityState() {
    * Vaccines are matched to the catalogue by name and recorded without a date,
    * which is what the onboarding copy promises ("you can add dates later").
    */
-  const completeOnboarding = useCallback((finalProfile: HealthProfile) => {
-    setProfile({ ...finalProfile, onboarded: true });
+  const syncProfileDerivedRecords = useCallback((fields: { medications?: string; vaccineStatus?: string }) => {
 
     const names = (value: string): string[] =>
       value
@@ -208,10 +208,10 @@ function useClairityState() {
 
     const now = new Date().toISOString();
 
-    setMedications((prev) => {
+    if (typeof fields.medications === "string") setMedications((prev) => {
       const existing = new Set(prev.map((med) => med.name.trim().toLowerCase()));
       const additions: Medication[] = [];
-      for (const name of names(finalProfile.medications ?? "")) {
+      for (const name of names(fields.medications ?? "")) {
         if (existing.has(name.toLowerCase())) continue;
         existing.add(name.toLowerCase());
         additions.push({
@@ -231,7 +231,7 @@ function useClairityState() {
       return additions.length ? [...prev, ...additions] : prev;
     });
 
-    setVaccines((prev) => {
+    if (typeof fields.vaccineStatus === "string") setVaccines((prev) => {
       const existing = new Set(prev.map((record) => record.vaccineId));
       const additions: VaccineRecord[] = [];
 
@@ -242,7 +242,7 @@ function useClairityState() {
       // string instead, longest first so a long name is never mistaken for a
       // shorter one nested inside it, consuming each match so it cannot be
       // counted twice.
-      let remaining = (finalProfile.vaccineStatus ?? "").toLowerCase();
+      let remaining = (fields.vaccineStatus ?? "").toLowerCase();
       const byLongestName = [...VACCINE_CATALOG].sort((a, b) => b.name.length - a.name.length);
 
       for (const info of byLongestName) {
@@ -274,6 +274,39 @@ function useClairityState() {
       return additions.length ? [...prev, ...additions] : prev;
     });
   }, []);
+
+  const completeOnboarding = useCallback(
+    (finalProfile: HealthProfile) => {
+      setProfile({ ...finalProfile, onboarded: true });
+      syncProfileDerivedRecords({
+        medications: finalProfile.medications,
+        vaccineStatus: finalProfile.vaccineStatus,
+      });
+    },
+    [syncProfileDerivedRecords],
+  );
+
+  /**
+   * Update profile fields, keeping the records they imply in step.
+   *
+   * Medications and vaccines live in two places: as free text on the profile,
+   * which is what the questionnaire and Settings edit, and as records, which is
+   * what the dashboard tiles and the Meds and Vaccines tabs count. Editing the
+   * text alone left the two disagreeing — a medication added in Settings showed
+   * up in the profile and nowhere else, exactly as it did after onboarding
+   * before that path was fixed. Any writer of these fields now goes through the
+   * same sync.
+   */
+  const updateProfile = useCallback((updates: Partial<HealthProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updates }));
+    if (typeof updates.medications === "string" || typeof updates.vaccineStatus === "string") {
+      syncProfileDerivedRecords({
+        medications: updates.medications,
+        vaccineStatus: updates.vaccineStatus,
+      });
+    }
+  }, [syncProfileDerivedRecords]);
+
 
   const resetProfile = useCallback(() => {
     setProfile(DEFAULT_PROFILE);
@@ -403,6 +436,15 @@ function useClairityState() {
     const notificationId = await scheduleMedicationReminder(record).catch(() => null);
     const savedRecord = { ...record, notificationId };
     setMedications((prev) => [...prev, savedRecord]);
+    // Keep the profile's own list in step, so Settings does not show a stale
+    // answer to "what medications do you take". setProfile directly rather than
+    // updateProfile: the latter derives records from this text, which would
+    // send us straight back round.
+    setProfile((prev) => {
+      const listed = profileList(prev.medications);
+      if (listed.some((name) => name.toLowerCase() === record.name.toLowerCase())) return prev;
+      return { ...prev, medications: [...listed, record.name].join(", ") };
+    });
   }, []);
 
   /**
@@ -444,6 +486,14 @@ function useClairityState() {
     setMedications((prev) => {
       const medication = prev.find((item) => item.id === id);
       void cancelReminder(medication?.notificationId ?? null);
+      if (medication) {
+        setProfile((profile) => ({
+          ...profile,
+          medications: profileList(profile.medications)
+            .filter((name) => name.toLowerCase() !== medication.name.toLowerCase())
+            .join(", "),
+        }));
+      }
       return prev.filter((item) => item.id !== id);
     });
   }, []);
