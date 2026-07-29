@@ -35,7 +35,20 @@ const MODEL_ID = "claude-sonnet-5";
 const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const CLASSIFICATION_THRESHOLD = 0.65;
-const QUALITY_THRESHOLD = 0.85;
+/**
+ * Below this, a read is unreliable enough that a retake genuinely helps.
+ *
+ * It was 0.85, which rejected any photo of a real document — creased, dim,
+ * handwritten — even when every character was legible, and asked for a "clearer
+ * photo" of a page that was already as clear as it gets. The gate is no longer
+ * carrying the safety burden on its own: every fact is source-linked, and
+ * anything the explanation cannot tie back to the page is pruned per item. So
+ * this only needs to catch reads that are actually untrustworthy.
+ */
+const QUALITY_THRESHOLD = 0.55;
+
+/** Above this a read is clean; between the two it is usable but worth checking. */
+const QUALITY_CONFIDENT = 0.8;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -508,7 +521,11 @@ async function extractFacts(input: AnalysisInput): Promise<RawExtraction> {
         role: "system",
         content: `You are the strict extraction stage of a medical record system. You do NOT provide medical advice, explanations, reassurance, diagnosis, or interpretation. You only transcribe and classify what is visibly present in the source image.
 
-First assess source quality. If blurry, cropped, shadowed, rotated, glare-covered, low resolution, or any critical content cannot be read with high confidence, set quality.isReadable=false. Always set quality.score to your confidence that every clinically important character was read correctly, as a number from 0 to 1; a clean scan or a sharp, evenly lit photo is 0.9 or above. A PDF whose text is already digital has no photographic defects to assess and should score at or near 1.0 — do not mark it down for the absence of image quality. Do not guess partial values. If not medical, set classification.isMedicalDocument=false.
+First assess whether the content can be READ, which is not the same as whether the photograph is tidy. Real documents are creased, folded, shadowed, held at an angle, and handwritten; none of that matters if the characters can still be made out. Set quality.isReadable=false only when clinically important content genuinely cannot be deciphered — not because the page is crumpled, dim, skewed, or written by hand.
+
+If only part is illegible, still extract everything you can read and record each unreadable item in facts.unknowns, saying what could not be made out. A partial reading of a real document is more useful than refusing the whole page.
+
+Set quality.score to your confidence that the characters you did transcribe are correct, from 0 to 1. Digital PDF text is at or near 1.0. A sharp photo is around 0.9. A creased or dim photo you can still read confidently is around 0.7 — score what you could read, not how the page looked. List the specific obstacles in quality.issues. Do not guess a value you cannot see: leave it out and note it in unknowns. If not medical, set classification.isMedicalDocument=false.
 
 For each readable text block, create a sourceBlock using normalized 0-1000 bounding-box coordinates. Every fact MUST include sourceBlockIds that point to the exact block(s) containing it. If it is not explicit in the source, do not include it. Do not infer missing dosage, duration, diagnosis, urgency, normality, or clinical meaning. Preserve medication dose, route, frequency, duration, restrictions, and escalation wording exactly as written. Translate no content in this stage; detectedLanguage identifies the source language.
 
@@ -752,6 +769,18 @@ function verifyAndPrune(
     .filter((term) => flattenOutput({ ...cards, checklist, timeline, warnings: allWarnings, scripts }).join(" ").toLowerCase().includes(term));
 
   const flags: string[] = [];
+
+  // A creased or handwritten page is now read rather than refused, so say when
+  // it was hard going. The reader can check the figures against the page they
+  // are holding; silently presenting a shaky read as a clean one would be worse
+  // than the old refusal.
+  if (extraction.quality.score < QUALITY_CONFIDENT) {
+    const issues = extraction.quality.issues.filter(Boolean).join(" ");
+    flags.push(
+      `Parts of this document were hard to read, so check the figures against the original.${issues ? ` ${issues}` : ""}`,
+    );
+  }
+
   if (droppedNumeric > 0) flags.push(droppedNumeric === 1
     ? "One item was left out because a figure in it could not be matched to your document."
     : `${droppedNumeric} items were left out because a figure in them could not be matched to your document.`);
