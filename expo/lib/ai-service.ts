@@ -496,13 +496,34 @@ async function extractFacts(input: AnalysisInput): Promise<RawExtraction> {
         role: "system",
         content: `You are the strict extraction stage of a medical record system. You do NOT provide medical advice, explanations, reassurance, diagnosis, or interpretation. You only transcribe and classify what is visibly present in the source image.
 
-First assess image quality. If blurry, cropped, shadowed, rotated, glare-covered, low resolution, or any critical content cannot be read with high confidence, set quality.isReadable=false. Do not guess partial values. If not medical, set classification.isMedicalDocument=false.
+First assess image quality. If blurry, cropped, shadowed, rotated, glare-covered, low resolution, or any critical content cannot be read with high confidence, set quality.isReadable=false. Always set quality.score to your confidence that every clinically important character was read correctly, as a number from 0 to 1; a clean scan or a sharp, evenly lit photo is 0.9 or above. Do not guess partial values. If not medical, set classification.isMedicalDocument=false.
 
 For each readable text block, create a sourceBlock using normalized 0-1000 bounding-box coordinates. Every fact MUST include sourceBlockIds that point to the exact block(s) containing it. If it is not explicit in the source, do not include it. Do not infer missing dosage, duration, diagnosis, urgency, normality, or clinical meaning. Preserve medication dose, route, frequency, duration, restrictions, and escalation wording exactly as written. Translate no content in this stage; detectedLanguage identifies the source language.
 
 Classify only as: blood_work, imaging, pathology, discharge, prescription, referral, operative_report, consultation, diagnosis, vaccination_record, general. Confidence below 0.65 means generic/general downstream.
 
-Extract: medications; labs; diagnoses/findings as stated; procedures; instructions/restrictions; follow-ups; appointments; explicit red flags; expected-but-missing details as unknowns; and conflicts. Appointments are ONLY explicitly scheduled visits with a complete, unambiguous date and time. Use ISO 8601 local date-time in dateTime. Copy purpose, location, and what-to-bring wording exactly; do not create an appointment from a vague follow-up instruction. If no item exists, return an empty array.`,
+Extract: medications; labs; diagnoses/findings as stated; procedures; instructions/restrictions; follow-ups; appointments; explicit red flags; expected-but-missing details as unknowns; and conflicts. Appointments are ONLY explicitly scheduled visits with a complete, unambiguous date and time. Use ISO 8601 local date-time in dateTime. Copy purpose, location, and what-to-bring wording exactly; do not create an appointment from a vague follow-up instruction. If no item exists, return an empty array.
+
+Return one JSON object and nothing else, in exactly this shape. Every key below is required, every list must be present even when empty, and every extracted item must carry a non-empty sourceBlockIds. Names are exact: an item under a different key, or nested anywhere other than "facts", is discarded.
+
+{
+  "quality": { "isReadable": true, "score": 0.0, "issues": ["..."], "message": "..." },
+  "classification": { "type": "blood_work", "confidence": 0.0, "detectedLanguage": "English", "isMedicalDocument": true },
+  "title": "...",
+  "sourceBlocks": [{ "id": "b1", "page": 1, "text": "...", "confidence": 0.0, "box": { "x": 0, "y": 0, "width": 0, "height": 0 } }],
+  "facts": {
+    "medications": [{ "id": "m1", "name": "...", "dose": "...", "route": "...", "frequency": "...", "duration": "...", "purpose": "...", "startStopInstructions": "...", "sourceBlockIds": ["b1"] }],
+    "labValues": [{ "id": "l1", "testName": "...", "value": "...", "unit": "...", "referenceRange": "...", "status": "in_range|out_of_range|unknown", "direction": "high|low|normal|unknown", "sourceBlockIds": ["b1"] }],
+    "diagnosesAndFindings": [{ "id": "f1", "text": "...", "sourceBlockIds": ["b1"] }],
+    "procedures": [{ "id": "p1", "text": "...", "sourceBlockIds": ["b1"] }],
+    "instructionsAndRestrictions": [{ "id": "i1", "text": "...", "sourceBlockIds": ["b1"] }],
+    "followUps": [{ "id": "u1", "what": "...", "withWhom": "...", "byWhen": "...", "sourceBlockIds": ["b1"] }],
+    "appointments": [{ "id": "a1", "dateTime": "2026-09-19T10:30", "purpose": "...", "location": "...", "whatToBring": "...", "sourceBlockIds": ["b1"] }],
+    "redFlags": [{ "id": "r1", "symptom": "...", "action": "...", "isEmergency": false, "sourceBlockIds": ["b1"] }],
+    "unknowns": [{ "id": "k1", "text": "...", "sourceBlockIds": ["b1"] }],
+    "conflicts": [{ "id": "c1", "text": "...", "sourceBlockIds": ["b1"] }]
+  }
+}`,
       },
       {
         role: "user",
