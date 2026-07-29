@@ -1,0 +1,51 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1732 >>
+stream
+BT /F1 14 Tf 56 740 Td (RIVERSIDE MEDICAL LABORATORY) Tj ET
+BT /F1 10 Tf 56 722 Td (118 Grove Street, Springfield  -  (555) 240-9911  -  FICTIONAL SAMPLE DOCUMENT) Tj ET
+BT /F1 11 Tf 56 696 Td (Patient: SALIMA MERCHANT      DOB: 14 Mar 1991      Collected: 22 July 2026 08:15) Tj ET
+BT /F1 11 Tf 56 680 Td (Ordering physician: Dr. A. Whitfield      Accession: RM-2026-118342) Tj ET
+BT /F1 12 Tf 56 650 Td (COMPLETE BLOOD COUNT) Tj ET
+BT /F1 11 Tf 56 630 Td (Test                    Result      Units        Reference Range) Tj ET
+BT /F1 11 Tf 56 612 Td (Haemoglobin             11.2        g/dL         12.0 - 15.5      LOW) Tj ET
+BT /F1 11 Tf 56 596 Td (White cell count        9.4         x10^9/L      4.0 - 11.0) Tj ET
+BT /F1 11 Tf 56 580 Td (Platelets               268         x10^9/L      150 - 400) Tj ET
+BT /F1 11 Tf 56 564 Td (Haematocrit             34.1        %            36.0 - 46.0      LOW) Tj ET
+BT /F1 11 Tf 56 548 Td (Mean cell volume        78.4        fL           80.0 - 100.0     LOW) Tj ET
+BT /F1 11 Tf 56 532 Td (Ferritin                11          ng/mL        15 - 150         LOW) Tj ET
+BT /F1 12 Tf 56 500 Td (INTERPRETATION) Tj ET
+BT /F1 11 Tf 56 482 Td (Findings consistent with iron deficiency anaemia.) Tj ET
+BT /F1 11 Tf 56 466 Td (Haemoglobin and ferritin below reference range.) Tj ET
+BT /F1 12 Tf 56 436 Td (PLAN) Tj ET
+BT /F1 11 Tf 56 418 Td (Ferrous sulfate 325 mg orally twice daily with food.) Tj ET
+BT /F1 11 Tf 56 402 Td (Continue for 12 weeks. Repeat CBC and ferritin in 8 weeks.) Tj ET
+BT /F1 11 Tf 56 386 Td (Follow-up appointment: 19 September 2026 at 10:30 with Dr. Whitfield.) Tj ET
+BT /F1 10 Tf 56 350 Td (Report electronically verified by Dr. A. Whitfield, MD - 22 July 2026) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000002025 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2095
+%%EOF
