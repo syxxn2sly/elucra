@@ -181,22 +181,23 @@ export default function HealthCardSetupScreen() {
             </View>
           ) : null}
 
-          {/* Card photos */}
+          {/* Card photos — one slot per side, like depositing a cheque */}
           <Text style={styles.fieldLabel}>Card Photos</Text>
-          <View style={styles.imageRow}>
-            <CardImagePicker
-              label="Front (AI will read this)"
-              imageUri={frontImageUri}
-              onCamera={() => captureImage("front")}
-              onGallery={() => pickImage("front")}
-            />
-            <CardImagePicker
-              label="Back"
-              imageUri={backImageUri}
-              onCamera={() => captureImage("back")}
-              onGallery={() => pickImage("back")}
-            />
-          </View>
+          <CardCaptureSlot
+            side="Front"
+            hint="We'll read the details from this side"
+            imageUri={frontImageUri}
+            onCamera={() => captureImage("front")}
+            onGallery={() => pickImage("front")}
+            busy={autofillPhase === "scanning"}
+          />
+          <CardCaptureSlot
+            side="Back"
+            hint="Optional — kept for your records"
+            imageUri={backImageUri}
+            onCamera={() => captureImage("back")}
+            onGallery={() => pickImage("back")}
+          />
 
           {/* Re-scan button */}
           {frontImageUri ? (
@@ -299,39 +300,85 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-function CardImagePicker({
-  label,
+/**
+ * One side of the card, captured the way a banking app captures a cheque.
+ *
+ * The previous version put four buttons — Camera and Gallery for each side — in
+ * a grid above the fields, which read as a wall of controls and gave no sense
+ * that what you are photographing is a card. This is a single card-shaped slot
+ * per side: tap it to shoot, and once there is a photo the slot *becomes* the
+ * photo, so the state of the thing is visible rather than described.
+ *
+ * Gallery stays available but steps back to a text link, since photographing
+ * the card in front of you is overwhelmingly the common path.
+ */
+function CardCaptureSlot({
+  side,
+  hint,
   imageUri,
   onCamera,
   onGallery,
+  busy,
 }: {
-  label: string;
+  side: string;
+  hint: string;
   imageUri: string | null;
   onCamera: () => void;
   onGallery: () => void;
+  busy?: boolean;
 }) {
   return (
-    <View style={styles.cardPicker}>
-      <Text style={styles.cardPickerLabel}>{label}</Text>
-      {imageUri ? (
-        <View style={styles.cardPickerImageWrap}>
-          <Image source={{ uri: imageUri }} style={styles.cardPickerImage} contentFit="contain" />
-          <Pressable onPress={onCamera} style={styles.retakeBtn}>
-            <Text style={styles.retakeText}>Retake</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View style={styles.cardPickerActions}>
-          <Pressable onPress={onCamera} style={({ pressed }) => [styles.cardPickerBtn, pressed && styles.pressed]}>
-            <Camera color={C.primary} size={22} strokeWidth={2.5} />
-            <Text style={styles.cardPickerBtnText}>Camera</Text>
-          </Pressable>
-          <Pressable onPress={onGallery} style={({ pressed }) => [styles.cardPickerBtn, pressed && styles.pressed]}>
-            <ImageIcon color={C.accent} size={22} strokeWidth={2.5} />
-            <Text style={styles.cardPickerBtnText}>Gallery</Text>
-          </Pressable>
-        </View>
-      )}
+    <View style={styles.slotWrap}>
+      <View style={styles.slotHeader}>
+        <Text style={styles.slotSide}>{side}</Text>
+        {imageUri ? (
+          <View style={styles.slotDone}>
+            <Check color={C.success} size={15} strokeWidth={3} />
+            <Text style={styles.slotDoneText}>Captured</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <Pressable
+        onPress={onCamera}
+        accessibilityRole="button"
+        accessibilityLabel={imageUri ? `Retake ${side} of card` : `Photograph ${side} of card`}
+        style={({ pressed }) => [
+          styles.slot,
+          imageUri ? styles.slotFilled : styles.slotEmpty,
+          pressed && styles.pressed,
+        ]}
+      >
+        {imageUri ? (
+          <>
+            <Image source={{ uri: imageUri }} style={styles.slotImage} contentFit="cover" />
+            <View style={styles.slotRetake}>
+              <Camera color={C.textInverse} size={15} strokeWidth={2.5} />
+              <Text style={styles.slotRetakeText}>Retake</Text>
+            </View>
+          </>
+        ) : (
+          <View style={styles.slotEmptyInner}>
+            <View style={styles.slotIconWrap}>
+              <Camera color={C.primary} size={24} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.slotPrompt}>Tap to photograph</Text>
+            <Text style={styles.slotHint}>{hint}</Text>
+          </View>
+        )}
+
+        {busy ? (
+          <View style={styles.slotBusy}>
+            <ActivityIndicator color={C.textInverse} />
+            <Text style={styles.slotBusyText}>Reading card…</Text>
+          </View>
+        ) : null}
+      </Pressable>
+
+      <Pressable onPress={onGallery} hitSlop={10} style={styles.slotGallery}>
+        <ImageIcon color={C.textMuted} size={15} strokeWidth={2.5} />
+        <Text style={styles.slotGalleryText}>Choose from library</Text>
+      </Pressable>
     </View>
   );
 }
@@ -431,54 +478,115 @@ const styles = StyleSheet.create({
   required: {
     color: C.danger,
   },
-  imageRow: {
+  slotWrap: {
+    marginBottom: Space.lg,
+  },
+  slotHeader: {
     flexDirection: "row",
-    gap: Space.md,
-  },
-  cardPicker: {
-    flex: 1,
-  },
-  cardPickerLabel: {
-    ...Type.caption,
-    fontFamily: Font.bodySemi,
-    color: C.textMuted,
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: Space.sm,
   },
-  cardPickerImageWrap: {
+  slotSide: {
+    ...Type.label,
+    color: C.text,
+  },
+  slotDone: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+  },
+  slotDoneText: {
+    ...Type.caption,
+    color: C.success,
+  },
+  // 1.586:1 is the ID-1 card ratio every health card, bank card and driving
+  // licence uses, so the empty slot is already the shape of the thing you are
+  // about to put in it.
+  slot: {
+    width: "100%",
+    aspectRatio: 1.586,
+    borderRadius: Radius.lg,
+    overflow: "hidden",
+    justifyContent: "center",
+  },
+  slotEmpty: {
+    // Lighter fill than the page with the stronger border colour: `border` on
+    // `surfaceAlt` is a two-shade difference and the dashed edge disappeared,
+    // taking the "this is an empty slot you can fill" cue with it.
+    backgroundColor: C.surface,
+    borderWidth: 2,
+    borderColor: C.borderStrong,
+    borderStyle: "dashed",
+  },
+  slotFilled: {
+    backgroundColor: C.surfaceAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  slotEmptyInner: {
     alignItems: "center",
     gap: Space.sm,
+    paddingHorizontal: Space.lg,
   },
-  cardPickerImage: {
-    width: "100%",
-    height: 100,
+  slotIconWrap: {
+    width: 52,
+    height: 52,
     borderRadius: Radius.md,
-    backgroundColor: C.surfaceAlt,
+    backgroundColor: C.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  retakeBtn: {
-    paddingVertical: Space.sm,
-    paddingHorizontal: Space.md,
-  },
-  retakeText: {
+  slotPrompt: {
     ...Type.label,
-    color: C.primary,
+    color: C.text,
   },
-  cardPickerActions: {
-    gap: Space.sm,
+  slotHint: {
+    ...Type.caption,
+    color: C.textMuted,
+    textAlign: "center",
   },
-  cardPickerBtn: {
+  slotImage: {
+    width: "100%",
+    height: "100%",
+  },
+  slotRetake: {
+    position: "absolute",
+    right: Space.md,
+    bottom: Space.md,
     flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+    paddingVertical: Space.xs,
+    paddingHorizontal: Space.sm,
+    borderRadius: Radius.pill,
+    backgroundColor: "rgba(42,33,25,0.82)",
+  },
+  slotRetakeText: {
+    ...Type.caption,
+    color: C.textInverse,
+  },
+  slotBusy: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     gap: Space.sm,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: Radius.md,
+    backgroundColor: "rgba(42,33,25,0.62)",
+  },
+  slotBusyText: {
+    ...Type.label,
+    color: C.textInverse,
+  },
+  slotGallery: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space.xs,
     paddingVertical: Space.md,
   },
-  cardPickerBtnText: {
-    ...Type.label,
-    color: C.text,
+  slotGalleryText: {
+    ...Type.caption,
+    color: C.textMuted,
   },
   rescanBtn: {
     flexDirection: "row",
