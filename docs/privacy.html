@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLAIRITY — Privacy Policy</title>
+<style>
+  :root { --bg:#F2E9DA; --surface:#FDF9F1; --text:#2A2119; --muted:#7C6B57; --border:#D9C8AC; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:0; background:var(--bg); color:var(--text);
+         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .wrap { max-width:720px; margin:0 auto; padding:48px 24px 72px; }
+  h1 { font-size:2rem; margin:0 0 4px; letter-spacing:-0.5px; }
+  .updated { color:var(--muted); font-size:.9rem; margin-bottom:32px; }
+  h2 { font-size:1.15rem; margin:36px 0 10px; }
+  p, li { color:#3D3226; }
+  a { color:var(--text); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px;
+          padding:18px 22px; margin:20px 0; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.94rem; display:block; overflow-x:auto; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { font-weight:600; }
+  code { background:var(--surface); border:1px solid var(--border); border-radius:5px;
+         padding:1px 5px; font-size:.9em; }
+  footer { margin-top:48px; color:var(--muted); font-size:.88rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Privacy Policy</h1>
+<p class="updated">CLAIRITY &middot; last updated 30 July 2026</p>
+
+<div class="card">
+  <p style="margin:0"><strong>The short version.</strong> Your health information is stored on your
+  phone, not on our servers &mdash; we don't operate any. We have no accounts, no logins and no
+  analytics, so we cannot see your data even if we wanted to. When you ask CLAIRITY to explain a
+  document, that document is sent to an AI service to be read. That is the one time your health
+  information leaves your device, and it only happens when you ask.</p>
+</div>
+
+<h2>What stays on your phone</h2>
+<p>All of it, by default. Your health profile, saved reports and their explanations, vaccine records,
+medications, appointments and saved places are written to your device's own storage. Your health card
+is held in the operating system's encrypted keychain (iOS Keychain / Android Keystore) and unlocked
+with Face&nbsp;ID, Touch&nbsp;ID or your device passcode.</p>
+<p>Deleting the app deletes all of it. There is no copy elsewhere and no way for us to restore it.</p>
+
+<h2>What leaves your phone, and when</h2>
+<p>CLAIRITY has no backend of its own. It talks directly to the services below, only for the feature
+named, and only when you use that feature.</p>
+
+<table>
+  <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
+  <tr>
+    <td><strong>Anthropic</strong> (Claude)<br><code>api.anthropic.com</code></td>
+    <td>The photo or PDF you chose, and the age, sex, allergies and conditions from your profile so
+        the explanation can be relevant to you</td>
+    <td>Only when you scan a document or a health card</td>
+  </tr>
+  <tr>
+    <td><strong>Photon</strong> (OpenStreetMap)<br><code>photon.komoot.io</code></td>
+    <td>What you type into a clinic or location field, and your approximate coordinates if you tap
+        the near-me control</td>
+    <td>While you type a place name</td>
+  </tr>
+  <tr>
+    <td><strong>Geoapify</strong><br><code>api.geoapify.com</code></td>
+    <td>The same, if the app has been configured to use it instead of Photon</td>
+    <td>While you type a place name</td>
+  </tr>
+  <tr>
+    <td><strong>US National Library of Medicine</strong><br><code>rxnav.nlm.nih.gov</code>,
+        <code>clinicaltables.nlm.nih.gov</code></td>
+    <td>A medication name, to check its spelling and standard form</td>
+    <td>While you type a medication name</td>
+  </tr>
+  <tr>
+    <td><strong>openFDA</strong><br><code>api.fda.gov</code></td>
+    <td>A medication name, to look up its generic and brand names</td>
+    <td>When you save a medication</td>
+  </tr>
+  <tr>
+    <td><strong>Microsoft Azure Translator</strong><br><code>api.cognitive.microsofttranslator.com</code></td>
+    <td>The text of an explanation, if you have chosen another language <em>and</em> the app has been
+        configured with a translation key. Otherwise translation is done by Anthropic and nothing is
+        sent to Microsoft.</td>
+    <td>Only when translating a report</td>
+  </tr>
+  <tr>
+    <td><strong>CDC</strong> and <strong>REST Countries</strong><br><code>wwwnc.cdc.gov</code>,
+        <code>restcountries.com</code></td>
+    <td>A country name, for travel vaccine guidance. No health information.</td>
+    <td>When you open Travel</td>
+  </tr>
+</table>
+
+<p>Each of these is a third party with its own privacy policy, and their handling of what they
+receive is governed by their terms rather than ours.</p>
+
+<h2>Your location</h2>
+<p>Location is never requested unless you tap the near-me control on a place field, and it is used
+for one thing: ranking search results so a nearby clinic appears before one in another province. The
+coordinates are not saved, not written into any field, and not attached to any appointment. Declining
+the permission leaves everything working, just unranked.</p>
+
+<h2>What we don't do</h2>
+<ul>
+  <li>No accounts, no sign-in, no email address collected</li>
+  <li>No analytics, crash reporting, tracking pixels or advertising identifiers</li>
+  <li>No selling or sharing of your information &mdash; there is nothing to sell, because we never
+      receive it</li>
+  <li>No cross-app or cross-site tracking</li>
+</ul>
+
+<h2>Children</h2>
+<p>CLAIRITY is not directed at children under 13 and we do not knowingly collect their information.
+A parent may of course keep a child's records on their own device.</p>
+
+<h2>Not medical advice</h2>
+<p>CLAIRITY explains what a document says. It does not diagnose, does not decide what you should do,
+and is not a substitute for your doctor, nurse or pharmacist. Explanations are generated by software
+and can be wrong. Every fact it shows links back to the place on the page it came from so you can
+check it &mdash; please do, especially for doses and numbers, and speak to a qualified clinician
+about anything that matters.</p>
+
+<h2>Changes</h2>
+<p>If this policy changes in a way that affects what leaves your device, the date at the top will
+change and the new version will be published here before the change ships.</p>
+
+<h2>Contact</h2>
+<p>Questions, or anything here that looks wrong:
+<a href="mailto:syaanmerchant09@icloud.com">syaanmerchant09@icloud.com</a></p>
+
+<footer>
+  Place data &copy; OpenStreetMap contributors, available under the Open Database License.
+</footer>
+
+</div>
+</body>
+</html>
