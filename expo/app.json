@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.clairity.health",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "NSCameraUsageDescription": "CLAIRITY uses the camera so you can photograph a medical document or your health card. The photo is used only to read and explain that document and is stored on your device.",
         "NSPhotoLibraryUsageDescription": "CLAIRITY needs access to your photo library so you can choose an existing photo of a medical document or health card to explain or save.",
