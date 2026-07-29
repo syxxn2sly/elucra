@@ -21,7 +21,7 @@ import { Elevation, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { analyzeDocument } from "@/lib/ai-service";
-import { resizeForUpload } from "@/lib/resize-for-upload";
+import { prepareForUpload } from "@/lib/resize-for-upload";
 import { generateId } from "@/lib/utils";
 import {
   TRANSLATION_LANGUAGES,
@@ -115,16 +115,12 @@ export default function SimplifyScreen() {
       });
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
-        if (asset.mimeType?.includes("pdf") || asset.name?.endsWith(".pdf")) {
-          setErrorMsg(
-            "PDF files need to be converted to images first. Try taking a photo of the document on screen, or screenshot the PDF page and pick it from your gallery.",
-          );
-          setPhase("error");
-          return;
-        }
+        const isPdf = asset.mimeType === "application/pdf" || Boolean(asset.name?.toLowerCase().endsWith(".pdf"));
         const uri = asset.uri;
-        setImageUri(uri);
-        await processDocument(uri);
+        // A PDF has no thumbnail to show on the analysing screen, and setting it
+        // as the preview would render a broken image.
+        setImageUri(isPdf ? null : uri);
+        await processDocument(uri, isPdf ? "application/pdf" : asset.mimeType);
       }
     } catch (err) {
       console.error("[CLAIRITY] Document pick error:", err);
@@ -134,13 +130,13 @@ export default function SimplifyScreen() {
   }, []);
 
   const processDocument = useCallback(
-    async (uri: string) => {
+    async (uri: string, sourceMimeType?: string) => {
       setPhase("analyzing");
       setProgressText("Preparing your document…");
 
       try {
         setProgressText("Reading the text in your document…");
-        const { base64, mimeType } = await resizeForUpload(uri);
+        const { base64, mimeType } = await prepareForUpload(uri, sourceMimeType);
 
         setProgressText("Understanding what it means in plain English…");
         const englishResult = await analyzeDocument({

@@ -31,6 +31,18 @@ const LADDER = [
 /** Media types the Anthropic API will accept as image input. */
 const SUPPORTED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
 
+export const PDF_MIME = "application/pdf";
+
+/**
+ * PDFs go to the model whole, so the ceiling is the request limit rather than
+ * the image budget. Anything larger is almost certainly a scanned book rather
+ * than a report, and would be slow and expensive to read.
+ */
+const PDF_MAX_BYTES = 12_000_000;
+
+const isPdf = (uri: string, mimeType?: string): boolean =>
+  mimeType === PDF_MIME || /\.pdf($|\?)/i.test(uri);
+
 export interface UploadImage {
   base64: string;
   mimeType: string;
@@ -108,20 +120,50 @@ async function resizeViaCanvas(uri: string, width: number, quality: number): Pro
  * over the byte ceiling or in a format the API will not accept — an oversized
  * upload would only fail later with a less obvious error.
  */
-async function readSourceBytes(uri: string, maxBytes: number): Promise<UploadImage | null> {
+async function readSourceBytes(
+  uri: string,
+  maxBytes: number,
+  forceMimeType?: string,
+): Promise<UploadImage | null> {
   try {
     const response = await fetch(uri);
     const blob = await response.blob();
     if (blob.size > maxBytes) return null;
 
-    const mimeType = SUPPORTED_MIME.includes(blob.type as (typeof SUPPORTED_MIME)[number])
+    // Only claim a type we can vouch for. Labelling an unrecognised blob as
+    // JPEG just moves the failure to the API, where the message is worse — a
+    // HEIC from the photo library is the realistic case.
+    const detected = SUPPORTED_MIME.includes(blob.type as (typeof SUPPORTED_MIME)[number])
       ? blob.type
-      : "image/jpeg";
+      : null;
+    const mimeType = forceMimeType ?? detected;
+    if (!mimeType) return null;
+
     const base64 = await blobToBase64(blob);
     return base64 ? { base64, mimeType } : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Prepare any supported source for upload.
+ *
+ * A PDF is sent as-is: its text is already digital, so rasterising it — which
+ * is what "screenshot the page and photograph it" amounted to — throws away the
+ * one input that needs no reading at all. Patient-portal results are usually
+ * PDFs, which made the app worst at the document people most often have.
+ * Images still go down the resize ladder.
+ */
+export async function prepareForUpload(uri: string, mimeType?: string): Promise<UploadImage> {
+  if (!isPdf(uri, mimeType)) return resizeForUpload(uri);
+
+  const bytes = await readSourceBytes(uri, PDF_MAX_BYTES, PDF_MIME);
+  if (bytes) return bytes;
+
+  throw new Error(
+    "This PDF is too large or could not be opened. Please try a photo of the page instead.",
+  );
 }
 
 /**

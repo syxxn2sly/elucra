@@ -125,7 +125,12 @@ function toAnthropicRequest(body: UnknownRecord): UnknownRecord {
           const url = asString(asRecord(part.image_url).url);
           const match = /^data:(.+?);base64,(.*)$/s.exec(url);
           if (match) {
-            return { type: "image", source: { type: "base64", media_type: match[1], data: match[2] } };
+            const [, mediaType, data] = match;
+            // A PDF is a document block, not an image block. Sending one whole
+            // lets the model read the embedded text directly instead of reading
+            // pixels of it.
+            const blockType = mediaType === "application/pdf" ? "document" : "image";
+            return { type: blockType, source: { type: "base64", media_type: mediaType, data } };
           }
           return { type: "text", text: "" };
         }
@@ -503,7 +508,7 @@ async function extractFacts(input: AnalysisInput): Promise<RawExtraction> {
         role: "system",
         content: `You are the strict extraction stage of a medical record system. You do NOT provide medical advice, explanations, reassurance, diagnosis, or interpretation. You only transcribe and classify what is visibly present in the source image.
 
-First assess image quality. If blurry, cropped, shadowed, rotated, glare-covered, low resolution, or any critical content cannot be read with high confidence, set quality.isReadable=false. Always set quality.score to your confidence that every clinically important character was read correctly, as a number from 0 to 1; a clean scan or a sharp, evenly lit photo is 0.9 or above. Do not guess partial values. If not medical, set classification.isMedicalDocument=false.
+First assess source quality. If blurry, cropped, shadowed, rotated, glare-covered, low resolution, or any critical content cannot be read with high confidence, set quality.isReadable=false. Always set quality.score to your confidence that every clinically important character was read correctly, as a number from 0 to 1; a clean scan or a sharp, evenly lit photo is 0.9 or above. A PDF whose text is already digital has no photographic defects to assess and should score at or near 1.0 — do not mark it down for the absence of image quality. Do not guess partial values. If not medical, set classification.isMedicalDocument=false.
 
 For each readable text block, create a sourceBlock using normalized 0-1000 bounding-box coordinates. Every fact MUST include sourceBlockIds that point to the exact block(s) containing it. If it is not explicit in the source, do not include it. Do not infer missing dosage, duration, diagnosis, urgency, normality, or clinical meaning. Preserve medication dose, route, frequency, duration, restrictions, and escalation wording exactly as written. Translate no content in this stage; detectedLanguage identifies the source language.
 
@@ -747,8 +752,12 @@ function verifyAndPrune(
     .filter((term) => flattenOutput({ ...cards, checklist, timeline, warnings: allWarnings, scripts }).join(" ").toLowerCase().includes(term));
 
   const flags: string[] = [];
-  if (droppedNumeric > 0) flags.push(`${droppedNumeric} item${droppedNumeric === 1 ? "" : "s"} were left out because a figure in them could not be matched to your document.`);
-  if (droppedUnlinked > 0) flags.push(`${droppedUnlinked} item${droppedUnlinked === 1 ? "" : "s"} were left out because they could not be traced back to the page.`);
+  if (droppedNumeric > 0) flags.push(droppedNumeric === 1
+    ? "One item was left out because a figure in it could not be matched to your document."
+    : `${droppedNumeric} items were left out because a figure in them could not be matched to your document.`);
+  if (droppedUnlinked > 0) flags.push(droppedUnlinked === 1
+    ? "One item was left out because it could not be traced back to the page."
+    : `${droppedUnlinked} items were left out because they could not be traced back to the page.`);
   if (restoredRedFlags.length > 0) flags.push(`${restoredRedFlags.length} urgent note${restoredRedFlags.length === 1 ? " was" : "s were"} added back from your document.`);
   if (proseIssues.length > 0) flags.push(`Check these figures against your document: ${proseIssues.join(", ")}.`);
   if (jargon.length > 0) flags.push(`Some medical terms were left unexplained: ${jargon.join(", ")}.`);
