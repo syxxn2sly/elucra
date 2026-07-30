@@ -296,6 +296,20 @@ export const TRAVEL_DESTINATIONS: TravelDestination[] = [
 
 // Add polio to catalog for travel
 VACCINE_CATALOG.push({
+  id: "bcg",
+  name: "Tuberculosis (BCG)",
+  category: "other",
+  description:
+    "Protects against severe tuberculosis. Given routinely in many countries but not in Canada, so most people vaccinated abroad. Separate from the TB skin or blood test, which checks for infection rather than preventing it.",
+  protectsAgainst: "Tuberculosis",
+  cadenceMonths: null,
+  doseCount: 1,
+  doseIntervalMonths: null,
+  minAge: 0,
+  maxAge: null,
+});
+
+VACCINE_CATALOG.push({
   id: "polio",
   name: "Polio",
   category: "other",

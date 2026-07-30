@@ -172,6 +172,7 @@ export function MultiChipInput({
   placeholder,
   label,
   required,
+  maxItems,
 }: {
   selectedItems: string[];
   onToggle: (item: string) => void;
@@ -180,7 +181,15 @@ export function MultiChipInput({
   placeholder?: string;
   label?: string;
   required?: boolean;
+  /** Cap on selections. Unlimited when omitted. */
+  maxItems?: number;
 }) {
+  /*
+    At the cap, unselected options stop responding but stay visible and
+    deselecting still works — hiding them would make it look like the list had
+    changed, and disabling everything would strip out the way back.
+  */
+  const atCap = maxItems !== undefined && selectedItems.length >= maxItems;
   const [showAll, setShowAll] = useState(false);
   const [customText, setCustomText] = useState("");
   const [showCustom, setShowCustom] = useState(false);
@@ -227,15 +236,19 @@ export function MultiChipInput({
       <View style={styles.chipRow}>
         {visibleSuggestions.map((opt) => {
           const selected = selectedItems.includes(opt);
+          const blocked = atCap && !selected;
           return (
             <Pressable
               key={opt}
-              onPress={() => onToggle(opt)}
+              onPress={() => { if (!blocked) onToggle(opt); }}
               style={({ pressed }) => [
                 styles.chip,
                 selected && styles.chipSelected,
-                pressed && styles.chipPressed,
+                blocked && styles.chipBlocked,
+                pressed && !blocked && styles.chipPressed,
               ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected, disabled: blocked }}
             >
               {selected ? (
                 <Check color={C.textInverse} size={14} strokeWidth={2.5} />
@@ -264,7 +277,11 @@ export function MultiChipInput({
       ) : null}
 
       {/* Add custom */}
-      {showCustom ? (
+      {atCap ? (
+        <Text style={styles.capNote}>
+          That&apos;s {maxItems} — deselect one to choose a different option.
+        </Text>
+      ) : showCustom ? (
         <View style={styles.customRow}>
           <TextInput
             style={styles.customInput}
@@ -537,6 +554,14 @@ const styles = StyleSheet.create({
   chipSelected: {
     backgroundColor: C.primary,
     borderColor: C.primary,
+  },
+  chipBlocked: {
+    opacity: 0.4,
+  },
+  capNote: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.md,
   },
   chipPressed: {
     opacity: 0.85,

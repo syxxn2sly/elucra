@@ -174,7 +174,10 @@ export function PlaceField({
 }
 
 const styles = StyleSheet.create({
-  field: { marginBottom: Space.lg },
+  // marginTop, not marginBottom: the screens that use this space their own
+  // fields with marginTop, and mixing the two doubled the gap wherever a
+  // PlaceField sat next to a plain one.
+  field: { marginTop: Space.lg },
   fieldLabel: { ...Type.label, color: C.text, marginBottom: Space.sm },
   row: { flexDirection: "row", alignItems: "center", gap: Space.sm },
   input: {

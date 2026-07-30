@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   doseDate: { ...Type.caption, color: C.textMuted, marginTop: 2 },
   doseHint: { ...Type.caption, color: C.textMuted },
   doseActions: { flexDirection: "row", gap: Space.md, alignItems: "center" },
-  proofDoseRow: { flexDirection: "row", gap: Space.sm, marginTop: Space.md, flexWrap: "wrap" },
+  proofDoseRow: { flexDirection: "row", gap: Space.sm, marginTop: Space.lg, marginBottom: Space.md, flexWrap: "wrap" },
   proofDoseChip: {
     flexDirection: "row",
     alignItems: "center",

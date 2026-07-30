@@ -47,6 +47,8 @@ interface Step {
   optional: boolean;
   options?: string[];
   suggestions?: string[];
+  /** Cap on multiChip selections. Unlimited when omitted. */
+  maxItems?: number;
 }
 
 const STEPS: Step[] = [
@@ -142,11 +144,12 @@ const STEPS: Step[] = [
   {
     key: "occupation",
     title: "What's your occupation?",
-    subtitle: "Some jobs affect health risks and vaccine recommendations.",
+    subtitle: "Some jobs affect health risks and vaccine recommendations. Add up to three, including your own.",
     icon: <Briefcase color={C.primary} size={22} strokeWidth={2.5} />,
-    inputType: "chipSelect",
+    inputType: "multiChip",
     optional: true,
-    options: OCCUPATION_OPTIONS,
+    suggestions: OCCUPATION_OPTIONS,
+    maxItems: 3,
   },
   {
     key: "vaccineStatus",
@@ -328,6 +331,7 @@ export default function OnboardingScreen() {
               onToggle={toggleChip}
               onAddCustom={addCustomChip}
               suggestions={step.suggestions}
+              maxItems={step.maxItems}
             />
           ) : null}
 
