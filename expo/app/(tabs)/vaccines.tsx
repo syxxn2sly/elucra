@@ -109,7 +109,7 @@ export default function VaccinesScreen() {
                     <Shield color={isOverdue ? C.danger : C.docVaccination} size={22} strokeWidth={2.5} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.vacName}>{vac.name}</Text>
+                    <Text style={styles.vacName} numberOfLines={2}>{vac.name}</Text>
                     <Text style={styles.vacDate}>Received: {formatMonthYear(vac.monthReceived, vac.yearReceived)}</Text>
                     {vac.verified ? (
                       <View style={styles.verifiedRow}>
@@ -150,12 +150,14 @@ export default function VaccinesScreen() {
                     <View style={[styles.vacIcon, { backgroundColor: C.accentSoft }]}>
                       <Calendar color={C.accent} size={22} strokeWidth={2.5} />
                     </View>
-                    <View>
-                      <Text style={styles.vacName}>{vac.name}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.vacName} numberOfLines={2}>{vac.name}</Text>
                       <Text style={styles.vacDate}>Date not recorded</Text>
                     </View>
                   </View>
-                  <Tag text="ADD DATE" color={C.accent} bg={C.accentSoft} />
+                  <View style={styles.tagWrap}>
+                    <Tag text="ADD DATE" color={C.accent} bg={C.accentSoft} />
+                  </View>
                 </View>
               </Card>
             ))}
@@ -444,6 +446,11 @@ const styles = StyleSheet.create({
   vacName: {
     ...Type.heading,
     color: C.text,
+  },
+  // The tag must not be squeezed by a long vaccine name, and must not be run
+  // under by one either — several catalogue names are long enough to do both.
+  tagWrap: {
+    flexShrink: 0,
   },
   vacDate: {
     ...Type.caption,

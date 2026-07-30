@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 
+import { ZoomablePhoto } from "@/components/photo-viewer";
 import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
@@ -264,7 +265,13 @@ export default function VaccineDetailScreen() {
           </Text>
           {vac.proofImageUri ? (
             <View style={styles.proofImageWrap}>
-              <Image source={{ uri: vac.proofImageUri }} style={styles.proofImage} contentFit="contain" />
+              <ZoomablePhoto
+                uri={vac.proofImageUri}
+                style={styles.proofImage}
+                contentFit="contain"
+                accessibilityLabel="Open proof photo full screen"
+                caption={vac.name}
+              />
               <View style={styles.verifiedBadge}>
                 <CheckCircle2 color={C.success} size={18} strokeWidth={2.5} />
                 <Text style={styles.verifiedText}>Verified</Text>

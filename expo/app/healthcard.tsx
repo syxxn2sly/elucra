@@ -19,6 +19,7 @@ import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
+import { ZoomablePhoto } from "@/components/photo-viewer";
 import Colors from "@/constants/colors";
 import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
@@ -202,7 +203,13 @@ export default function HealthCardScreen() {
         {/* Card image with front/back toggle */}
         {currentImage ? (
           <View style={styles.cardImageWrap}>
-            <Image source={{ uri: currentImage }} style={styles.cardImage} contentFit="contain" />
+            <ZoomablePhoto
+              uri={currentImage}
+              style={styles.cardImage}
+              contentFit="contain"
+              accessibilityLabel="Open health card photo full screen"
+              caption="Tap the close button when you are done"
+            />
             <View style={styles.flipToggle}>
               <Pressable
                 onPress={() => setShowFront(true)}

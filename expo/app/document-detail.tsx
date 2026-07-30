@@ -30,6 +30,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
+import { ZoomablePhoto } from "@/components/photo-viewer";
 import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
@@ -262,10 +263,12 @@ export default function DocumentDetailScreen() {
           </Pressable>
         ) : null}
         {showImage && doc.imageUri ? (
-          <Image
-            source={{ uri: doc.imageUri }}
+          <ZoomablePhoto
+            uri={doc.imageUri}
             style={styles.originalImage}
             contentFit="contain"
+            accessibilityLabel="Open the original document full screen"
+            caption={doc.result.title}
           />
         ) : null}
 
