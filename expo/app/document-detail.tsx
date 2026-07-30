@@ -15,6 +15,7 @@ import {
   Stethoscope,
   MapPin,
   Eye,
+  Info,
 } from "lucide-react-native";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
@@ -306,6 +307,34 @@ export default function DocumentDetailScreen() {
           </View>
           <Text style={styles.languageText}>Source language: {doc.result.classification?.detectedLanguage ?? "Not recorded"}</Text>
         </View>
+
+        {/*
+          What the verification actually withheld, sitting immediately under the
+          "Source-checked" pill because it qualifies that claim. The pipeline has
+          always written these — a figure it could not match, an item it could not
+          trace, a page it found hard to read — and nothing displayed them, so a
+          shortened result looked like a complete one. Deliberately not styled as
+          an error: the document was read, and this is the honest footnote on how
+          well.
+        */}
+        {doc.result.safety?.flags?.length ? (
+          <View style={styles.flagsCard}>
+            <View style={styles.flagsHeader}>
+              <Info color={C.warning} size={17} strokeWidth={2.5} />
+              <Text style={styles.flagsTitle}>Worth knowing</Text>
+            </View>
+            {doc.result.safety.flags.map((flag) => (
+              <View key={flag} style={styles.flagRow}>
+                <Text style={styles.flagBullet}>•</Text>
+                <Text style={styles.flagText}>{flag}</Text>
+              </View>
+            ))}
+            <Text style={styles.flagsFootnote}>
+              Anything CLAIRITY could not match to your document is left out rather than
+              shown. Check the original above if a figure matters.
+            </Text>
+          </View>
+        ) : null}
 
         {/* Original document image */}
         {doc.imageUri ? (
@@ -1054,6 +1083,29 @@ const styles = StyleSheet.create({
     ...Type.caption,
     color: C.textMuted,
     marginBottom: Space.md,
+  },
+  flagsCard: {
+    backgroundColor: C.warningSoft,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: C.warning + "33",
+    padding: Space.lg,
+    marginBottom: Space.lg,
+  },
+  flagsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.sm,
+  },
+  flagsTitle: { ...Type.label, color: C.warning },
+  flagRow: { flexDirection: "row", gap: Space.sm, marginTop: Space.xs },
+  flagBullet: { ...Type.body, color: C.warning },
+  flagText: { ...Type.body, color: C.text, flex: 1 },
+  flagsFootnote: {
+    ...Type.caption,
+    color: C.textMuted,
+    marginTop: Space.md,
   },
   langTrigger: {
     flexDirection: "row",

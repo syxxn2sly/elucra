@@ -775,9 +775,14 @@ function verifyAndPrune(
   // are holding; silently presenting a shaky read as a clean one would be worse
   // than the old refusal.
   if (extraction.quality.score < QUALITY_CONFIDENT) {
-    const issues = extraction.quality.issues.filter(Boolean).join(" ");
+    // The model's issue strings are fragments, not sentences — appending them
+    // after a full stop produced "…against the original. creased page with
+    // shadow", which reads like a truncated thought.
+    const issues = extraction.quality.issues.filter(Boolean).join("; ");
     flags.push(
-      `Parts of this document were hard to read, so check the figures against the original.${issues ? ` ${issues}` : ""}`,
+      issues
+        ? `Parts of this document were hard to read (${issues}), so check the figures against the original.`
+        : "Parts of this document were hard to read, so check the figures against the original.",
     );
   }
 
