@@ -16,7 +16,7 @@ import {
   MapPin,
   Eye,
 } from "lucide-react-native";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -26,6 +26,7 @@ import {
   Share as RNShare,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -35,7 +36,7 @@ import Colors from "@/constants/colors";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { languageLabel } from "@/lib/translate";
+import { languageLabel, translateTexts, TRANSLATION_LANGUAGES, isRightToLeft } from "@/lib/translate";
 import { DOCUMENT_TYPES } from "@/lib/types";
 import { formatDateDisplay, confirmDestructive } from "@/lib/utils";
 import { Card, Tag, EmptyState, ScreenHeader } from "@/components/ui";
@@ -65,7 +66,64 @@ export default function DocumentDetailScreen() {
    * checks actually passed.
    */
   const [showEnglish, setShowEnglish] = useState(false);
+
+  /*
+    Script translations, keyed by language code and cached for the life of the
+    screen. The English is the source every time — translating a translation
+    compounds drift, and the safety checks ran on the English.
+  */
+  const [scriptLang, setScriptLang] = useState("en");
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const [translatedScripts, setTranslatedScripts] = useState<Record<string, string[]>>({});
+  const [scriptError, setScriptError] = useState("");
   const translated = Boolean(savedDoc?.originalResult);
+
+  const englishScripts = savedDoc?.result.scripts ?? [];
+
+  /**
+   * Fetch the chosen language once, then serve it from the cache.
+   *
+   * Guarded on the cache so re-selecting a language already fetched costs
+   * nothing, and English never calls out at all — it is the source text.
+   */
+  useEffect(() => {
+    if (scriptLang === "en" || translatedScripts[scriptLang] || englishScripts.length === 0) return;
+    let cancelled = false;
+    setScriptError("");
+    (async () => {
+      try {
+        const texts = await translateTexts(englishScripts.map((script) => script.text), scriptLang);
+        if (!cancelled) setTranslatedScripts((prev) => ({ ...prev, [scriptLang]: texts }));
+      } catch (error) {
+        if (cancelled) return;
+        // Fall back to English rather than an empty card, and say why.
+        setScriptError(
+          error instanceof Error
+            ? `${error.message} Showing English.`
+            : "Could not translate the script. Showing English.",
+        );
+        setScriptLang("en");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scriptLang, englishScripts.length]);
+
+  /** The script as it should read right now: cached translation, or the English. */
+  const displayedScript = useCallback(
+    (script: CommunicationScript): CommunicationScript => {
+      if (scriptLang === "en") return script;
+      const cached = translatedScripts[scriptLang];
+      const index = englishScripts.findIndex((entry) => entry.language === script.language);
+      const text = cached?.[index];
+      return text
+        ? { ...script, text, language: scriptLang, languageLabel: languageLabel(scriptLang) }
+        : script;
+    },
+    [scriptLang, translatedScripts, englishScripts],
+  );
   // Memoised because swapping in the English allocates a new object, and `doc`
   // is a dependency of three callbacks below — without this they would be
   // rebuilt on every render.
@@ -445,20 +503,87 @@ export default function DocumentDetailScreen() {
             <Text style={styles.scriptHint}>
               Read these aloud to a family member, pharmacist, or doctor.
             </Text>
-            {doc.result.scripts.map((script) => (
-              <ScriptBlock
-                key={script.language}
-                script={script}
-                expanded={expandedScript === script.language}
-                onToggle={() =>
-                  setExpandedScript(
-                    expandedScript === script.language ? null : script.language,
-                  )
-                }
-              />
-            ))}
+
+            {/*
+              Any of the app's languages, translated when asked for rather than
+              all of them up front. Generating sixteen per document would
+              multiply the cost and the wait for languages nobody opens.
+            */}
+            <Pressable
+              onPress={() => setLangPickerOpen(true)}
+              style={({ pressed }) => [styles.langTrigger, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={`Script language: ${languageLabel(scriptLang)}. Tap to change.`}
+            >
+              <Text style={styles.langTriggerLabel}>Language</Text>
+              <View style={styles.langTriggerValue}>
+                <Text style={styles.langTriggerText}>{languageLabel(scriptLang)}</Text>
+                <ChevronDown color={C.primary} size={18} strokeWidth={2.5} />
+              </View>
+            </Pressable>
+
+            {scriptError ? <Text style={styles.langError}>{scriptError}</Text> : null}
+
+            {doc.result.scripts.map((script) => {
+              const shown = displayedScript(script);
+              return (
+                <ScriptBlock
+                  key={script.language}
+                  script={shown}
+                  loading={scriptLang !== "en" && !translatedScripts[scriptLang]}
+                  rtl={isRightToLeft(scriptLang)}
+                  expanded={expandedScript === script.language}
+                  onToggle={() =>
+                    setExpandedScript(
+                      expandedScript === script.language ? null : script.language,
+                    )
+                  }
+                />
+              );
+            })}
           </Card>
         ) : null}
+
+        <Modal
+          visible={langPickerOpen}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setLangPickerOpen(false)}
+        >
+          <View style={styles.langSheetOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setLangPickerOpen(false)} />
+            <View style={styles.langSheet}>
+              <Text style={styles.langSheetTitle}>Read the script in…</Text>
+              <ScrollView style={styles.langSheetList}>
+                {TRANSLATION_LANGUAGES.map((lang) => {
+                  const active = lang.code === scriptLang;
+                  return (
+                    <Pressable
+                      key={lang.code}
+                      onPress={() => {
+                        setScriptLang(lang.code);
+                        setLangPickerOpen(false);
+                      }}
+                      style={({ pressed }) => [styles.langRow, pressed && styles.langRowPressed]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text style={[styles.langRowText, active && styles.langRowTextActive]}>
+                        {lang.label}
+                      </Text>
+                      {/* Its English name too: someone helping the patient may not
+                          read the script the label is written in. */}
+                      {lang.label !== lang.english ? (
+                        <Text style={styles.langRowEnglish}>{lang.english}</Text>
+                      ) : null}
+                      {active ? <Check color={C.primary} size={18} strokeWidth={2.5} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
 
         {/* Doctor-to-Doctor Communication */}
         <Card style={styles.card}>
@@ -546,18 +671,28 @@ function ScriptBlock({
   script,
   expanded,
   onToggle,
+  loading,
+  rtl,
 }: {
   script: CommunicationScript;
   expanded: boolean;
   onToggle: () => void;
+  /** Translation in flight — the English is still shown underneath meanwhile. */
+  loading?: boolean;
+  rtl?: boolean;
 }) {
   return (
     <View style={styles.scriptBlock}>
       <Pressable onPress={onToggle} style={styles.scriptHeader}>
         <Text style={styles.scriptLang}>{script.languageLabel}</Text>
-        {expanded ? <ChevronUp color={C.textMuted} size={18} strokeWidth={2.5} /> : <ChevronDown color={C.textMuted} size={18} strokeWidth={2.5} />}
+        <View style={styles.scriptHeaderRight}>
+          {loading ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
+          {expanded ? <ChevronUp color={C.textMuted} size={18} strokeWidth={2.5} /> : <ChevronDown color={C.textMuted} size={18} strokeWidth={2.5} />}
+        </View>
       </Pressable>
-      {expanded ? <Text style={styles.scriptText}>{script.text}</Text> : null}
+      {expanded ? (
+        <Text style={[styles.scriptText, rtl && styles.scriptTextRtl]}>{script.text}</Text>
+      ) : null}
     </View>
   );
 }
@@ -920,6 +1055,45 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     marginBottom: Space.md,
   },
+  langTrigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: C.surfaceAlt,
+    borderRadius: Radius.md,
+    paddingVertical: Space.md,
+    paddingHorizontal: Space.lg,
+    marginBottom: Space.md,
+  },
+  langTriggerLabel: { ...Type.caption, color: C.textMuted },
+  langTriggerValue: { flexDirection: "row", alignItems: "center", gap: Space.xs },
+  langTriggerText: { ...Type.label, color: C.primary },
+  langError: { ...Type.caption, color: C.danger, marginBottom: Space.md },
+  langSheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
+  langSheet: {
+    backgroundColor: C.surface,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    paddingTop: Space.xl,
+    paddingBottom: Space.xxxl,
+    maxHeight: "72%",
+  },
+  langSheetTitle: { ...Type.title, color: C.text, paddingHorizontal: Space.xl, marginBottom: Space.md },
+  langSheetList: { paddingHorizontal: Space.xl },
+  langRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.sm,
+    paddingVertical: Space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  langRowPressed: { backgroundColor: C.surfaceAlt },
+  langRowText: { ...Type.body, color: C.text },
+  langRowTextActive: { fontFamily: Font.bodySemi, color: C.primary },
+  langRowEnglish: { ...Type.caption, color: C.textMuted, flex: 1 },
+  scriptHeaderRight: { flexDirection: "row", alignItems: "center", gap: Space.sm },
+  scriptTextRtl: { writingDirection: "rtl", textAlign: "right" },
   scriptBlock: {
     borderTopWidth: 1,
     borderTopColor: C.border,
