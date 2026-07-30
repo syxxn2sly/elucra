@@ -594,7 +594,7 @@ async function communicateFacts(extraction: RawExtraction): Promise<Communicated
 
 Write at an approximately grade 5–6 reading level. Explain rather than diagnose. Preserve doses, routes, frequencies, restrictions, and clinician instructions verbatim whenever they appear. Make every card item include sourceBlockIds from the facts it uses. Include every extracted red flag in warnings, with the action stated in the extracted fact. If a fact is unclear or missing, say so plainly and direct the person to ask their pharmacist or clinician; do not guess.
 
-Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language: en|pa|hi|ur, languageLabel, text, sourceBlockIds}]. The summary and interpretation must not contain unsupported numbers.`,
+Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language, languageLabel, text, sourceBlockIds}] — write these in English only, with language "en" and languageLabel "English"; the app translates them on demand into whichever language the reader asks for. The summary and interpretation must not contain unsupported numbers.`,
       },
       { role: "user", content: JSON.stringify(factsOnly(extraction)) },
     ],

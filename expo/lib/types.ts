@@ -77,7 +77,13 @@ export interface WarningSign extends SourceLinked {
 }
 
 export interface CommunicationScript extends SourceLinked {
-  language: "en" | "pa" | "hi" | "ur";
+  /**
+   * A code from TRANSLATION_LANGUAGES. This was once a union of four — en, pa,
+   * hi, ur — which is why the app offered only those: the type, the prompt and
+   * the picker all agreed on a list that excluded twelve of the sixteen
+   * languages the app already supports elsewhere.
+   */
+  language: string;
   languageLabel: string;
   text: string;
 }
