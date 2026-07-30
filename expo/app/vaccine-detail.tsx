@@ -53,7 +53,14 @@ export default function VaccineDetailScreen() {
   const [doseYear, setDoseYear] = useState<string>("");
   const [month, setMonth] = useState<number | null>(vac?.monthReceived ?? null);
   const [year, setYear] = useState<string>(vac?.yearReceived?.toString() ?? "");
-  const [notSure, setNotSure] = useState(!vac?.hasDate);
+  /*
+    Starts false even for a vaccine with no date. It used to start true, which
+    hid the month and year pickers behind the "I'm not sure" radio — so the one
+    thing someone opening an undated vaccine wants to do required first turning
+    off a checkbox they had not ticked. Entering a date is the default path; not
+    knowing it is the exception.
+  */
+  const [notSure, setNotSure] = useState(false);
 
   const info = vac ? VACCINE_CATALOG.find((v) => v.id === vac.vaccineId) : null;
 
@@ -210,7 +217,7 @@ export default function VaccineDetailScreen() {
                     </Text>
                   </View>
                   {doseNumber === 1 ? (
-                    <Text style={styles.doseHint}>Set above</Text>
+                    <Text style={styles.doseHint}>Set below</Text>
                   ) : isEditing ? (
                     <Pressable onPress={() => setEditingDose(null)} hitSlop={10}>
                       <Text style={styles.editLink}>Cancel</Text>
@@ -294,17 +301,6 @@ export default function VaccineDetailScreen() {
             </View>
           ) : (
             <View style={styles.dateEditor}>
-              {/* I'm not sure toggle */}
-              <Pressable
-                onPress={() => setNotSure(!notSure)}
-                style={({ pressed }) => [styles.notSureRow, pressed && styles.pressed]}
-              >
-                <View style={[styles.radio, notSure && styles.radioActive]}>
-                  {notSure ? <View style={styles.radioDot} /> : null}
-                </View>
-                <Text style={styles.notSureText}>I'm not sure of the exact date</Text>
-              </Pressable>
-
               {!notSure ? (
                 <View style={styles.datePickers}>
                   <Text style={styles.pickerLabel}>Month received</Text>
@@ -342,6 +338,21 @@ export default function VaccineDetailScreen() {
                   without a date. You can add a date anytime.
                 </Text>
               )}
+
+              {/*
+                Below the date entry, not above it. As the first thing in the
+                card it read like a question to answer before continuing; here it
+                reads as the alternative it is.
+              */}
+              <Pressable
+                onPress={() => setNotSure(!notSure)}
+                style={({ pressed }) => [styles.notSureRow, pressed && styles.pressed]}
+              >
+                <View style={[styles.radio, notSure && styles.radioActive]}>
+                  {notSure ? <View style={styles.radioDot} /> : null}
+                </View>
+                <Text style={styles.notSureText}>I'm not sure of the exact date</Text>
+              </Pressable>
 
               <PrimaryButton label="Save" onPress={handleSaveDate} style={{ marginTop: 18 }} />
             </View>
