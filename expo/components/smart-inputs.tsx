@@ -692,6 +692,10 @@ const styles = StyleSheet.create({
     height: WHEEL_HEIGHT,
     overflow: "hidden",
   },
+  wheelTriggerText: {
+    ...Type.label,
+    color: C.primary,
+  },
   timeColon: {
     ...Type.display,
     color: C.text,
@@ -907,5 +911,95 @@ export function TimeWheel({ value, onChange }: { value: Date; onChange: (next: D
         </View>
       </Modal>
     </View>
+  );
+}
+
+const MONTH_LABELS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const;
+
+/**
+ * Pick a month and year on a dial.
+ *
+ * Vaccination dates are remembered as "some time in March a couple of years
+ * ago", not to the day, so month and year are all this asks for. Two columns of
+ * the same wheel the age and time pickers use, rather than a month chip strip
+ * plus a typed year — that was two different input styles for one date, and the
+ * year field could be left half-typed.
+ *
+ * Years run from this year backwards; nobody records a vaccine they have not had.
+ */
+export function MonthYearWheel({
+  month,
+  year,
+  onConfirm,
+  label,
+  triggerLabel,
+}: {
+  month: number | null;
+  year: number | null;
+  onConfirm: (month: number, year: number) => void;
+  label?: string;
+  triggerLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const thisYear = new Date().getFullYear();
+  const years = useMemo(
+    () => Array.from({ length: 100 }, (_, i) => thisYear - i),
+    [thisYear],
+  );
+
+  const [draftMonth, setDraftMonth] = useState(month ?? new Date().getMonth() + 1);
+  const [draftYear, setDraftYear] = useState(year ?? thisYear);
+
+  const openWheel = useCallback(() => {
+    setDraftMonth(month ?? new Date().getMonth() + 1);
+    setDraftYear(year ?? thisYear);
+    setOpen(true);
+  }, [month, year, thisYear]);
+
+  return (
+    <>
+      <Pressable
+        onPress={openWheel}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={label ? `${triggerLabel} — ${label}` : triggerLabel}
+      >
+        <Text style={styles.wheelTriggerText}>{triggerLabel}</Text>
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{label ?? "Select a date"}</Text>
+            <View style={styles.wheelContainer}>
+              <View style={styles.timeColumns}>
+                <WheelColumn
+                  data={MONTH_LABELS.map((_, i) => i + 1)}
+                  value={draftMonth}
+                  onChange={setDraftMonth}
+                  width={110}
+                  format={(m) => MONTH_LABELS[m - 1]}
+                />
+                <WheelColumn data={years} value={draftYear} onChange={setDraftYear} width={110} />
+              </View>
+              <View style={styles.wheelHighlight} pointerEvents="none" />
+            </View>
+            <Pressable
+              onPress={() => {
+                onConfirm(draftMonth, draftYear);
+                setOpen(false);
+              }}
+              style={({ pressed }) => [styles.modalDoneBtn, pressed && styles.pressed]}
+            >
+              <Text style={styles.modalDoneText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }

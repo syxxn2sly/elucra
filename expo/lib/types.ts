@@ -218,6 +218,12 @@ export interface VaccineDose {
   doseNumber: number;
   monthReceived: number | null;
   yearReceived: number | null;
+  /**
+   * Proof for this dose specifically. A three-dose course is three separate
+   * clinic visits and three separate records, so one photo per vaccine could
+   * only ever evidence one of them.
+   */
+  proofImageUri?: string | null;
 }
 
 export interface VaccineRecord {

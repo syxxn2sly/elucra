@@ -31,6 +31,7 @@ import { useClairity } from "@/lib/store";
 import { VACCINE_CATALOG } from "@/lib/vaccine-data";
 import { formatMonthYear, formatDueCountdown, formatDateDisplay } from "@/lib/utils";
 import { Card, Tag, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
+import { MonthYearWheel } from "@/components/smart-inputs";
 
 const C = Colors.light;
 
@@ -43,14 +44,13 @@ export default function VaccineDetailScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { vaccines, updateVaccineDate, recordVaccineDose, removeVaccineDose, setVaccineProof, removeVaccine } = useClairity();
+  const { vaccines, updateVaccineDate, recordVaccineDose, removeVaccineDose, setVaccineProof, setVaccineDoseProof, removeVaccine } = useClairity();
 
   const vac = vaccines.find((v) => v.id === id);
   const [editingDate, setEditingDate] = useState(!vac?.hasDate);
   /** Which dose the editor is open for, or null. Dose 1 is edited above. */
-  const [editingDose, setEditingDose] = useState<number | null>(null);
-  const [doseMonth, setDoseMonth] = useState<number | null>(null);
-  const [doseYear, setDoseYear] = useState<string>("");
+  /** Which dose the proof section is showing. Ignored for a single-shot vaccine. */
+  const [proofDose, setProofDose] = useState(1);
   const [month, setMonth] = useState<number | null>(vac?.monthReceived ?? null);
   const [year, setYear] = useState<string>(vac?.yearReceived?.toString() ?? "");
   /*
@@ -63,6 +63,29 @@ export default function VaccineDetailScreen() {
   const [notSure, setNotSure] = useState(false);
 
   const info = vac ? VACCINE_CATALOG.find((v) => v.id === vac.vaccineId) : null;
+  /*
+    A course stores proof per dose; a single shot keeps using the record-level
+    photo, so older single-dose records are untouched.
+  */
+  const isCourse = Boolean(info && info.doseCount > 1);
+
+  /**
+   * One place decides where a proof photo lands, so the camera, the library and
+   * the clear button cannot disagree. For a course it belongs to the selected
+   * dose; for a single shot it stays on the record, which leaves older
+   * single-dose entries exactly as they were.
+   */
+  const saveProof = useCallback(
+    (uri: string | null) => {
+      if (!vac) return;
+      if (isCourse) setVaccineDoseProof(vac.id, proofDose, uri);
+      else setVaccineProof(vac.id, uri);
+    },
+    [vac, isCourse, proofDose, setVaccineDoseProof, setVaccineProof],
+  );
+  const activeProofUri = isCourse
+    ? (vac?.doses.find((d) => d.doseNumber === proofDose)?.proofImageUri ?? null)
+    : (vac?.proofImageUri ?? null);
 
   const handleSaveDate = useCallback(() => {
     if (!vac) return;
@@ -90,17 +113,17 @@ export default function VaccineDetailScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (!result.canceled && result.assets[0]) {
-      setVaccineProof(vac.id, result.assets[0].uri);
+      saveProof(result.assets[0].uri);
     }
-  }, [vac, setVaccineProof]);
+  }, [vac, saveProof]);
 
   const handleProofGallery = useCallback(async () => {
     if (!vac) return;
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (!result.canceled && result.assets[0]) {
-      setVaccineProof(vac.id, result.assets[0].uri);
+      saveProof(result.assets[0].uri);
     }
-  }, [vac, setVaccineProof]);
+  }, [vac, saveProof]);
 
   const handleDelete = useCallback(() => {
     if (!vac) return;
@@ -204,7 +227,6 @@ export default function VaccineDetailScreen() {
 
             {Array.from({ length: info.doseCount }, (_, index) => index + 1).map((doseNumber) => {
               const dose = vac.doses.find((entry) => entry.doseNumber === doseNumber);
-              const isEditing = editingDose === doseNumber;
               return (
                 <View key={doseNumber} style={styles.doseRow}>
                   <View style={styles.doseNumWrap}>
@@ -216,162 +238,50 @@ export default function VaccineDetailScreen() {
                       {dose ? formatMonthYear(dose.monthReceived, dose.yearReceived) : "Not recorded"}
                     </Text>
                   </View>
-                  {doseNumber === 1 ? (
-                    <Text style={styles.doseHint}>Set below</Text>
-                  ) : isEditing ? (
-                    <Pressable onPress={() => setEditingDose(null)} hitSlop={10}>
-                      <Text style={styles.editLink}>Cancel</Text>
-                    </Pressable>
-                  ) : (
-                    <View style={styles.doseActions}>
-                      <Pressable onPress={() => setEditingDose(doseNumber)} hitSlop={10}>
-                        <Text style={styles.editLink}>{dose ? "Edit" : "Add"}</Text>
+                  <View style={styles.doseActions}>
+                    <MonthYearWheel
+                      month={dose?.monthReceived ?? null}
+                      year={dose?.yearReceived ?? null}
+                      label={`When was dose ${doseNumber}?`}
+                      triggerLabel={dose ? "Edit" : "Add date"}
+                      onConfirm={(month, year) => recordVaccineDose(vac.id, doseNumber, month, year)}
+                    />
+                    {dose ? (
+                      <Pressable onPress={() => removeVaccineDose(vac.id, doseNumber)} hitSlop={10}>
+                        <Text style={styles.doseRemove}>Clear</Text>
                       </Pressable>
-                      {dose ? (
-                        <Pressable onPress={() => removeVaccineDose(vac.id, doseNumber)} hitSlop={10}>
-                          <Text style={styles.doseRemove}>Clear</Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  )}
+                    ) : null}
+                  </View>
                 </View>
               );
             })}
-
-            {editingDose && editingDose > 1 ? (
-              <View style={styles.doseEditor}>
-                <Text style={styles.doseEditorTitle}>When was dose {editingDose}?</Text>
-                <Text style={styles.pickerLabel}>Month received</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
-                  {MONTHS.map((name, index) => (
-                    <Pressable
-                      key={name}
-                      onPress={() => setDoseMonth(index + 1)}
-                      style={({ pressed }) => [
-                        styles.monthChip,
-                        doseMonth === index + 1 && styles.monthChipActive,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={[styles.monthChipText, doseMonth === index + 1 && styles.monthChipTextActive]}>
-                        {name}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-                <Text style={styles.pickerLabel}>Year received</Text>
-                <TextInput
-                  style={styles.yearInput}
-                  value={doseYear}
-                  onChangeText={setDoseYear}
-                  placeholder="e.g. 2026"
-                  placeholderTextColor={C.textMuted}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                />
-                <PrimaryButton
-                  label={`Save dose ${editingDose}`}
-                  onPress={() => {
-                    const yearNum = parseInt(doseYear, 10);
-                    if (!doseMonth || Number.isNaN(yearNum)) return;
-                    recordVaccineDose(vac.id, editingDose, doseMonth, yearNum);
-                    setEditingDose(null);
-                    setDoseMonth(null);
-                    setDoseYear("");
-                  }}
-                  disabled={!doseMonth || doseYear.length !== 4}
-                  style={{ marginTop: Space.md }}
-                />
-              </View>
-            ) : null}
           </Card>
         ) : null}
 
-        {/* Date recorded */}
-        <Card style={{ marginTop: 16 }}>
-          <Text style={styles.cardTitle}>When did you get it?</Text>
-          {!editingDate && vac.hasDate ? (
-            <View style={styles.dateDisplay}>
-              <Text style={styles.dateText}>
-                {formatMonthYear(vac.monthReceived, vac.yearReceived)}
-              </Text>
-              <Pressable onPress={() => setEditingDate(true)} hitSlop={12}>
-                <Text style={styles.editLink}>Edit</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.dateEditor}>
-              {!notSure ? (
-                <View style={styles.datePickers}>
-                  <Text style={styles.pickerLabel}>Month received</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
-                    {MONTHS.map((m, idx) => (
-                      <Pressable
-                        key={m}
-                        onPress={() => setMonth(idx + 1)}
-                        style={({ pressed }) => [
-                          styles.monthChip,
-                          month === idx + 1 && styles.monthChipActive,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text style={[styles.monthChipText, month === idx + 1 && styles.monthChipTextActive]}>
-                          {m}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                  <Text style={styles.pickerLabel}>Year received</Text>
-                  <TextInput
-                    style={styles.yearInput}
-                    value={year}
-                    onChangeText={setYear}
-                    placeholder="e.g. 2024"
-                    placeholderTextColor={C.textMuted}
-                    keyboardType="number-pad"
-                    maxLength={4}
-                  />
-                </View>
-              ) : (
-                <Text style={styles.notSureHint}>
-                  We'll record that you've had this vaccine, but we can't send you reminders
-                  without a date. You can add a date anytime.
+        {/* One shot: the same dial, one row, so a date is set one way everywhere. */}
+        {info && info.doseCount === 1 ? (
+          <Card style={{ marginTop: 16 }}>
+            <Text style={styles.cardTitle}>When did you get it?</Text>
+            <View style={styles.doseRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.doseDate}>
+                  {vac.hasDate ? formatMonthYear(vac.monthReceived, vac.yearReceived) : "Not recorded"}
                 </Text>
-              )}
-
-              {/*
-                Below the date entry, not above it. As the first thing in the
-                card it read like a question to answer before continuing; here it
-                reads as the alternative it is.
-              */}
-              <Pressable
-                onPress={() => setNotSure(!notSure)}
-                style={({ pressed }) => [styles.notSureRow, pressed && styles.pressed]}
-              >
-                <View style={[styles.radio, notSure && styles.radioActive]}>
-                  {notSure ? <View style={styles.radioDot} /> : null}
-                </View>
-                <Text style={styles.notSureText}>I'm not sure of the exact date</Text>
-              </Pressable>
-
-              <PrimaryButton label="Save" onPress={handleSaveDate} style={{ marginTop: 18 }} />
-            </View>
-          )}
-        </Card>
-
-        {/* Next due */}
-        {vac.nextDueDate ? (
-          <Card style={[styles.dueCard, { marginTop: 16 }]}>
-            <View style={styles.dueRow}>
-              <View>
-                <Text style={styles.dueLabel}>Next due</Text>
-                <Text style={styles.dueDate}>{formatDateDisplay(vac.nextDueDate)}</Text>
               </View>
-              <Tag
-                text={formatDueCountdown(vac.nextDueDate)}
-                color={formatDueCountdown(vac.nextDueDate) === "Overdue" ? C.danger : C.accent}
-                bg={formatDueCountdown(vac.nextDueDate) === "Overdue" ? C.dangerSoft : C.accentSoft}
-              />
+              <View style={styles.doseActions}>
+                <MonthYearWheel
+                  month={vac.monthReceived}
+                  year={vac.yearReceived}
+                  label="When did you get it?"
+                  triggerLabel={vac.hasDate ? "Edit" : "Add date"}
+                  onConfirm={(month, year) => updateVaccineDate(vac.id, month, year, true)}
+                />
+                {vac.hasDate ? (
+                  <Pressable onPress={() => updateVaccineDate(vac.id, null, null, false)} hitSlop={10}>
+                    <Text style={styles.doseRemove}>Clear</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
           </Card>
         ) : null}
@@ -383,10 +293,44 @@ export default function VaccineDetailScreen() {
             Attach a photo of your vaccination card, immunization-registry record, or
             provider record to verify this vaccine.
           </Text>
-          {vac.proofImageUri ? (
+
+          {/*
+            A course is several clinic visits and several records, so proof is
+            per dose. The selector only appears for a course — for one shot there
+            is nothing to choose between.
+          */}
+          {info && info.doseCount > 1 ? (
+            <View style={styles.proofDoseRow}>
+              {Array.from({ length: info.doseCount }, (_, index) => index + 1).map((doseNumber) => {
+                const active = proofDose === doseNumber;
+                const has = Boolean(vac.doses.find((d) => d.doseNumber === doseNumber)?.proofImageUri);
+                return (
+                  <Pressable
+                    key={doseNumber}
+                    onPress={() => setProofDose(doseNumber)}
+                    style={({ pressed }) => [
+                      styles.proofDoseChip,
+                      active && styles.proofDoseChipActive,
+                      pressed && styles.pressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Proof for dose ${doseNumber}${has ? ", attached" : ", none yet"}`}
+                  >
+                    <Text style={[styles.proofDoseText, active && styles.proofDoseTextActive]}>
+                      Dose {doseNumber}
+                    </Text>
+                    {has ? (
+                      <CheckCircle2 color={active ? C.textInverse : C.success} size={13} strokeWidth={3} />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+          {activeProofUri ? (
             <View style={styles.proofImageWrap}>
               <ZoomablePhoto
-                uri={vac.proofImageUri}
+                uri={activeProofUri}
                 style={styles.proofImage}
                 contentFit="contain"
                 accessibilityLabel="Open proof photo full screen"
@@ -397,7 +341,7 @@ export default function VaccineDetailScreen() {
                 <Text style={styles.verifiedText}>Verified</Text>
               </View>
               <Pressable
-                onPress={() => setVaccineProof(vac.id, null)}
+                onPress={() => saveProof(null)}
                 style={styles.removeProofBtn}
               >
                 <Text style={styles.removeProofText}>Remove proof</Text>
@@ -421,7 +365,7 @@ export default function VaccineDetailScreen() {
               </Pressable>
             </View>
           )}
-          {!vac.proofImageUri ? (
+          {!activeProofUri ? (
             <View style={styles.unverifiedRow}>
               <HelpCircle color={C.textMuted} size={16} strokeWidth={2.5} />
               <Text style={styles.unverifiedText}>Not verified — add proof to mark as verified</Text>
@@ -535,7 +479,22 @@ const styles = StyleSheet.create({
   doseLabel: { ...Type.label, color: C.text },
   doseDate: { ...Type.caption, color: C.textMuted, marginTop: 2 },
   doseHint: { ...Type.caption, color: C.textMuted },
-  doseActions: { flexDirection: "row", gap: Space.md },
+  doseActions: { flexDirection: "row", gap: Space.md, alignItems: "center" },
+  proofDoseRow: { flexDirection: "row", gap: Space.sm, marginTop: Space.md, flexWrap: "wrap" },
+  proofDoseChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.md,
+    borderRadius: Radius.pill,
+    backgroundColor: C.surfaceAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  proofDoseChipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  proofDoseText: { ...Type.caption, fontFamily: Font.bodySemi, color: C.text },
+  proofDoseTextActive: { color: C.textInverse },
   doseRemove: { ...Type.caption, fontFamily: Font.bodySemi, color: C.danger },
   doseEditor: {
     marginTop: Space.md,

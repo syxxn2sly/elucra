@@ -494,6 +494,25 @@ function useClairityState() {
     );
   }, []);
 
+  /** Attach or clear the proof photo for one dose of a course. */
+  const setVaccineDoseProof = useCallback(
+    (id: string, doseNumber: number, proofUri: string | null) => {
+      setVaccines((prev) =>
+        prev.map((v) =>
+          v.id === id
+            ? {
+                ...v,
+                doses: v.doses.map((dose) =>
+                  dose.doseNumber === doseNumber ? { ...dose, proofImageUri: proofUri } : dose,
+                ),
+              }
+            : v,
+        ),
+      );
+    },
+    [],
+  );
+
   const setVaccineProof = useCallback((id: string, proofUri: string | null) => {
     setVaccines((prev) =>
       prev.map((v) =>
@@ -657,6 +676,7 @@ function useClairityState() {
     recordVaccineDose,
     removeVaccineDose,
     setVaccineProof,
+    setVaccineDoseProof,
     removeVaccine,
     // Medications
     addMedication,
