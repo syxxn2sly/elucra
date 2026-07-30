@@ -9,11 +9,6 @@
     "scheme": "clarity-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF6F0"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.clairity.health",
@@ -56,6 +51,15 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#2A2119"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 132,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF6F0"
         }
       ]
     ],

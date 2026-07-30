@@ -75,6 +75,7 @@ export default function DocumentDetailScreen() {
   */
   const [scriptLang, setScriptLang] = useState("en");
   const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const [flagsOpen, setFlagsOpen] = useState(false);
   const [translatedScripts, setTranslatedScripts] = useState<Record<string, string[]>>({});
   const [scriptError, setScriptError] = useState("");
   const translated = Boolean(savedDoc?.originalResult);
@@ -319,20 +320,45 @@ export default function DocumentDetailScreen() {
         */}
         {doc.result.safety?.flags?.length ? (
           <View style={styles.flagsCard}>
-            <View style={styles.flagsHeader}>
+            {/*
+              Collapsed by default, but the count is always on the header — the
+              point is that the reader knows something was withheld, not that they
+              read all of it every time.
+            */}
+            <Pressable
+              onPress={() => setFlagsOpen(!flagsOpen)}
+              style={styles.flagsHeader}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: flagsOpen }}
+              accessibilityLabel={`Worth knowing, ${doc.result.safety.flags.length} ${doc.result.safety.flags.length === 1 ? "note" : "notes"}`}
+            >
               <Info color={C.warning} size={17} strokeWidth={2.5} />
-              <Text style={styles.flagsTitle}>Worth knowing</Text>
-            </View>
-            {doc.result.safety.flags.map((flag) => (
+              <Text style={styles.flagsTitle}>
+                Worth knowing
+                <Text style={styles.flagsCount}>
+                  {"  "}
+                  {doc.result.safety.flags.length}
+                  {doc.result.safety.flags.length === 1 ? " note" : " notes"}
+                </Text>
+              </Text>
+              {flagsOpen ? (
+                <ChevronUp color={C.warning} size={18} strokeWidth={2.5} />
+              ) : (
+                <ChevronDown color={C.warning} size={18} strokeWidth={2.5} />
+              )}
+            </Pressable>
+            {flagsOpen ? doc.result.safety.flags.map((flag) => (
               <View key={flag} style={styles.flagRow}>
                 <Text style={styles.flagBullet}>•</Text>
                 <Text style={styles.flagText}>{flag}</Text>
               </View>
-            ))}
-            <Text style={styles.flagsFootnote}>
-              Anything CLAIRITY could not match to your document is left out rather than
-              shown. Check the original above if a figure matters.
-            </Text>
+            )) : null}
+            {flagsOpen ? (
+              <Text style={styles.flagsFootnote}>
+                Anything CLAIRITY could not match to your document is left out rather than
+                shown. Check the original above if a figure matters.
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
@@ -663,8 +689,11 @@ export default function DocumentDetailScreen() {
 
         {/* Disclaimer */}
         <Text style={styles.disclaimer}>
-          CLAIRITY provides general information to help you understand your document. It is not a
-          substitute for professional medical advice. Always consult your healthcare provider.
+          Explanations here are produced by software reading your document, and software
+          can misread. Every fact is linked to the place on the page it came from — check
+          anything that matters against the original, especially doses and numbers. This
+          explains your document; it does not diagnose, and it is not a substitute for your
+          doctor, nurse or pharmacist.
         </Text>
       </ScrollView>
     </View>
@@ -1096,9 +1125,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Space.sm,
-    marginBottom: Space.sm,
   },
-  flagsTitle: { ...Type.label, color: C.warning },
+  flagsCount: { ...Type.caption, fontFamily: Font.bodyRegular, color: C.textMuted },
+  flagsTitle: { ...Type.label, color: C.warning, flex: 1 },
   flagRow: { flexDirection: "row", gap: Space.sm, marginTop: Space.xs },
   flagBullet: { ...Type.body, color: C.warning },
   flagText: { ...Type.body, color: C.text, flex: 1 },

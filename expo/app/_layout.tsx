@@ -5,10 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { ClairityProvider } from "@/lib/store";
+import { AnimatedSplash } from "@/components/animated-splash";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,6 +50,8 @@ export default function RootLayout() {
   // Every Type level names a bundled family, so rendering before these load
   // would flash the whole app in the system font and then reflow. Hold the
   // splash until they are ready.
+  const [splashDone, setSplashDone] = useState(false);
+
   const [fontsLoaded, fontError] = useFonts({
     Nunito_600SemiBold,
     Nunito_700Bold,
@@ -71,6 +74,11 @@ export default function RootLayout() {
       <ClairityProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <RootLayoutNav />
+          {/*
+            Over the app rather than before it, so the app is fully laid out by
+            the time the overlay fades — nothing has to animate in behind it.
+          */}
+          {splashDone ? null : <AnimatedSplash onFinish={() => setSplashDone(true)} />}
         </GestureHandlerRootView>
       </ClairityProvider>
     </QueryClientProvider>
