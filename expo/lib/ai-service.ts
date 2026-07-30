@@ -25,12 +25,27 @@ import type {
   WarningSign,
 } from "./types";
 
-// Direct Anthropic Messages API. The key is read from EXPO_PUBLIC_ANTHROPIC_API_KEY.
-// NOTE: an EXPO_PUBLIC_* value is embedded in the shipped client bundle and is
-// therefore extractable from the app — acceptable for personal TestFlight
-// testing, but for public distribution this key MUST move behind a backend
-// proxy so it never ships to the device.
+/*
+  Two ways to reach the model, and which one is used depends on configuration
+  rather than on a code change.
+
+  PROXY (set EXPO_PUBLIC_API_BASE): requests go to our own worker, which holds
+  the Anthropic key server-side. The app sends only a client token — which does
+  still ship in the binary, but can be rotated from a dashboard without an App
+  Store release, and is worth far less to whoever extracts it than a billable
+  API key.
+
+  DIRECT (no EXPO_PUBLIC_API_BASE): the old path, with the key in the bundle.
+  Kept so local development and existing builds keep working, and so deploying
+  the proxy is a config flip rather than a hard cutover. It is not suitable for
+  anything distributed beyond people you trust.
+
+  See server/src/worker.ts and its deployment notes.
+*/
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
+const CLIENT_TOKEN = process.env.EXPO_PUBLIC_CLIENT_TOKEN;
 const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+const USING_PROXY = Boolean(API_BASE);
 const MODEL_ID = "claude-sonnet-5";
 const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -106,6 +121,12 @@ export class NonMedicalDocumentError extends Error {
 }
 
 function requireConfiguration(): void {
+  if (USING_PROXY) {
+    if (!CLIENT_TOKEN) {
+      throw new Error("AI service is not configured. Please try again later.");
+    }
+    return;
+  }
   if (!ANTHROPIC_API_KEY) {
     throw new Error("AI service is not configured. Please try again later.");
   }
@@ -174,14 +195,21 @@ function toAnthropicRequest(body: UnknownRecord): UnknownRecord {
 
 async function requestCompletion(body: UnknownRecord): Promise<string> {
   requireConfiguration();
-  const response = await fetch(ENDPOINT, {
+  const response = await fetch(USING_PROXY ? `${API_BASE}/v1/messages` : ENDPOINT, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY as string,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
+    headers: USING_PROXY
+      ? {
+          "Content-Type": "application/json",
+          "x-clairity-token": CLIENT_TOKEN as string,
+        }
+      : {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY as string,
+          "anthropic-version": ANTHROPIC_VERSION,
+          // Only needed talking to Anthropic from a browser; our own proxy sets
+          // no such restriction.
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
     body: JSON.stringify(toAnthropicRequest(body)),
   });
 
