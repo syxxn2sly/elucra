@@ -111,6 +111,18 @@ export default function VaccinesScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.vacName} numberOfLines={2}>{vac.name}</Text>
                     <Text style={styles.vacDate}>Received: {formatMonthYear(vac.monthReceived, vac.yearReceived)}</Text>
+                    {(() => {
+                      // Only for courses: "1 of 1" on a flu shot is noise.
+                      const info = VACCINE_CATALOG.find((entry) => entry.id === vac.vaccineId);
+                      if (!info || info.doseCount <= 1) return null;
+                      const given = vac.doses.length;
+                      const done = given >= info.doseCount;
+                      return (
+                        <Text style={[styles.doseProgress, done && styles.doseProgressDone]}>
+                          {done ? `All ${info.doseCount} doses recorded` : `Dose ${given} of ${info.doseCount} — ${info.doseCount - given} to go`}
+                        </Text>
+                      );
+                    })()}
                     {vac.verified ? (
                       <View style={styles.verifiedRow}>
                         <CheckCircle2 color={C.success} size={14} strokeWidth={2.5} />
@@ -451,6 +463,15 @@ const styles = StyleSheet.create({
   // under by one either — several catalogue names are long enough to do both.
   tagWrap: {
     flexShrink: 0,
+  },
+  doseProgress: {
+    ...Type.caption,
+    fontFamily: Font.bodySemi,
+    color: C.accent,
+    marginTop: Space.xs,
+  },
+  doseProgressDone: {
+    color: C.success,
   },
   vacDate: {
     ...Type.caption,

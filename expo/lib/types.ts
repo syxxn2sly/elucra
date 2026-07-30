@@ -212,6 +212,14 @@ export interface Appointment {
   createdAt: string;
 }
 
+/** One dose in a multi-dose series. */
+export interface VaccineDose {
+  /** 1-based. Dose 2 of Shingrix is doseNumber 2. */
+  doseNumber: number;
+  monthReceived: number | null;
+  yearReceived: number | null;
+}
+
 export interface VaccineRecord {
   id: string;
   vaccineId: string;
@@ -220,6 +228,14 @@ export interface VaccineRecord {
   monthReceived: number | null;
   yearReceived: number | null;
   hasDate: boolean;
+  /**
+   * Every dose recorded for this vaccine, dose 1 first.
+   *
+   * `monthReceived`/`yearReceived` above remain dose 1, so older records and
+   * every screen that only cares about "when did you have this" keep working.
+   * This is the fuller picture for vaccines given as a series.
+   */
+  doses: VaccineDose[];
   proofImageUri: string | null;
   verified: boolean;
   nextDueDate: string | null;
@@ -235,6 +251,10 @@ export interface VaccineInfo {
   description: string;
   protectsAgainst: string;
   cadenceMonths: number | null;
+  /** Doses in a full course. 1 for a single shot. */
+  doseCount: number;
+  /** Typical gap between doses in a course, for suggesting when the next is due. */
+  doseIntervalMonths: number | null;
   minAge: number;
   maxAge: number | null;
 }

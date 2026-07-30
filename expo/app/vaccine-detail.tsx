@@ -43,10 +43,14 @@ export default function VaccineDetailScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { vaccines, updateVaccineDate, setVaccineProof, removeVaccine } = useClairity();
+  const { vaccines, updateVaccineDate, recordVaccineDose, removeVaccineDose, setVaccineProof, removeVaccine } = useClairity();
 
   const vac = vaccines.find((v) => v.id === id);
   const [editingDate, setEditingDate] = useState(!vac?.hasDate);
+  /** Which dose the editor is open for, or null. Dose 1 is edited above. */
+  const [editingDose, setEditingDose] = useState<number | null>(null);
+  const [doseMonth, setDoseMonth] = useState<number | null>(null);
+  const [doseYear, setDoseYear] = useState<string>("");
   const [month, setMonth] = useState<number | null>(vac?.monthReceived ?? null);
   const [year, setYear] = useState<string>(vac?.yearReceived?.toString() ?? "");
   const [notSure, setNotSure] = useState(!vac?.hasDate);
@@ -170,6 +174,111 @@ export default function VaccineDetailScreen() {
             </View>
           ) : null}
         </Card>
+
+        {/*
+          Courses given in more than one dose. Hidden entirely for a single-shot
+          vaccine, where a series would be noise — "1 of 1" tells nobody
+          anything. Dose 1 is edited through the card above, so it is shown here
+          read-only to keep one date in one place.
+        */}
+        {info && info.doseCount > 1 ? (
+          <Card style={{ marginTop: 16 }}>
+            <View style={styles.doseHeader}>
+              <Text style={styles.cardTitle}>Doses</Text>
+              <Text style={styles.doseCount}>
+                {vac.doses.length} of {info.doseCount}
+                {vac.doses.length >= info.doseCount ? " · complete" : ""}
+              </Text>
+            </View>
+            <Text style={styles.doseIntro}>
+              This vaccine is given as {info.doseCount} doses
+              {info.doseIntervalMonths ? `, usually about ${info.doseIntervalMonths} months apart` : ""}.
+            </Text>
+
+            {Array.from({ length: info.doseCount }, (_, index) => index + 1).map((doseNumber) => {
+              const dose = vac.doses.find((entry) => entry.doseNumber === doseNumber);
+              const isEditing = editingDose === doseNumber;
+              return (
+                <View key={doseNumber} style={styles.doseRow}>
+                  <View style={styles.doseNumWrap}>
+                    <Text style={[styles.doseNum, dose && styles.doseNumDone]}>{doseNumber}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.doseLabel}>Dose {doseNumber}</Text>
+                    <Text style={styles.doseDate}>
+                      {dose ? formatMonthYear(dose.monthReceived, dose.yearReceived) : "Not recorded"}
+                    </Text>
+                  </View>
+                  {doseNumber === 1 ? (
+                    <Text style={styles.doseHint}>Set above</Text>
+                  ) : isEditing ? (
+                    <Pressable onPress={() => setEditingDose(null)} hitSlop={10}>
+                      <Text style={styles.editLink}>Cancel</Text>
+                    </Pressable>
+                  ) : (
+                    <View style={styles.doseActions}>
+                      <Pressable onPress={() => setEditingDose(doseNumber)} hitSlop={10}>
+                        <Text style={styles.editLink}>{dose ? "Edit" : "Add"}</Text>
+                      </Pressable>
+                      {dose ? (
+                        <Pressable onPress={() => removeVaccineDose(vac.id, doseNumber)} hitSlop={10}>
+                          <Text style={styles.doseRemove}>Clear</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+
+            {editingDose && editingDose > 1 ? (
+              <View style={styles.doseEditor}>
+                <Text style={styles.doseEditorTitle}>When was dose {editingDose}?</Text>
+                <Text style={styles.pickerLabel}>Month received</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
+                  {MONTHS.map((name, index) => (
+                    <Pressable
+                      key={name}
+                      onPress={() => setDoseMonth(index + 1)}
+                      style={({ pressed }) => [
+                        styles.monthChip,
+                        doseMonth === index + 1 && styles.monthChipActive,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={[styles.monthChipText, doseMonth === index + 1 && styles.monthChipTextActive]}>
+                        {name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+                <Text style={styles.pickerLabel}>Year received</Text>
+                <TextInput
+                  style={styles.yearInput}
+                  value={doseYear}
+                  onChangeText={setDoseYear}
+                  placeholder="e.g. 2026"
+                  placeholderTextColor={C.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+                <PrimaryButton
+                  label={`Save dose ${editingDose}`}
+                  onPress={() => {
+                    const yearNum = parseInt(doseYear, 10);
+                    if (!doseMonth || Number.isNaN(yearNum)) return;
+                    recordVaccineDose(vac.id, editingDose, doseMonth, yearNum);
+                    setEditingDose(null);
+                    setDoseMonth(null);
+                    setDoseYear("");
+                  }}
+                  disabled={!doseMonth || doseYear.length !== 4}
+                  style={{ marginTop: Space.md }}
+                />
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
 
         {/* Date recorded */}
         <Card style={{ marginTop: 16 }}>
@@ -391,6 +500,39 @@ const styles = StyleSheet.create({
     color: C.primary,
   },
   // Date
+  doseHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  doseCount: { ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
+  doseIntro: { ...Type.caption, color: C.textMuted, marginTop: Space.xs, marginBottom: Space.md },
+  doseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    paddingVertical: Space.sm,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  doseNumWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.pill,
+    backgroundColor: C.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  doseNum: { ...Type.caption, fontFamily: Font.bodySemi, color: C.textMuted },
+  doseNumDone: { color: C.primary },
+  doseLabel: { ...Type.label, color: C.text },
+  doseDate: { ...Type.caption, color: C.textMuted, marginTop: 2 },
+  doseHint: { ...Type.caption, color: C.textMuted },
+  doseActions: { flexDirection: "row", gap: Space.md },
+  doseRemove: { ...Type.caption, fontFamily: Font.bodySemi, color: C.danger },
+  doseEditor: {
+    marginTop: Space.md,
+    paddingTop: Space.md,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  doseEditorTitle: { ...Type.label, color: C.text, marginBottom: Space.sm },
   dateDisplay: {
     flexDirection: "row",
     alignItems: "center",

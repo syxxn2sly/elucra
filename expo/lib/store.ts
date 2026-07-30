@@ -109,7 +109,21 @@ function useClairityState() {
 
         if (profileStr) setProfile(JSON.parse(profileStr) as HealthProfile);
         if (docsStr) setDocuments(JSON.parse(docsStr) as SavedDocument[]);
-        if (vaccinesStr) setVaccines(JSON.parse(vaccinesStr) as VaccineRecord[]);
+        if (vaccinesStr) {
+          // Records written before dose tracking have no `doses`. Their single
+          // received date is dose 1, so synthesise that rather than showing an
+          // existing vaccine as having no doses at all.
+          setVaccines(
+            (JSON.parse(vaccinesStr) as VaccineRecord[]).map((record) => ({
+              ...record,
+              doses: record.doses?.length
+                ? record.doses
+                : record.hasDate
+                  ? [{ doseNumber: 1, monthReceived: record.monthReceived, yearReceived: record.yearReceived }]
+                  : [],
+            })),
+          );
+        }
         if (medsStr) setMedications((JSON.parse(medsStr) as Medication[]).map((medication) => ({ ...medication, reminderEnabled: medication.reminderEnabled ?? false, reminderTime: medication.reminderTime ?? "", notificationId: medication.notificationId ?? null })));
         if (appointmentsStr) setAppointments(JSON.parse(appointmentsStr) as Appointment[]);
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
@@ -263,6 +277,7 @@ function useClairityState() {
           monthReceived: null,
           yearReceived: null,
           hasDate: false,
+          doses: [],
           proofImageUri: null,
           verified: false,
           nextDueDate: null,
@@ -364,6 +379,9 @@ function useClairityState() {
         monthReceived: month,
         yearReceived: year,
         hasDate,
+        // A vaccine added with a date has had its first dose. Without a date it
+        // is recorded as "had it, don't know when" and the series starts empty.
+        doses: hasDate ? [{ doseNumber: 1, monthReceived: month, yearReceived: year }] : [],
         proofImageUri: null,
         verified: false,
         nextDueDate: nextDue,
@@ -392,6 +410,7 @@ function useClairityState() {
         monthReceived: null,
         yearReceived: null,
         hasDate: false,
+        doses: [],
         proofImageUri: null,
         verified: false,
         nextDueDate: null,
@@ -411,12 +430,69 @@ function useClairityState() {
           if (v.id !== id) return v;
           const info = VACCINE_CATALOG.find((vi) => vi.id === v.vaccineId);
           const nextDue = computeNextDue(month, year, info?.cadenceMonths ?? null);
-          return { ...v, monthReceived: month, yearReceived: year, hasDate, nextDueDate: nextDue };
+          // Editing "the" date edits dose 1, so the series and the summary
+          // fields cannot drift apart.
+          const doses = hasDate
+            ? [
+                { doseNumber: 1, monthReceived: month, yearReceived: year },
+                ...v.doses.filter((dose) => dose.doseNumber !== 1),
+              ].sort((a, b) => a.doseNumber - b.doseNumber)
+            : v.doses.filter((dose) => dose.doseNumber !== 1);
+          return { ...v, monthReceived: month, yearReceived: year, hasDate, doses, nextDueDate: nextDue };
         }),
       );
     },
     [],
   );
+
+  /**
+   * Record or change one dose of a course.
+   *
+   * Several vaccines are only complete after two or three shots — Shingrix,
+   * hepatitis B, HPV — and a single received date could not express "dose 1 in
+   * March, dose 2 still outstanding". Dose 1 stays mirrored onto the record's
+   * own month/year so every existing screen keeps working unchanged.
+   */
+  const recordVaccineDose = useCallback(
+    (id: string, doseNumber: number, month: number | null, year: number | null) => {
+      setVaccines((prev) =>
+        prev.map((v) => {
+          if (v.id !== id) return v;
+          const info = VACCINE_CATALOG.find((vi) => vi.id === v.vaccineId);
+          const doses = [
+            ...v.doses.filter((dose) => dose.doseNumber !== doseNumber),
+            { doseNumber, monthReceived: month, yearReceived: year },
+          ].sort((a, b) => a.doseNumber - b.doseNumber);
+
+          const first = doses.find((dose) => dose.doseNumber === 1);
+          // The next reminder runs from the most recent dose, not the first.
+          const latest = doses[doses.length - 1];
+          const complete = info ? doses.length >= info.doseCount : true;
+          const nextDue = complete
+            ? computeNextDue(latest?.monthReceived ?? null, latest?.yearReceived ?? null, info?.cadenceMonths ?? null)
+            : computeNextDue(latest?.monthReceived ?? null, latest?.yearReceived ?? null, info?.doseIntervalMonths ?? null);
+
+          return {
+            ...v,
+            doses,
+            monthReceived: first?.monthReceived ?? v.monthReceived,
+            yearReceived: first?.yearReceived ?? v.yearReceived,
+            hasDate: Boolean(first?.monthReceived && first?.yearReceived) || v.hasDate,
+            nextDueDate: nextDue,
+          };
+        }),
+      );
+    },
+    [],
+  );
+
+  const removeVaccineDose = useCallback((id: string, doseNumber: number) => {
+    setVaccines((prev) =>
+      prev.map((v) =>
+        v.id === id ? { ...v, doses: v.doses.filter((dose) => dose.doseNumber !== doseNumber) } : v,
+      ),
+    );
+  }, []);
 
   const setVaccineProof = useCallback((id: string, proofUri: string | null) => {
     setVaccines((prev) =>
@@ -578,6 +654,8 @@ function useClairityState() {
     addVaccine,
     addTravelVaccine,
     updateVaccineDate,
+    recordVaccineDose,
+    removeVaccineDose,
     setVaccineProof,
     removeVaccine,
     // Medications
