@@ -11,6 +11,7 @@ import {
   ArrowRight,
   FileText,
   Sparkles,
+  Stethoscope,
 } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -127,6 +128,24 @@ export default function HomeScreen() {
               </View>
               <ArrowRight color={C.textInverse} size={24} />
             </View>
+          </Pressable>
+
+          {/*
+            The other half of the loop. Simplify is what you do with a document
+            after a visit; this is what you take into the next one.
+          */}
+          <Pressable
+            onPress={() => router.push("/visit-summary")}
+            style={({ pressed }) => [styles.visitCard, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Build a summary to show your doctor"
+          >
+            <Stethoscope color={C.primary} size={22} strokeWidth={2.5} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.visitCardTitle}>Summary for your doctor</Text>
+              <Text style={styles.visitCardSub}>Medications, recent results and questions — ready to show</Text>
+            </View>
+            <ArrowRight color={C.primary} size={20} />
           </Pressable>
         </View>
 
@@ -418,6 +437,20 @@ const styles = StyleSheet.create({
     marginTop: Space.xs,
   },
   // Snapshot grid
+  visitCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: Radius.lg,
+    paddingVertical: Space.lg,
+    paddingHorizontal: Space.lg,
+    marginTop: Space.md,
+  },
+  visitCardTitle: { ...Type.label, color: C.text },
+  visitCardSub: { ...Type.caption, color: C.textMuted, marginTop: 2 },
   snapshotGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

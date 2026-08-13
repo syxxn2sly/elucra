@@ -1,0 +1,229 @@
+// CLAIRITY — a summary to show your doctor at the start of an appointment
+import { router } from "expo-router";
+import * as Clipboard from "expo-clipboard";
+import { ClipboardCheck, Copy, RefreshCw, Share as ShareIcon, Stethoscope } from "lucide-react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Share as RNShare,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import Colors from "@/constants/colors";
+import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
+import { useStackScrollPadding } from "@/lib/layout";
+import { useClairity } from "@/lib/store";
+import { generateVisitSummary } from "@/lib/ai-service";
+import { formatDateDisplay, formatMonthYear } from "@/lib/utils";
+import { Card, PrimaryButton, ScreenHeader } from "@/components/ui";
+
+const C = Colors.light;
+
+/** Enough context to be useful, few enough to stay under a page. */
+const RECENT_DOCUMENT_LIMIT = 5;
+
+export default function VisitSummaryScreen() {
+  const insets = useSafeAreaInsets();
+  const scrollPadding = useStackScrollPadding();
+  const { profile, medications, documents, appointments, vaccines, loaded } = useClairity();
+
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const generate = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const now = Date.now();
+      const text = await generateVisitSummary({
+        profile,
+        medications: medications.map((med) => ({
+          name: med.name,
+          dose: med.dose,
+          frequency: med.frequency,
+        })),
+        // Newest first — a summary is about what has changed lately, and the
+        // stored order is oldest-first.
+        recentDocuments: [...documents]
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          .slice(0, RECENT_DOCUMENT_LIMIT)
+          .map((doc) => ({
+            title: doc.result.title,
+            date: formatDateDisplay(doc.createdAt),
+            summary: doc.result.summary,
+          })),
+        upcomingAppointments: appointments
+          .filter((appointment) => new Date(appointment.dateTime).getTime() >= now)
+          .map((appointment) => ({
+            title: appointment.title,
+            dateTime: formatDateDisplay(appointment.dateTime),
+            location: appointment.location,
+          })),
+        vaccines: vaccines
+          .filter((vaccine) => vaccine.hasDate)
+          .map((vaccine) => ({
+            name: vaccine.name,
+            received: formatMonthYear(vaccine.monthReceived, vaccine.yearReceived),
+          })),
+      });
+      setSummary(text);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not build the summary. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [profile, medications, documents, appointments, vaccines]);
+
+  /*
+    Generate on open, but only once the store has hydrated.
+
+    The store reads from AsyncStorage asynchronously, so on first render the
+    profile, medications and documents are all still at their defaults. Firing
+    immediately produced a confident summary reporting that nothing had been
+    recorded — for a profile full of data. Worse than a spinner: it looked like
+    an answer.
+  */
+  const generated = useRef(false);
+  useEffect(() => {
+    if (!loaded || generated.current) return;
+    generated.current = true;
+    generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  const copy = useCallback(async () => {
+    await Clipboard.setStringAsync(summary);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [summary]);
+
+  const share = useCallback(async () => {
+    try {
+      await RNShare.share({ message: summary });
+    } catch {
+      // Cancelling the share sheet lands here; nothing to report.
+    }
+  }, [summary]);
+
+  const hasAnything =
+    medications.length > 0 || documents.length > 0 || appointments.length > 0 || Boolean(profile.name);
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <ScreenHeader title="For your appointment" fallbackRoute="/(tabs)" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: scrollPadding }}
+      >
+        <View style={styles.titleWrap}>
+          <View style={styles.titleIcon}>
+            <Stethoscope color={C.primary} size={24} strokeWidth={2.5} />
+          </View>
+          <Text style={styles.title}>Show this to your doctor</Text>
+        </View>
+        <Text style={styles.subtitle}>
+          Built from what CLAIRITY already knows: your profile, medications, recent reports and
+          upcoming appointments.
+        </Text>
+
+        {!hasAnything ? (
+          <Card style={styles.card}>
+            <Text style={styles.emptyText}>
+              There is nothing to summarise yet. Add your medications or scan a report first, and
+              this will have something to work from.
+            </Text>
+          </Card>
+        ) : loading || !loaded ? (
+          <Card style={styles.card}>
+            <View style={styles.loadingRow}>
+              <ActivityIndicator color={C.primary} />
+              <Text style={styles.loadingText}>Putting your summary together…</Text>
+            </View>
+          </Card>
+        ) : error ? (
+          <Card style={styles.card}>
+            <Text style={styles.errorText}>{error}</Text>
+            <PrimaryButton label="Try again" onPress={generate} style={{ marginTop: Space.md }} />
+          </Card>
+        ) : (
+          <>
+            <Card style={styles.card}>
+              <Text style={styles.summaryText} selectable>
+                {summary}
+              </Text>
+            </Card>
+
+            <View style={styles.actions}>
+              <Pressable onPress={copy} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+                {copied ? (
+                  <ClipboardCheck color={C.success} size={19} strokeWidth={2.5} />
+                ) : (
+                  <Copy color={C.primary} size={19} strokeWidth={2.5} />
+                )}
+                <Text style={styles.actionText}>{copied ? "Copied" : "Copy"}</Text>
+              </Pressable>
+              <Pressable onPress={share} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+                <ShareIcon color={C.primary} size={19} strokeWidth={2.5} />
+                <Text style={styles.actionText}>Share</Text>
+              </Pressable>
+              <Pressable onPress={generate} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+                <RefreshCw color={C.primary} size={19} strokeWidth={2.5} />
+                <Text style={styles.actionText}>Rebuild</Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.disclaimer}>
+              Built from what you have recorded, and only that — anything CLAIRITY does not know is
+              left out rather than guessed at, so read it through before you hand it over. It is a
+              starting point for the conversation, not a medical record and not a diagnosis.
+            </Text>
+          </>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.background },
+  titleWrap: { flexDirection: "row", alignItems: "center", gap: Space.md, marginBottom: Space.sm },
+  titleIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    backgroundColor: C.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { ...Type.title, color: C.text, flex: 1 },
+  subtitle: { ...Type.body, color: C.textMuted, marginBottom: Space.lg },
+  card: { marginBottom: Space.lg },
+  loadingRow: { flexDirection: "row", alignItems: "center", gap: Space.md },
+  loadingText: { ...Type.body, color: C.textMuted },
+  errorText: { ...Type.body, color: C.danger },
+  emptyText: { ...Type.body, color: C.textMuted },
+  summaryText: { ...Type.body, color: C.text, lineHeight: 25 },
+  actions: { flexDirection: "row", gap: Space.sm },
+  action: {
+    flex: 1,
+    minHeight: HIT_TARGET,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space.sm,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: Radius.md,
+  },
+  actionText: { ...Type.label, color: C.primary },
+  pressed: { opacity: 0.85 },
+  disclaimer: { ...Type.caption, color: C.textMuted, marginTop: Space.xl, lineHeight: 19 },
+});

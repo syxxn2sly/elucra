@@ -894,6 +894,51 @@ export async function extractHealthCard(input: { imageBase64: string; mimeType: 
 }
 
 /** Build a clinical handoff strictly from the verified extraction, never raw imagery. */
+/**
+ * A summary of everything, for the appointment you are walking into.
+ *
+ * The per-document version above answers "what does this report say". This
+ * answers "what should my doctor know about me right now" — and the two need
+ * different framing: this one is read aloud or handed over by a patient, so it
+ * is organised the way a clinician takes a history rather than as a document
+ * handoff.
+ *
+ * Same discipline as everywhere else in this file: it is given structured facts
+ * and told to use only those. It does not diagnose, does not suggest treatment,
+ * and does not invent a symptom nobody recorded. Anything the app does not know
+ * is left out rather than guessed at, because a confident-sounding summary with
+ * an invented detail in it is worse at a consultation than no summary at all.
+ */
+export async function generateVisitSummary(input: {
+  profile: HealthProfile;
+  medications: { name: string; dose: string; frequency: string }[];
+  recentDocuments: { title: string; date: string; summary: string }[];
+  upcomingAppointments: { title: string; dateTime: string; location: string }[];
+  vaccines: { name: string; received: string }[];
+}): Promise<string> {
+  const content = await requestCompletion({
+    model: MODEL_ID,
+    max_tokens: 900,
+    messages: [
+      {
+        role: "system",
+        content: `Write a short summary a patient can show their doctor at the start of an appointment. Use ONLY the supplied facts.
+
+Organise it under these headings, omitting any heading with nothing to report:
+ABOUT ME — age, sex, and any conditions and allergies recorded.
+CURRENT MEDICATIONS — name, dose and frequency exactly as recorded. Say "dose not recorded" where it is missing rather than leaving it out.
+RECENT RESULTS — the most recent documents and what they showed, in one line each.
+UPCOMING — appointments already booked.
+QUESTIONS TO ASK — only questions that follow directly from a gap in the record, such as a medication with no dose recorded or a result the patient has no follow-up for. If nothing qualifies, omit this heading entirely.
+
+Do not diagnose, do not interpret results beyond what the supplied summary already says, do not recommend treatment, and do not invent symptoms, dates or measurements. Plain text, no markdown, under 250 words.`,
+      },
+      { role: "user", content: JSON.stringify(input) },
+    ],
+  });
+  return content.trim();
+}
+
 export async function generateDoctorSummary(input: { title: string; facts: ExtractedFacts; profile: HealthProfile }): Promise<string> {
   const content = await requestCompletion({
     model: MODEL_ID,
