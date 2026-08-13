@@ -9,7 +9,7 @@ import {
   Calendar,
   HelpCircle,
 } from "lucide-react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -53,6 +53,20 @@ export default function VaccineDetailScreen() {
   const [proofDose, setProofDose] = useState(1);
   const [month, setMonth] = useState<number | null>(vac?.monthReceived ?? null);
   const [year, setYear] = useState<string>(vac?.yearReceived?.toString() ?? "");
+
+  /*
+    Same hydration guard as Care Team. Before the store loads, `vac` is
+    undefined, so editingDate opened true and the month and year started empty —
+    a vaccine with a recorded date appeared to have none.
+  */
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (hydrated.current || !vac) return;
+    hydrated.current = true;
+    setMonth(vac.monthReceived ?? null);
+    setYear(vac.yearReceived?.toString() ?? "");
+    setEditingDate(!vac.hasDate);
+  }, [vac]);
   /*
     Starts false even for a vaccine with no date. It used to start true, which
     hid the month and year pickers behind the "I'm not sure" radio — so the one

@@ -1,7 +1,7 @@
 // CLAIRITY — Personal medical portfolio: family doctor and care-team record
 import { router } from "expo-router";
 import { Stethoscope, Check, ShieldCheck } from "lucide-react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,8 +27,25 @@ const EMPTY_DOCTOR: FamilyDoctor = {
 export default function IdentityScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { familyDoctor, updateFamilyDoctor } = useClairity();
+  const { familyDoctor, updateFamilyDoctor, loaded } = useClairity();
   const [draft, setDraft] = useState<FamilyDoctor>(familyDoctor ?? EMPTY_DOCTOR);
+
+  /*
+    Fill the draft once the store has hydrated.
+
+    The store starts at DEFAULT_FAMILY_DOCTOR — all empty strings, never
+    undefined — so the initialiser above always took the empty default and never
+    saw the saved record. Opening Care Team with details already saved showed
+    blank fields, and saving from there would have written the blanks back over
+    them. Guarded by a ref so it fills once and never overwrites typing.
+  */
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (hydrated.current || !loaded) return;
+    hydrated.current = true;
+    setDraft(familyDoctor ?? EMPTY_DOCTOR);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
   const setField = useCallback((key: keyof FamilyDoctor, value: string) => {
     setDraft((previous) => ({ ...previous, [key]: value }));
