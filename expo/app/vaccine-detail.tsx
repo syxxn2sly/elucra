@@ -16,7 +16,6 @@ import {
   View,
   ScrollView,
   Pressable,
-  Alert,
   TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,7 +28,7 @@ import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { VACCINE_CATALOG } from "@/lib/vaccine-data";
-import { formatMonthYear, formatDueCountdown, formatDateDisplay } from "@/lib/utils";
+import { confirmDestructive, formatDateDisplay, formatDueCountdown, formatMonthYear, notify } from "@/lib/utils";
 import { Card, Tag, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
 import { MonthYearWheel } from "@/components/smart-inputs";
 
@@ -111,7 +110,7 @@ export default function VaccineDetailScreen() {
     const monthNum = month;
     const yearNum = parseInt(year, 10);
     if (!monthNum || !yearNum || yearNum < 1900 || yearNum > 2100) {
-      Alert.alert("Please check", "Select both a month and a valid year, or choose \"I'm not sure\".");
+      notify("Please check", "Select both a month and a valid year, or choose \"I'm not sure\".");
       return;
     }
     updateVaccineDate(vac.id, monthNum, yearNum, true);
@@ -122,7 +121,7 @@ export default function VaccineDetailScreen() {
     if (!vac) return;
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert("Permission needed", "Camera access is needed to photograph your proof.");
+      notify("Permission needed", "Camera access is needed to photograph your proof.");
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
@@ -141,20 +140,14 @@ export default function VaccineDetailScreen() {
 
   const handleDelete = useCallback(() => {
     if (!vac) return;
-    Alert.alert(
+    confirmDestructive(
       "Remove this vaccine?",
       "This will delete your record of this vaccine.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
+      "Delete",
+      () => {
             removeVaccine(vac.id);
             router.back();
           },
-        },
-      ],
     );
   }, [vac, removeVaccine]);
 

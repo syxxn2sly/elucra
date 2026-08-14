@@ -5,7 +5,6 @@ import * as ImagePicker from "expo-image-picker";
 import { FileText, Camera, Image as ImageIcon, Sparkles, AlertCircle, X, RefreshCw } from "lucide-react-native";
 import React, { useState, useCallback, useRef } from "react";
 import {
-  Alert,
   StyleSheet,
   Text,
   View,
@@ -22,7 +21,7 @@ import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { analyzeDocument } from "@/lib/ai-service";
 import { prepareForUpload } from "@/lib/resize-for-upload";
-import { generateId } from "@/lib/utils";
+import { generateId, notify } from "@/lib/utils";
 import {
   TRANSLATION_LANGUAGES,
   languageLabel,
@@ -165,7 +164,7 @@ export default function SimplifyScreen() {
             const reason =
               translationError instanceof Error ? translationError.message : "Translation failed.";
             console.warn("[CLAIRITY] Translation failed, keeping English:", reason);
-            Alert.alert(
+            notify(
               `Could not translate into ${languageLabel(language)}`,
               `${reason}\n\nYour document has been saved in English.`,
             );

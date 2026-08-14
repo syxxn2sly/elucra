@@ -23,7 +23,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,7 +33,7 @@ import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { PrimaryButton, ScreenHeader } from "@/components/ui";
-import { obfuscate } from "@/lib/utils";
+import { notify, obfuscate } from "@/lib/utils";
 import { extractHealthCard } from "@/lib/ai-service";
 import { resizeForUpload } from "@/lib/resize-for-upload";
 import type { HealthCardData } from "@/lib/types";
@@ -84,7 +83,7 @@ export default function HealthCardSetupScreen() {
   const captureImage = useCallback(async (which: "front" | "back") => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert("Permission needed", "Camera access is needed to photograph your card.");
+      notify("Permission needed", "Camera access is needed to photograph your card.");
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.9 });
@@ -115,7 +114,7 @@ export default function HealthCardSetupScreen() {
 
   const handleSave = useCallback(async () => {
     if (!cardNumber.trim()) {
-      Alert.alert("Card number required", "Please enter your health card number.");
+      notify("Card number required", "Please enter your health card number.");
       return;
     }
     const card: HealthCardData = {

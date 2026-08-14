@@ -25,7 +25,6 @@ import {
   ScrollView,
   Pressable,
   Share as RNShare,
-  Alert,
   ActivityIndicator,
   Modal,
 } from "react-native";
@@ -39,7 +38,7 @@ import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { languageLabel, translateTexts, TRANSLATION_LANGUAGES, isRightToLeft } from "@/lib/translate";
 import { DOCUMENT_TYPES } from "@/lib/types";
-import { formatDateDisplay, confirmDestructive } from "@/lib/utils";
+import { confirmDestructive, formatDateDisplay, notify } from "@/lib/utils";
 import { Card, Tag, EmptyState, ScreenHeader } from "@/components/ui";
 import { generateDoctorSummary } from "@/lib/ai-service";
 import type { CommunicationScript } from "@/lib/types";
@@ -192,7 +191,7 @@ export default function DocumentDetailScreen() {
       documentId: doc.id,
       sourceBlockIds: [candidate.id, ...candidate.sourceBlockIds],
     });
-    Alert.alert("Added to your calendar", "Your appointment and its reminder have been saved.");
+    notify("Added to your calendar", "Your appointment and its reminder have been saved.");
   }, [doc, appointments, addAppointment]);
 
   const handleCopyDoctorSummary = useCallback(async () => {

@@ -29,7 +29,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -37,6 +36,7 @@ import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
+import { confirmDestructive } from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader } from "@/components/ui";
 import { ChipSelect, MultiChipInput, AgeWheel } from "@/components/smart-inputs";
 import {
@@ -122,20 +122,14 @@ export default function SettingsScreen() {
   }, []);
 
   const handleReset = useCallback(() => {
-    Alert.alert(
+    confirmDestructive(
       "Reset all data?",
       "This will permanently delete your profile, documents, vaccines, medications, and health card. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Everything",
-          style: "destructive",
-          onPress: () => {
+      "Delete Everything",
+      () => {
             resetProfile();
             router.replace("/onboarding");
           },
-        },
-      ],
     );
   }, [resetProfile]);
 

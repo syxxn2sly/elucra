@@ -11,7 +11,6 @@ import {
   View,
   Pressable,
   ScrollView,
-  Alert,
   Platform,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
@@ -25,7 +24,7 @@ import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/th
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { Card, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
-import { deobfuscate, obfuscate } from "@/lib/utils";
+import { confirmDestructive, deobfuscate, notify, obfuscate } from "@/lib/utils";
 import type { HealthCardData } from "@/lib/types";
 
 const C = Colors.light;
@@ -96,7 +95,7 @@ export default function HealthCardScreen() {
       }
     } catch (err) {
       console.error("[CLAIRITY] Auth error:", err);
-      Alert.alert("Authentication failed", "Please try again.");
+      notify("Authentication failed", "Please try again.");
     } finally {
       setAuthenticating(false);
     }
@@ -278,22 +277,16 @@ export default function HealthCardScreen() {
         {/* Delete */}
         <Pressable
           onPress={() => {
-            Alert.alert(
+            confirmDestructive(
               "Delete health card?",
               "This will permanently remove your card from this phone.",
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Delete",
-                  style: "destructive",
-                  onPress: async () => {
-                    await SecureStore.deleteItemAsync(CARD_KEY);
-                    removeHealthCard();
-                    setCardData(null);
-                    setUnlocked(false);
-                  },
-                },
-              ],
+              "Delete",
+              async () => {
+                await SecureStore.deleteItemAsync(CARD_KEY);
+                removeHealthCard();
+                setCardData(null);
+                setUnlocked(false);
+              },
             );
           }}
           style={styles.deleteBtn}

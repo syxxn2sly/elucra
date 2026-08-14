@@ -248,10 +248,16 @@ export default function AddAppointmentScreen() {
               value={appointmentDate}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
-              // The iOS spinner follows the system theme, so on a phone set to
-              // dark mode it drew white text on this light sheet and the date
-              // was invisible. The app is light-only for now, so pin it.
-              themeVariant="light"
+              /*
+                themeVariant is iOS-only. On Android the picker follows the
+                system theme regardless, so a phone in dark mode still draws
+                light text on this light sheet — the same invisible-date bug,
+                unfixed on the other platform. Forcing the whole dialog light
+                there needs a themed wrapper rather than a prop, so for now the
+                sheet itself goes dark on Android to match what the picker will
+                actually draw.
+              */
+              themeVariant={Platform.OS === "ios" ? "light" : undefined}
               minimumDate={new Date()}
               onChange={handlePickerChange}
             />

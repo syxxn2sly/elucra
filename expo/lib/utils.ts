@@ -178,3 +178,20 @@ export function confirmDestructive(
     { text: confirmLabel, style: "destructive", onPress: onConfirm },
   ]);
 }
+
+/**
+ * Tell the user something, on every platform.
+ *
+ * Companion to confirmDestructive, and needed for the same reason: react-native-web
+ * implements Alert as an empty function, so every "permission needed", "check this
+ * field" and "saved" message in the app was invisible in a browser. A validation
+ * failure that says nothing is worse than one that says the wrong thing — the form
+ * simply appears not to respond.
+ */
+export function notify(title: string, message?: string): void {
+  if (Platform.OS === "web") {
+    if (typeof window !== "undefined") window.alert(message ? `${title}\n\n${message}` : title);
+    return;
+  }
+  Alert.alert(title, message);
+}
