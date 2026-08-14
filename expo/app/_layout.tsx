@@ -40,6 +40,7 @@ function RootLayoutNav() {
       <Stack.Screen name="healthcard" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="visit-summary" />
+      <Stack.Screen name="vitals" />
       <Stack.Screen name="travel" />
       <Stack.Screen name="identity" />
       <Stack.Screen name="add-appointment" options={{ presentation: "modal" }} />

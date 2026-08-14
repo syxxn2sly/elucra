@@ -219,6 +219,35 @@ export interface Appointment {
 }
 
 /** One dose in a multi-dose series. */
+/**
+ * What can be logged. Kept as a closed set rather than free text so a reading
+ * always knows its own units and reference range, and so trends can group.
+ */
+export type VitalKind =
+  | "bloodPressure"
+  | "heartRate"
+  | "bloodGlucose"
+  | "oxygenSaturation"
+  | "weight"
+  | "temperature";
+
+export interface VitalReading {
+  id: string;
+  kind: VitalKind;
+  /**
+   * The reading. Blood pressure is the only two-number kind, so it uses
+   * `systolic`/`diastolic` and leaves this null rather than encoding "120/80"
+   * as a string nobody can plot.
+   */
+  value: number | null;
+  systolic: number | null;
+  diastolic: number | null;
+  /** When it was taken, which is not always when it was entered. */
+  takenAt: string;
+  note: string;
+  createdAt: string;
+}
+
 export interface VaccineDose {
   /** 1-based. Dose 2 of Shingrix is doseNumber 2. */
   doseNumber: number;

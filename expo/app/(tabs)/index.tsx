@@ -12,6 +12,7 @@ import {
   FileText,
   Sparkles,
   Stethoscope,
+  Activity,
 } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -46,6 +47,7 @@ export default function HomeScreen() {
     documents,
     vaccines,
     medications,
+    vitals,
     healthCard,
     loaded,
   } = useClairity();
@@ -182,6 +184,13 @@ export default function HomeScreen() {
             value={documents.length.toString()}
             sub={documents.length === 1 ? "document" : "documents"}
             onPress={() => router.push("/reports")}
+          />
+          <QuickCard
+            icon={<Activity color={C.docBloodWork} size={22} strokeWidth={2.5} />}
+            label="Vitals"
+            value={vitals.length.toString()}
+            sub={vitals.length === 1 ? "reading" : "readings"}
+            onPress={() => router.push("/vitals")}
           />
           <QuickCard
             icon={<CreditCard color={C.accent} size={22} strokeWidth={2.5} />}

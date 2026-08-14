@@ -17,6 +17,7 @@ import type {
   HealthCardData,
   FamilyDoctor,
   Appointment,
+  VitalReading,
 } from "./types";
 import { generateId, computeNextDue } from "./utils";
 import { VACCINE_CATALOG } from "./vaccine-data";
@@ -30,6 +31,7 @@ const STORAGE_KEYS = {
   healthCard: "@clairity/healthcard",
   familyDoctor: "@clairity/family-doctor",
   appointments: "@clairity/appointments",
+  vitals: "@clairity/vitals",
   favouriteLocation: "@clairity/favourite-location",
   preferredLanguage: "@clairity/preferred-language",
 } as const;
@@ -73,6 +75,7 @@ function useClairityState() {
   const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [vitals, setVitals] = useState<VitalReading[]>([]);
   const [healthCard, setHealthCard] = useState<HealthCardData | null>(null);
   const [familyDoctor, setFamilyDoctor] = useState<FamilyDoctor>(DEFAULT_FAMILY_DOCTOR);
   /** Places pinned for one-tap reuse when booking an appointment. */
@@ -93,6 +96,7 @@ function useClairityState() {
           cardStr,
           doctorStr,
           appointmentsStr,
+          vitalsStr,
           favouriteLocationStr,
           preferredLanguageStr,
         ] = await Promise.all([
@@ -103,6 +107,7 @@ function useClairityState() {
           AsyncStorage.getItem(STORAGE_KEYS.healthCard),
           AsyncStorage.getItem(STORAGE_KEYS.familyDoctor),
           AsyncStorage.getItem(STORAGE_KEYS.appointments),
+          AsyncStorage.getItem(STORAGE_KEYS.vitals),
           AsyncStorage.getItem(STORAGE_KEYS.favouriteLocation),
           AsyncStorage.getItem(STORAGE_KEYS.preferredLanguage),
         ]);
@@ -126,6 +131,7 @@ function useClairityState() {
         }
         if (medsStr) setMedications((JSON.parse(medsStr) as Medication[]).map((medication) => ({ ...medication, reminderEnabled: medication.reminderEnabled ?? false, reminderTime: medication.reminderTime ?? "", notificationId: medication.notificationId ?? null })));
         if (appointmentsStr) setAppointments(JSON.parse(appointmentsStr) as Appointment[]);
+        if (vitalsStr) setVitals(JSON.parse(vitalsStr) as VitalReading[]);
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
         if (doctorStr) setFamilyDoctor({ ...DEFAULT_FAMILY_DOCTOR, ...(JSON.parse(doctorStr) as FamilyDoctor) });
         // Stored as a bare string when there was only one favourite; the array
@@ -171,6 +177,10 @@ function useClairityState() {
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.appointments, JSON.stringify(appointments));
   }, [appointments, loaded]);
+
+  useEffect(() => {
+    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.vitals, JSON.stringify(vitals));
+  }, [vitals, loaded]);
 
   useEffect(() => {
     if (loaded) {
@@ -362,6 +372,21 @@ function useClairityState() {
     },
     [],
   );
+
+  // --- Vitals ---
+  /**
+   * Newest first on write, so every reader gets chronological order without
+   * having to sort. Readings are entered out of order more often than you would
+   * think — someone logs this morning's blood pressure at lunchtime.
+   */
+  const addVital = useCallback((reading: Omit<VitalReading, "id" | "createdAt">) => {
+    const record: VitalReading = { ...reading, id: generateId(), createdAt: new Date().toISOString() };
+    setVitals((prev) => [record, ...prev].sort((a, b) => b.takenAt.localeCompare(a.takenAt)));
+  }, []);
+
+  const removeVital = useCallback((id: string) => {
+    setVitals((prev) => prev.filter((reading) => reading.id !== id));
+  }, []);
 
   // --- Vaccine actions ---
   const addVaccine = useCallback(
@@ -652,6 +677,9 @@ function useClairityState() {
     vaccines,
     medications,
     appointments,
+    vitals,
+    addVital,
+    removeVital,
     healthCard,
     familyDoctor,
     favouriteLocations,

@@ -26,6 +26,9 @@ const SPLASH_BACKGROUND = "#FAF6F0";
 
 const MARK_SIZE = 132;
 
+/** Sum of the sequence below. Kept beside it so the deadline cannot drift. */
+const TOTAL_DURATION_MS = 520 + 280 + 240 + 320;
+
 export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const markOpacity = useRef(new Animated.Value(0)).current;
   const markScale = useRef(new Animated.Value(0.88)).current;
@@ -69,12 +72,26 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
     ]);
 
     run.start(({ finished }) => {
-      // Report done even when interrupted — a backgrounded app cancels the
-      // animation, and leaving the overlay up would hide the app entirely.
       if (finished) finish();
     });
 
+    /*
+      A hard deadline, independent of the animation.
+
+      This overlay covers the whole app, so "the animation did not call back" has
+      to be survivable rather than fatal — and it happened: the sequence stalled
+      and left the splash sitting at full opacity over a fully rendered screen,
+      with no way past it. An animation callback is not a guarantee. It can be
+      dropped when the app backgrounds mid-sequence, and on react-native-web the
+      native driver does not always deliver one at all.
+
+      Set comfortably past the animation's own length so it never truncates a
+      run that is working.
+    */
+    const deadline = setTimeout(finish, TOTAL_DURATION_MS + 400);
+
     return () => {
+      clearTimeout(deadline);
       run.stop();
       finish();
     };
