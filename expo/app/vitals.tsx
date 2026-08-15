@@ -22,6 +22,7 @@ import { useClairity } from "@/lib/store";
 import { confirmDestructive, formatDateDisplay } from "@/lib/utils";
 import { VITAL_DEFINITIONS, formatVital, vitalDefinition } from "@/lib/vitals-data";
 import { Card, EmptyState, PrimaryButton, ScreenHeader } from "@/components/ui";
+import { VitalTrend } from "@/components/vital-trend";
 import type { VitalKind, VitalReading } from "@/lib/types";
 
 const C = Colors.light;
@@ -32,6 +33,8 @@ export default function VitalsScreen() {
   const { vitals, addVital, removeVital } = useClairity();
 
   const [adding, setAdding] = useState<VitalKind | null>(null);
+  /** Measured per group, since each card lays out independently. */
+  const [chartWidths, setChartWidths] = useState<Record<string, number>>({});
 
   const remove = useCallback(
     (reading: VitalReading) => {
@@ -109,6 +112,25 @@ export default function VitalsScreen() {
               <Text style={styles.groupReference}>{definition.reference}</Text>
 
               <Card style={styles.groupCard}>
+                {/*
+                  Above the readings, because the shape is what you came to see
+                  once there is more than one. onLayout supplies the width —
+                  SVG needs a number and the card is flexible.
+                */}
+                <View
+                  style={styles.trendWrap}
+                  onLayout={(event) =>
+                    setChartWidths((prev) =>
+                      prev[definition.kind] === event.nativeEvent.layout.width
+                        ? prev
+                        : { ...prev, [definition.kind]: event.nativeEvent.layout.width },
+                    )
+                  }
+                >
+                  {chartWidths[definition.kind] ? (
+                    <VitalTrend readings={readings} width={chartWidths[definition.kind]} />
+                  ) : null}
+                </View>
                 {readings.map((reading, index) => (
                   <View
                     key={reading.id}
@@ -301,6 +323,7 @@ const styles = StyleSheet.create({
   groupCount: { ...Type.caption, color: C.textMuted },
   groupReference: { ...Type.caption, color: C.textMuted, marginTop: 2, marginBottom: Space.sm },
   groupCard: { paddingVertical: Space.xs },
+  trendWrap: { paddingHorizontal: Space.xs },
   readingRow: { flexDirection: "row", alignItems: "center", paddingVertical: Space.md },
   readingRowDivided: { borderTopWidth: 1, borderTopColor: C.border },
   readingValue: { ...Type.title, color: C.text },
