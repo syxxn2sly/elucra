@@ -927,7 +927,9 @@ export async function generateVisitSummary(input: {
         content: `Write a short summary a patient can show their doctor at the start of an appointment. Use ONLY the supplied facts.
 
 Organise it under these headings, omitting any heading with nothing to report:
-ABOUT ME — age, sex, and any conditions and allergies recorded.
+Start with the patient's name on its own line, exactly as recorded, then a blank line. If no name is recorded, start straight at ABOUT ME.
+
+ABOUT ME — age, sex, and any conditions and allergies recorded. Do not repeat the name here.
 CURRENT MEDICATIONS — name, dose and frequency exactly as recorded. Say "dose not recorded" where it is missing rather than leaving it out.
 RECENT RESULTS — the most recent documents and what they showed, in one line each.
 READINGS I TRACK — the latest value for each vital recorded, with its date and how many readings there are. Report the numbers exactly and say nothing about whether they are normal, high or concerning: they were taken at home in unknown conditions, and interpreting them is the clinician's job, not yours.
