@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,14 +28,37 @@ import type { VitalKind, VitalReading } from "@/lib/types";
 
 const C = Colors.light;
 
+/** Matches the ScrollView contentContainerStyle below. */
+const SCREEN_PADDING = 20;
+/** The hairline on `Card`. */
+const CARD_BORDER = 1;
+
 export default function VitalsScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { vitals, addVital, removeVital } = useClairity();
 
   const [adding, setAdding] = useState<VitalKind | null>(null);
-  /** Measured per group, since each card lays out independently. */
-  const [chartWidths, setChartWidths] = useState<Record<string, number>>({});
+
+  /*
+    The chart needs a pixel width, and every card on this screen is the same
+    width, so it is arithmetic rather than something to measure.
+
+    Measuring with onLayout meant the chart could only appear a frame after the
+    card had already drawn, and a stale measurement outlived a resize and spilled
+    the line past the card edge. Deriving it is correct on the very first frame.
+
+    On web this value does not follow a window resize — the chart keeps the width
+    it mounted with and under-fills, which is whitespace rather than overflow, and
+    corrects on the next mount. That is the harmless direction to fail in, and the
+    app is phone-first, where the width is fixed for the life of the screen.
+  */
+  const { width: windowWidth } = useWindowDimensions();
+  const chartWidth =
+    windowWidth -
+    SCREEN_PADDING * 2 -
+    (Space.lg + CARD_BORDER) * 2 - // Card padding and its hairline border
+    Space.xs * 2; // trendWrap
 
   const remove = useCallback(
     (reading: VitalReading) => {
@@ -112,24 +136,9 @@ export default function VitalsScreen() {
               <Text style={styles.groupReference}>{definition.reference}</Text>
 
               <Card style={styles.groupCard}>
-                {/*
-                  Above the readings, because the shape is what you came to see
-                  once there is more than one. onLayout supplies the width —
-                  SVG needs a number and the card is flexible.
-                */}
-                <View
-                  style={styles.trendWrap}
-                  onLayout={(event) =>
-                    setChartWidths((prev) =>
-                      prev[definition.kind] === event.nativeEvent.layout.width
-                        ? prev
-                        : { ...prev, [definition.kind]: event.nativeEvent.layout.width },
-                    )
-                  }
-                >
-                  {chartWidths[definition.kind] ? (
-                    <VitalTrend readings={readings} width={chartWidths[definition.kind]} />
-                  ) : null}
+                {/* Above the readings: the shape is what you came to see. */}
+                <View style={styles.trendWrap}>
+                  <VitalTrend readings={readings} width={chartWidth} />
                 </View>
                 {readings.map((reading, index) => (
                   <View
