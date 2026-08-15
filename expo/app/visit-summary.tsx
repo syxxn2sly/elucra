@@ -20,6 +20,7 @@ import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { generateVisitSummary } from "@/lib/ai-service";
 import { formatDateDisplay, formatMonthYear } from "@/lib/utils";
+import { VITAL_DEFINITIONS, formatVital } from "@/lib/vitals-data";
 import { Card, PrimaryButton, ScreenHeader } from "@/components/ui";
 
 const C = Colors.light;
@@ -30,7 +31,7 @@ const RECENT_DOCUMENT_LIMIT = 5;
 export default function VisitSummaryScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { profile, medications, documents, appointments, vaccines, loaded } = useClairity();
+  const { profile, medications, documents, appointments, vaccines, vitals, loaded } = useClairity();
 
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,6 +73,20 @@ export default function VisitSummaryScreen() {
             name: vaccine.name,
             received: formatMonthYear(vaccine.monthReceived, vaccine.yearReceived),
           })),
+        // Latest per measure rather than every reading: a clinician wants the
+        // current value and how long you have been tracking, not a data dump.
+        vitals: VITAL_DEFINITIONS.map((definition) => {
+          const forKind = vitals.filter((reading) => reading.kind === definition.kind);
+          const latest = forKind[0];
+          return latest
+            ? {
+                label: definition.label,
+                latest: formatVital(latest),
+                takenAt: formatDateDisplay(latest.takenAt),
+                count: forKind.length,
+              }
+            : null;
+        }).filter((entry): entry is NonNullable<typeof entry> => entry !== null),
       });
       setSummary(text);
     } catch (err) {
@@ -79,7 +94,7 @@ export default function VisitSummaryScreen() {
     } finally {
       setLoading(false);
     }
-  }, [profile, medications, documents, appointments, vaccines]);
+  }, [profile, medications, documents, appointments, vaccines, vitals]);
 
   /*
     Generate on open, but only once the store has hydrated.
@@ -113,7 +128,7 @@ export default function VisitSummaryScreen() {
   }, [summary]);
 
   const hasAnything =
-    medications.length > 0 || documents.length > 0 || appointments.length > 0 || Boolean(profile.name);
+    medications.length > 0 || documents.length > 0 || appointments.length > 0 || vitals.length > 0 || Boolean(profile.name);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>

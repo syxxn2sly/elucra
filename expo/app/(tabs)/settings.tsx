@@ -19,8 +19,7 @@ import {
   CreditCard,
   FileHeart,
   Stethoscope,
-  Shield,
-} from "lucide-react-native";
+  Shield, Download } from "lucide-react-native";
 import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
@@ -29,14 +28,16 @@ import {
   ScrollView,
   Pressable,
   TextInput,
+  Share as RNShare,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
+import { File, Paths } from "expo-file-system";
 import { useClairity } from "@/lib/store";
-import { confirmDestructive } from "@/lib/utils";
+import { confirmDestructive, notify } from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader } from "@/components/ui";
 import { ChipSelect, MultiChipInput, AgeWheel } from "@/components/smart-inputs";
 import {
@@ -79,7 +80,7 @@ const FIELDS: EditableField[] = [
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
-  const { profile, updateProfile, resetProfile, documents, vaccines, medications, healthCard, familyDoctor } = useClairity();
+  const { profile, updateProfile, resetProfile, documents, vaccines, medications, appointments, vitals, healthCard, familyDoctor } = useClairity();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
   const [tempChipList, setTempChipList] = useState<string[]>([]);
@@ -120,6 +121,51 @@ export default function SettingsScreen() {
       return updated;
     });
   }, []);
+
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Write everything to a JSON file and hand it to the share sheet.
+   *
+   * A file rather than a wall of text in a message: this can run to megabytes
+   * once documents are involved, and a file can be saved to Files, mailed to
+   * yourself, or dropped in a drive — all of which are real backups, which the
+   * app otherwise has none of.
+   *
+   * The health card is deliberately excluded. It lives in the OS keychain behind
+   * biometrics, and copying it into a plaintext file the user then shares would
+   * quietly undo the one genuine security boundary the app has.
+   */
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    try {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        app: "CLAIRITY",
+        formatVersion: 1,
+        note: "Your health card is not included — it stays in this device's secure storage.",
+        profile,
+        familyDoctor,
+        documents,
+        vaccines,
+        medications,
+        appointments,
+        vitals,
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const stamp = new Date().toISOString().slice(0, 10);
+      const file = new File(Paths.cache, `clairity-export-${stamp}.json`);
+      file.write(json);
+      await RNShare.share({ url: file.uri, title: `CLAIRITY export ${stamp}` });
+    } catch (error) {
+      notify(
+        "Could not export",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, [profile, familyDoctor, documents, vaccines, medications, appointments, vitals]);
 
   const handleReset = useCallback(() => {
     confirmDestructive(
@@ -271,6 +317,29 @@ export default function SettingsScreen() {
 
         {/* Danger zone */}
         <SectionHeader title="Data" />
+
+        {/*
+          Before the destructive action, deliberately. Everything CLAIRITY holds
+          lives on this phone and nowhere else — losing it loses the lot — so the
+          way to keep a copy should be the first thing offered here, not a
+          footnote under the button that deletes it.
+        */}
+        <Pressable
+          onPress={handleExport}
+          disabled={exporting}
+          style={({ pressed }) => [styles.exportBtn, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Export a copy of your data"
+        >
+          <Download color={C.primary} size={20} strokeWidth={2.5} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.exportText}>{exporting ? "Preparing…" : "Export my data"}</Text>
+            <Text style={styles.exportSub}>
+              A file with everything on this device — save it somewhere you trust
+            </Text>
+          </View>
+        </Pressable>
+
         <Pressable
           onPress={handleReset}
           style={({ pressed }) => [styles.dangerBtn, pressed && styles.pressed]}
@@ -513,6 +582,20 @@ const styles = StyleSheet.create({
     fontFamily: Font.bodySemi,
     color: C.textInverse,
   },
+  exportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: Radius.md,
+    paddingVertical: Space.lg,
+    paddingHorizontal: Space.lg,
+    marginBottom: Space.md,
+  },
+  exportText: { ...Type.label, color: C.text },
+  exportSub: { ...Type.caption, color: C.textMuted, marginTop: 2 },
   // Danger zone
   dangerBtn: {
     flexDirection: "row",

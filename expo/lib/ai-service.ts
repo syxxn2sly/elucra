@@ -915,6 +915,8 @@ export async function generateVisitSummary(input: {
   recentDocuments: { title: string; date: string; summary: string }[];
   upcomingAppointments: { title: string; dateTime: string; location: string }[];
   vaccines: { name: string; received: string }[];
+  /** Most recent reading per measure, plus how many are on file. */
+  vitals: { label: string; latest: string; takenAt: string; count: number }[];
 }): Promise<string> {
   const content = await requestCompletion({
     model: MODEL_ID,
@@ -928,6 +930,7 @@ Organise it under these headings, omitting any heading with nothing to report:
 ABOUT ME — age, sex, and any conditions and allergies recorded.
 CURRENT MEDICATIONS — name, dose and frequency exactly as recorded. Say "dose not recorded" where it is missing rather than leaving it out.
 RECENT RESULTS — the most recent documents and what they showed, in one line each.
+READINGS I TRACK — the latest value for each vital recorded, with its date and how many readings there are. Report the numbers exactly and say nothing about whether they are normal, high or concerning: they were taken at home in unknown conditions, and interpreting them is the clinician's job, not yours.
 UPCOMING — appointments already booked.
 QUESTIONS TO ASK — only questions that follow directly from a gap in the record, such as a medication with no dose recorded or a result the patient has no follow-up for. If nothing qualifies, omit this heading entirely.
 
