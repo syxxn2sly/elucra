@@ -1,6 +1,7 @@
 // CLAIRITY — log a reading and see what you have recorded
 import { router } from "expo-router";
-import { Activity, Plus, Trash2, X } from "lucide-react-native";
+import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { Activity, CalendarDays, Plus, Trash2, X } from "lucide-react-native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -32,6 +33,13 @@ const C = Colors.light;
 const SCREEN_PADDING = 20;
 /** The hairline on `Card`. */
 const CARD_BORDER = 1;
+
+/** The picker and the `<input type="date">` fallback both speak YYYY-MM-DD. */
+function toDateInput(value: Date): string {
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const day = `${value.getDate()}`.padStart(2, "0");
+  return `${value.getFullYear()}-${month}-${day}`;
+}
 
 export default function VitalsScreen() {
   const insets = useSafeAreaInsets();
@@ -204,6 +212,45 @@ function AddReadingSheet({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
+  /*
+    Defaults to now, because that is the common case, but a reading taken this
+    morning and logged at lunchtime is the second commonest — and without this
+    it landed on the chart at the wrong point in time.
+  */
+  const [takenAt, setTakenAt] = useState(() => new Date());
+  const [pickingDate, setPickingDate] = useState(false);
+  const [dateInput, setDateInput] = useState(() => toDateInput(new Date()));
+
+  const applyDate = useCallback((next: Date) => {
+    setTakenAt(next);
+    setDateInput(toDateInput(next));
+    setError("");
+  }, []);
+
+  const handlePickerChange = useCallback(
+    (event: DateTimePickerEvent, selected?: Date) => {
+      if (Platform.OS === "android") setPickingDate(false);
+      if (event.type === "dismissed" || !selected) return;
+      // Keep the time of day already on the reading and move only the date.
+      const next = new Date(takenAt);
+      next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+      applyDate(next);
+    },
+    [takenAt, applyDate],
+  );
+
+  const handleWebDateChange = useCallback(
+    (value: string) => {
+      setDateInput(value);
+      const [year, month, day] = value.split("-").map(Number);
+      if (!year || !month || !day) return;
+      const next = new Date(takenAt);
+      next.setFullYear(year, month - 1, day);
+      applyDate(next);
+    },
+    [takenAt, applyDate],
+  );
+
   const save = useCallback(() => {
     const firstValue = Number(first);
     const secondValue = Number(second);
@@ -231,9 +278,7 @@ function AddReadingSheet({
       value: definition.paired ? null : firstValue,
       systolic: definition.paired ? firstValue : null,
       diastolic: definition.paired ? secondValue : null,
-      // Recorded as now. Back-dating is a later addition; guessing a different
-      // time would be worse than recording the one we know.
-      takenAt: new Date().toISOString(),
+      takenAt: takenAt.toISOString(),
       note: note.trim(),
     });
   }, [first, second, note, definition, kind, onSave]);
@@ -289,6 +334,49 @@ function AddReadingSheet({
             ) : null}
           </View>
 
+          <Text style={styles.inputLabel}>When</Text>
+          {Platform.OS === "web" ? (
+            <TextInput
+              style={styles.input}
+              value={dateInput}
+              onChangeText={handleWebDateChange}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={C.textMuted}
+              autoCapitalize="none"
+            />
+          ) : (
+            <Pressable
+              onPress={() => setPickingDate((open) => !open)}
+              style={({ pressed }) => [styles.input, styles.dateButton, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel={`Date of reading, ${formatDateDisplay(takenAt.toISOString())}`}
+            >
+              <CalendarDays color={C.primary} size={19} strokeWidth={2.4} />
+              <Text style={styles.dateButtonText}>{formatDateDisplay(takenAt.toISOString())}</Text>
+            </Pressable>
+          )}
+
+          {pickingDate ? (
+            <View style={styles.pickerPanel}>
+              <DateTimePicker
+                value={takenAt}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                // Same iOS-only caveat as the appointment screen: on Android the
+                // picker follows the system theme regardless of this.
+                themeVariant={Platform.OS === "ios" ? "light" : undefined}
+                /* A reading you have not taken yet is not a reading. */
+                maximumDate={new Date()}
+                onChange={handlePickerChange}
+              />
+              {Platform.OS === "ios" ? (
+                <Pressable onPress={() => setPickingDate(false)} style={styles.donePickerButton}>
+                  <Text style={styles.donePickerText}>Done</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+
           <Text style={styles.inputLabel}>Note (optional)</Text>
           <TextInput
             style={styles.input}
@@ -333,6 +421,11 @@ const styles = StyleSheet.create({
   groupReference: { ...Type.caption, color: C.textMuted, marginTop: 2, marginBottom: Space.sm },
   groupCard: { paddingVertical: Space.xs },
   trendWrap: { paddingHorizontal: Space.xs },
+  dateButton: { flexDirection: "row", alignItems: "center", gap: Space.sm },
+  dateButtonText: { ...Type.body, color: C.text },
+  pickerPanel: { alignItems: "center", marginTop: Space.sm },
+  donePickerButton: { minHeight: HIT_TARGET, justifyContent: "center", paddingHorizontal: Space.lg },
+  donePickerText: { ...Type.label, color: C.primary },
   readingRow: { flexDirection: "row", alignItems: "center", paddingVertical: Space.md },
   readingRowDivided: { borderTopWidth: 1, borderTopColor: C.border },
   readingValue: { ...Type.title, color: C.text },
