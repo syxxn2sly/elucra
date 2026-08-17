@@ -77,27 +77,38 @@ export function VitalTrend({
     const ordered = [...readings].sort((a, b) => a.takenAt.localeCompare(b.takenAt));
 
     /*
-      Spacing by time, not by index.
+      Spacing blends time and order, because neither alone is readable.
 
-      Evenly spaced points would imply a regular cadence, and home readings never
-      have one — three in a week then nothing until spring would draw as a steady
-      march. Positioning by date shows the gaps as gaps.
+      Purely by time is what a chart "should" do, and it fails badly on real
+      data: three readings taken the same afternoon land on the same x, the line
+      between them goes vertical, and the whole series reads as a cliff. Purely
+      by order is always legible but implies a regular cadence that home readings
+      never have — a week of daily readings and a five-month gap would look the
+      same.
+
+      Weighting time at TIME_WEIGHT keeps a long gap visibly long while
+      guaranteeing every reading its own x, at least (1 - TIME_WEIGHT) / (n - 1)
+      of the width from its neighbour. The dates under the chart remain the
+      precise statement; this is the shape.
     */
+    const TIME_WEIGHT = 0.65;
+
     const first = new Date(ordered[0].takenAt).getTime();
     const last = new Date(ordered[ordered.length - 1].takenAt).getTime();
     const timeSpan = last - first;
 
-    const build = (pick: (r: VitalReading) => number | null): Point[] =>
-      ordered
-        .map((reading) => ({
-          // All on one date collapses to a single x; fall back to even spacing.
-          t: timeSpan > 0 ? (new Date(reading.takenAt).getTime() - first) / timeSpan : 0,
-          value: pick(reading),
-        }))
-        .filter((point): point is Point => point.value !== null)
-        .map((point, index, all) =>
-          timeSpan > 0 ? point : { ...point, t: all.length > 1 ? index / (all.length - 1) : 0 },
-        );
+    const build = (pick: (r: VitalReading) => number | null): Point[] => {
+      const values = ordered
+        .map((reading) => ({ time: new Date(reading.takenAt).getTime(), value: pick(reading) }))
+        .filter((entry): entry is { time: number; value: number } => entry.value !== null);
+
+      return values.map((entry, index) => {
+        const byOrder = values.length > 1 ? index / (values.length - 1) : 0;
+        // Everything on one instant has no time axis to speak of; use the order.
+        const byTime = timeSpan > 0 ? (entry.time - first) / timeSpan : byOrder;
+        return { t: TIME_WEIGHT * byTime + (1 - TIME_WEIGHT) * byOrder, value: entry.value };
+      });
+    };
 
     const built: Series[] = definition.paired
       ? [
