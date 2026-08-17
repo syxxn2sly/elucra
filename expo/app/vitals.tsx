@@ -34,6 +34,26 @@ const SCREEN_PADDING = 20;
 /** The hairline on `Card`. */
 const CARD_BORDER = 1;
 
+/**
+ * The date, plus the time when another reading shares that date.
+ *
+ * Three readings all labelled "Aug 17, 2026" give you no way to tell which row
+ * is which, or which order they were taken in. The time only earns its space
+ * when the date alone is ambiguous.
+ */
+function whenLabel(reading: VitalReading, siblings: VitalReading[]): string {
+  const date = formatDateDisplay(reading.takenAt);
+  const shared = siblings.some(
+    (other) => other.id !== reading.id && formatDateDisplay(other.takenAt) === date,
+  );
+  if (!shared) return date;
+  const time = new Date(reading.takenAt).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${date}, ${time}`;
+}
+
 /** The picker and the `<input type="date">` fallback both speak YYYY-MM-DD. */
 function toDateInput(value: Date): string {
   const month = `${value.getMonth() + 1}`.padStart(2, "0");
@@ -156,7 +176,7 @@ export default function VitalsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.readingValue}>{formatVital(reading)}</Text>
                       <Text style={styles.readingWhen}>
-                        {formatDateDisplay(reading.takenAt)}
+                        {whenLabel(reading, readings)}
                         {reading.note ? ` · ${reading.note}` : ""}
                       </Text>
                     </View>

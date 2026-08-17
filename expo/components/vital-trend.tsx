@@ -142,6 +142,8 @@ export function VitalTrend({
 
   const chartWidth = Math.max(1, width);
   const decimals = definition.decimals;
+  const firstLabel = formatDateDisplay(oldest.takenAt);
+  const lastLabel = formatDateDisplay(newest.takenAt);
 
   return (
     <View style={styles.wrap}>
@@ -174,10 +176,21 @@ export function VitalTrend({
         ))}
       </Svg>
 
-      <View style={styles.axis}>
-        <Text style={styles.axisText}>{formatDateDisplay(oldest.takenAt)}</Text>
-        <Text style={styles.axisText}>{formatDateDisplay(newest.takenAt)}</Text>
-      </View>
+      {/*
+        A series recorded inside a single day would otherwise print that day
+        twice, at both ends, which reads as a rendering fault rather than as
+        "this all happened on one day". One centred label says it plainly.
+      */}
+      {firstLabel === lastLabel ? (
+        <View style={styles.axisSingle}>
+          <Text style={styles.axisText}>{firstLabel}</Text>
+        </View>
+      ) : (
+        <View style={styles.axis}>
+          <Text style={styles.axisText}>{firstLabel}</Text>
+          <Text style={styles.axisText}>{lastLabel}</Text>
+        </View>
+      )}
 
       {/*
         A statement of fact about the numbers, with no adjective attached.
@@ -218,6 +231,7 @@ export function VitalTrend({
 const styles = StyleSheet.create({
   wrap: { marginTop: Space.md },
   axis: { flexDirection: "row", justifyContent: "space-between", marginTop: Space.xs },
+  axisSingle: { alignItems: "center", marginTop: Space.xs },
   axisText: { ...Type.caption, color: C.textMuted },
   summary: { ...Type.caption, fontFamily: Font.bodySemi, color: C.text, marginTop: Space.sm },
   legend: { flexDirection: "row", gap: Space.lg, marginTop: Space.xs },
