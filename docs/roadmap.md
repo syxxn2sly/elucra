@@ -70,7 +70,7 @@ asserting two drugs conflict is clinical decision support.
 | 1 | Doctor summary button on home | Tap with real data, check nothing invented, share works |
 | 2 | Vitals: logging | Log each type, confirm it survives a restart |
 | 3 | Vitals: trends | Log a series, confirm graph and ranges read correctly |
-| 4 | Preventive care | Per the plan file's verification section |
+| 4 | Preventive care | Shipped. Screening ages need a yearly re-check — see the plan file |
 | 5 | Prevention timeline, 10 years | Ages and intervals land on the right years |
 | 6 | Health timeline | Every record type appears in the right order |
 | 7 | Medication adherence and refills | Mark taken/missed, confirm history and reminders |

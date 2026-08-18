@@ -96,3 +96,26 @@ so drift is visible rather than silent, and the screen links out to the source.
 **Not yet covered.** Blood pressure, type 2 diabetes and lung cancer screening
 are risk-based rather than age-based in the CTFPHC statements, so they do not fit
 the age-band shape and are deferred rather than guessed at.
+
+## Yearly re-check — next due 2027-08-17
+
+Agreed with Syaan 2026-08-17. The screening table is a snapshot, not a feed, and
+provinces move: Ontario expanded breast screening to 40–49 in late 2024,
+Saskatchewan added 40–42 in July 2026. A wrong age here is the worst failure this
+app can have, and it fails silently — a stale number looks exactly as confident
+as a current one.
+
+Once a year, re-read each `source.url` in `expo/lib/screening-data.ts`, correct
+anything that moved, and bump that entry's `checked` date. The dates are rendered
+on every card, so drift is visible to the user in the meantime.
+
+Sources to re-read:
+
+- Colorectal — https://www.partnershipagainstcancer.ca/topics/colorectal-screening-canada-2023-2024/programs/screening-parameters/
+- Cervical — https://www.partnershipagainstcancer.ca/topics/cervical-screening-canada-2023-2024/programs/guidelines/
+- Breast — https://www.partnershipagainstcancer.ca/topics/breast-screening-canada-2023-2024/programs/guidelines/
+- CTFPHC published guidelines — https://canadiantaskforce.ca/guidelines/published-guidelines/
+
+Worth checking at the same time whether the CTFPHC breast guideline is still in
+draft; it was when this was written, and a final version may change the national
+fallback used when no province is set.
