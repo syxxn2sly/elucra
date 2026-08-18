@@ -43,13 +43,18 @@ That second point is the finding that changes the design. MyHealthfinder cannot
    a US source, or dropped entirely. It stays useful for "what happens during the
    test", which is not jurisdiction-specific.
 
-## Open questions for Syaan
+## Decisions (Syaan, 2026-08-17)
 
-- **Province.** Canadian screening varies by province — cervical start age and
-  breast screening start age differ. The profile has no province field; the only
-  province-ish data is `HealthCardData.issuer`, which is optional and behind
-  biometrics. Either add a province question, or present national guidance with a
-  "your province may differ" note.
+- **Province: add it to the profile.** A province question joins onboarding and
+  settings, and the screening table is keyed on it where programs differ. It is
+  optional like gender — with it unset, fall back to national CTFPHC guidance
+  with the variation stated plainly.
+- **MyHealthfinder: dropped as a content source.** Explanations are written for
+  this app. MyHealthfinder survives only as an optional outbound link, labelled
+  as a US source, for what a test involves. No US age ever reaches the screen.
+
+## Still to settle in build
+
 - **Gender vs anatomy.** `gender` is optional and identity-based (Male / Female /
   Other / Prefer not to say), while screening is anatomy-based. The app must not
   guess. Proposal: always show the screenings that apply regardless (blood
@@ -71,3 +76,23 @@ before writing the table.
 - With gender unset or "Prefer not to say", no anatomy-specific screening is
   asserted and nothing is misgendered.
 - Every entry's citation resolves to a real page saying what the entry claims.
+
+## Sourced data (checked 2026-08-17)
+
+Written into `expo/lib/screening-data.ts` with per-entry citations.
+
+| Screening | Finding |
+|---|---|
+| Colorectal | Uniform nationally: 50–74, FIT every 2 years (AB and NT every 1–2). No province keying needed. |
+| Cervical | Varies most. Start 21 or 25, stop 65–70, interval 2–5 years. YT has no organized programme. Per-province table recorded. |
+| Breast | Mostly 50–74 every 2 years; AB starts at 45; NU is opportunistic only. Per-province table recorded. |
+
+**Known staleness.** The breast and cervical tables are the Partnership's 2023–24
+data, and several provinces are actively lowering start ages — Ontario began
+expanding to 40–49 in late 2024, Saskatchewan added 40–42 in July 2026. Both are
+noted on the affected entries. Each entry carries its source URL and check date
+so drift is visible rather than silent, and the screen links out to the source.
+
+**Not yet covered.** Blood pressure, type 2 diabetes and lung cancer screening
+are risk-based rather than age-based in the CTFPHC statements, so they do not fit
+the age-band shape and are deferred rather than guessed at.
