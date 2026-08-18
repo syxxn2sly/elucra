@@ -1,6 +1,6 @@
 // CLAIRITY — Onboarding flow (smart multi-step health profile intake)
 import { router } from "expo-router";
-import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
+import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, MapPin, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
 import React, { useState, useCallback } from "react";
 import {
   StyleSheet,
@@ -31,6 +31,7 @@ import {
   SMOKING_OPTIONS,
   ALCOHOL_OPTIONS,
 } from "@/lib/suggestion-data";
+import { PROVINCES } from "@/lib/screening-data";
 import type { HealthProfile } from "@/lib/types";
 
 const C = Colors.light;
@@ -77,6 +78,16 @@ const STEPS: Step[] = [
     inputType: "chipSelect",
     optional: true,
     options: ["Male", "Female", "Other", "Prefer not to say"],
+  },
+  {
+    key: "province",
+    title: "Where do you live?",
+    subtitle:
+      "Screening programmes differ by province — this is how CLAIRITY knows which ages apply to you.",
+    icon: <MapPin color={C.primary} size={22} strokeWidth={2.5} />,
+    inputType: "chipSelect",
+    optional: true,
+    options: PROVINCES.map((entry) => entry.name),
   },
   {
     key: "conditions",
@@ -184,6 +195,7 @@ export default function OnboardingScreen() {
         name: data.name ?? "",
         age: data.age ?? "",
         gender: data.gender ?? "",
+        province: data.province ?? "",
         conditions: data.conditions ?? "",
         surgeries: data.surgeries ?? "",
         medications: data.medications ?? "",

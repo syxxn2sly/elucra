@@ -19,7 +19,7 @@ import {
   CreditCard,
   FileHeart,
   Stethoscope,
-  Shield, Download } from "lucide-react-native";
+  Shield, Download , MapPin} from "lucide-react-native";
 import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
@@ -34,6 +34,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
+import { PROVINCES } from "@/lib/screening-data";
 import { useTabScrollPadding } from "@/lib/layout";
 import { File, Paths } from "expo-file-system";
 import { useClairity } from "@/lib/store";
@@ -67,6 +68,7 @@ const FIELDS: EditableField[] = [
   { key: "name", label: "Name", icon: <User color={C.primary} size={18} strokeWidth={2.5} />, type: "text" },
   { key: "age", label: "Age", icon: <Cake color={C.primary} size={18} strokeWidth={2.5} />, type: "ageWheel" },
   { key: "gender", label: "Gender", icon: <VenusAndMars color={C.primary} size={18} strokeWidth={2.5} />, type: "chipSelect", options: ["Male", "Female", "Other", "Prefer not to say"] },
+  { key: "province", label: "Province", icon: <MapPin color={C.primary} size={18} strokeWidth={2.5} />, type: "chipSelect", options: PROVINCES.map((entry) => entry.name) },
   { key: "conditions", label: "Medical Conditions", icon: <HeartPulse color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_CONDITIONS },
   { key: "surgeries", label: "Past Surgeries", icon: <Scissors color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_SURGERIES },
   { key: "medications", label: "Current Medications", icon: <Pill color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_MEDICATIONS },

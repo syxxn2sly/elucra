@@ -13,6 +13,7 @@ import {
   Sparkles,
   Stethoscope,
   Activity,
+  ShieldCheck,
 } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -27,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
+import { PROVINCES, SCREENINGS, ruleFor } from "@/lib/screening-data";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import {
@@ -55,6 +57,21 @@ export default function HomeScreen() {
   const upcomingVaccines = sortByDueDate(
     vaccines.filter((v) => v.nextDueDate && v.hasDate),
   ).slice(0, 3);
+
+  /*
+    How many programmes cover this age, which is not the same as how many are
+    due. CLAIRITY has no record of past screening, so the tile counts coverage
+    and the screen says so in words.
+  */
+  const screeningCount = useMemo(() => {
+    const age = Number.parseInt(profile.age, 10);
+    if (!Number.isFinite(age)) return null;
+    const code = PROVINCES.find((entry) => entry.name === profile.province)?.code ?? null;
+    return SCREENINGS.filter((screening) => {
+      const rule = ruleFor(screening, code);
+      return age >= rule.startAge && (rule.stopAge === null || age <= rule.stopAge);
+    }).length;
+  }, [profile.age, profile.province]);
 
   const undatedVaccines = vaccines.filter((v) => !v.hasDate);
 
@@ -191,6 +208,13 @@ export default function HomeScreen() {
             value={vitals.length.toString()}
             sub={vitals.length === 1 ? "reading" : "readings"}
             onPress={() => router.push("/vitals")}
+          />
+          <QuickCard
+            icon={<ShieldCheck color={C.docPathology} size={22} strokeWidth={2.5} />}
+            label="Screening"
+            value={screeningCount === null ? "—" : screeningCount.toString()}
+            sub={screeningCount === null ? "set your age" : "for your age"}
+            onPress={() => router.push("/preventive-care")}
           />
           <QuickCard
             icon={<CreditCard color={C.accent} size={22} strokeWidth={2.5} />}

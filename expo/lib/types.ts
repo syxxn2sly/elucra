@@ -311,6 +311,8 @@ export interface HealthProfile {
   name: string;
   age: string;
   gender: string;
+  /** Province or territory name, for screening programmes that differ by region. */
+  province: string;
   conditions: string;
   surgeries: string;
   medications: string;
