@@ -1,6 +1,6 @@
-// CLAIRITY — which routine screenings generally apply at your age, in your province
+// CLAIRITY — routine screening: what's offered, what you've had, when the next one lands
 import { router } from "expo-router";
-import { ExternalLink, MapPin, ShieldCheck } from "lucide-react-native";
+import { ExternalLink, MapPin, ShieldCheck, Trash2 } from "lucide-react-native";
 import React, { useMemo } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,9 +9,18 @@ import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { PROVINCES, SCREENINGS, ruleFor } from "@/lib/screening-data";
+import {
+  PROVINCES,
+  SCREENINGS,
+  ruleFor,
+  isConditionLinked,
+  screeningAppliesToConditions,
+} from "@/lib/screening-data";
 import type { ProvinceCode, Screening, ScreeningRule } from "@/lib/screening-data";
+import { computeNextDue, formatDueCountdown, formatMonthYear } from "@/lib/utils";
+import type { ScreeningRecord } from "@/lib/types";
 import { Card, ScreenHeader } from "@/components/ui";
+import { MonthYearWheel } from "@/components/smart-inputs";
 
 const C = Colors.light;
 
@@ -23,8 +32,10 @@ function provinceCode(name: string): ProvinceCode | null {
 /**
  * Where this age sits relative to the programme's band.
  *
- * Deliberately not "due" or "overdue" — CLAIRITY does not know when you were
- * last screened. It knows only whether a programme generally covers your age.
+ * Deliberately not "due" or "overdue" — this is population screening and
+ * CLAIRITY does not know whether the person has had it. "Due" only appears
+ * below once a record exists, computed from the date the person entered, the
+ * same posture the vaccine tracker already uses.
  */
 type Standing = "within" | "before" | "after";
 
@@ -40,16 +51,42 @@ function bandText(rule: ScreeningRule): string {
   return `Ages ${rule.startAge} ${upper} · ${rule.interval}`;
 }
 
+/** A profile condition matches a screening's trigger list. Loose text match, same as the data layer. */
+function matchesCondition(screening: Screening, conditions: string): boolean {
+  return screeningAppliesToConditions(screening, conditions);
+}
+
 export default function PreventiveCareScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
-  const { profile, loaded } = useClairity();
+  const { profile, screenings, recordScreening, removeScreening, loaded } = useClairity();
 
   const code = provinceCode(profile.province);
   const age = useMemo(() => {
     const parsed = Number.parseInt(profile.age, 10);
     return Number.isFinite(parsed) ? parsed : null;
   }, [profile.age]);
+
+  /*
+    Two groups rather than one list, because they answer different questions.
+    Population screening ("what does my age group get offered") and follow-up
+    tied to a condition ("what does having diabetes mean I should keep up
+    with") are different asks and read badly interleaved.
+  */
+  const { population, tailored } = useMemo(() => {
+    const pop: Screening[] = [];
+    const tail: Screening[] = [];
+    for (const screening of SCREENINGS) {
+      if (isConditionLinked(screening)) {
+        if (matchesCondition(screening, profile.conditions)) tail.push(screening);
+      } else {
+        pop.push(screening);
+      }
+    }
+    return { population: pop, tailored: tail };
+  }, [profile.conditions]);
+
+  const recordFor = (screeningId: string) => screenings.find((entry) => entry.screeningId === screeningId) ?? null;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -66,9 +103,9 @@ export default function PreventiveCareScreen() {
         </View>
 
         <Text style={styles.subtitle}>
-          Screening programmes in Canada are organised by age, and the ages differ by province.
-          This is what your programme generally offers — not a record of what you have had, and
-          not a statement that you are due for anything.
+          What Canadian screening programmes generally offer at your age, and the routine
+          follow-up that comes with any condition you have recorded. Record when you last had
+          one and CLAIRITY will work out roughly when the next is due.
         </Text>
 
         {!loaded ? null : (
@@ -94,15 +131,45 @@ export default function PreventiveCareScreen() {
               </Card>
             ) : null}
 
-            {SCREENINGS.map((screening) => (
-              <ScreeningCard key={screening.id} screening={screening} code={code} age={age} />
+            <Text style={styles.sectionLabel}>Routine screening for your age</Text>
+            {population.map((screening) => (
+              <ScreeningCard
+                key={screening.id}
+                screening={screening}
+                rule={ruleFor(screening, code)}
+                age={age}
+                record={recordFor(screening.id)}
+                onRecord={(month, year) => recordScreening(screening.id, month, year)}
+                onClear={() => removeScreening(screening.id)}
+              />
             ))}
 
+            {tailored.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>Because of what's in your profile</Text>
+                {tailored.map((screening) => (
+                  <ScreeningCard
+                    key={screening.id}
+                    screening={screening}
+                    rule={screening.national}
+                    age={null}
+                    record={recordFor(screening.id)}
+                    onRecord={(month, year) => recordScreening(screening.id, month, year)}
+                    onClear={() => removeScreening(screening.id)}
+                    conditionMatch={screening.conditions?.find((needle) =>
+                      profile.conditions.toLowerCase().includes(needle),
+                    )}
+                  />
+                ))}
+              </>
+            ) : null}
+
             <Text style={styles.disclaimer}>
-              These are the ages a programme generally uses, read from the sources linked on each
-              card. They change — several provinces have been lowering their start ages — and they
-              assume average risk. Your own history, and anything that runs in your family, can
-              change what your doctor recommends and when. This does not replace that conversation.
+              These are the ages and intervals a programme generally uses, read from the sources
+              linked on each card, and they assume average risk. Your own history, and anything
+              that runs in your family, can change what your doctor recommends and when. What you
+              record here stays on your device — CLAIRITY does not know what you have had unless
+              you tell it, and never assumes a screening happened.
             </Text>
           </>
         )}
@@ -113,20 +180,35 @@ export default function PreventiveCareScreen() {
 
 function ScreeningCard({
   screening,
-  code,
+  rule,
   age,
+  record,
+  onRecord,
+  onClear,
+  conditionMatch,
 }: {
   screening: Screening;
-  code: ProvinceCode | null;
+  rule: ScreeningRule;
   age: number | null;
+  record: ScreeningRecord | null;
+  onRecord: (month: number, year: number) => void;
+  onClear: () => void;
+  /** The condition text that triggered this card, shown as the "why". */
+  conditionMatch?: string;
 }) {
-  const rule = ruleFor(screening, code);
   const standing = standingFor(age, rule);
+  const nextDue = record ? computeNextDue(record.monthDone, record.yearDone, rule.intervalMonths) : null;
 
   return (
     <Card style={styles.card}>
       <Text style={styles.cardTitle}>{screening.label}</Text>
-      <Text style={styles.cardBand}>{bandText(rule)}</Text>
+      <Text style={styles.cardBand}>
+        {age !== null ? bandText(rule) : `${rule.interval}`}
+      </Text>
+
+      {conditionMatch ? (
+        <Text style={styles.cardBecause}>Because you have {conditionMatch} in your profile</Text>
+      ) : null}
 
       {/*
         Anatomy, not identity. The profile knows a gender; screening depends on
@@ -148,12 +230,41 @@ function ScreeningCard({
       {standing ? (
         <Text style={styles.cardStanding}>
           {standing === "within"
-            ? "Your age is inside this range. Ask your doctor whether it applies to you and when you were last screened."
+            ? "Your age is inside this range. If you haven't already, record when you last had it below."
             : standing === "before"
               ? `The routine programme starts at ${rule.startAge}. If it runs in your family, ask about starting earlier.`
               : `The routine programme runs to ${rule.stopAge}. Past that it becomes a conversation about your own health rather than an automatic invitation.`}
         </Text>
       ) : null}
+
+      {/*
+        Recording is the user's own claim about their own history, which is a
+        different thing from CLAIRITY asserting a population fact — so "due" and
+        "overdue" are fair game here the way they already are for vaccines.
+      */}
+      <View style={styles.recordRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.recordLabel}>Last had</Text>
+          <Text style={styles.recordValue}>
+            {record ? formatMonthYear(record.monthDone, record.yearDone) : "Not recorded"}
+          </Text>
+          {nextDue ? <Text style={styles.recordDue}>{formatDueCountdown(nextDue)}</Text> : null}
+        </View>
+        <View style={styles.recordActions}>
+          <MonthYearWheel
+            month={record?.monthDone ?? null}
+            year={record?.yearDone ?? null}
+            label={`When did you last have ${screening.label.toLowerCase()}?`}
+            triggerLabel={record ? "Edit" : "Record"}
+            onConfirm={onRecord}
+          />
+          {record ? (
+            <Pressable onPress={onClear} hitSlop={10} accessibilityLabel={`Clear ${screening.label} record`}>
+              <Trash2 color={C.textMuted} size={16} strokeWidth={2.5} />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
 
       <Pressable
         onPress={() => Linking.openURL(screening.source.url)}
@@ -188,13 +299,32 @@ const styles = StyleSheet.create({
   contextChange: { ...Type.caption, fontFamily: Font.bodySemi, color: C.primary },
   noticeCard: { marginBottom: Space.lg, backgroundColor: C.primarySoft },
   noticeText: { ...Type.caption, color: C.text, lineHeight: 19 },
+  sectionLabel: { ...Type.label, color: C.text, marginBottom: Space.sm, marginTop: Space.sm },
   card: { marginBottom: Space.lg },
   cardTitle: { ...Type.label, color: C.text, marginBottom: Space.xs },
   cardBand: { ...Type.caption, fontFamily: Font.bodySemi, color: C.primary, marginBottom: Space.sm },
+  cardBecause: {
+    ...Type.caption,
+    color: C.accent,
+    fontFamily: Font.bodySemi,
+    marginBottom: Space.sm,
+  },
   cardApplies: { ...Type.caption, color: C.textMuted, marginBottom: Space.sm, fontStyle: "italic" },
   cardWhat: { ...Type.body, color: C.text, lineHeight: 23 },
   cardNote: { ...Type.caption, color: C.textMuted, marginTop: Space.sm, lineHeight: 19 },
   cardStanding: { ...Type.caption, color: C.text, marginTop: Space.md, lineHeight: 19 },
+  recordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Space.md,
+    paddingTop: Space.md,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  recordLabel: { ...Type.caption, color: C.textMuted },
+  recordValue: { ...Type.body, fontFamily: Font.bodySemi, color: C.text },
+  recordDue: { ...Type.caption, color: C.primary, marginTop: 2 },
+  recordActions: { flexDirection: "row", alignItems: "center", gap: Space.md },
   sourceRow: { flexDirection: "row", alignItems: "center", gap: Space.xs, marginTop: Space.md },
   sourceText: { ...Type.caption, color: C.textMuted, flex: 1, fontSize: 11 },
   pressed: { opacity: 0.85 },

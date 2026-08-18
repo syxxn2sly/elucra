@@ -231,6 +231,22 @@ export type VitalKind =
   | "weight"
   | "temperature";
 
+/**
+ * A screening the user says they have had.
+ *
+ * Month and year only, matching how vaccines are recorded — nobody remembers
+ * the day they had a Pap test, and asking for one invites a wrong answer that
+ * then drives a wrong due date.
+ */
+export interface ScreeningRecord {
+  id: string;
+  /** Matches `Screening.id` in lib/screening-data.ts. */
+  screeningId: string;
+  monthDone: number | null;
+  yearDone: number | null;
+  createdAt: string;
+}
+
 export interface VitalReading {
   id: string;
   kind: VitalKind;

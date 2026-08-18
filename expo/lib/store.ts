@@ -18,6 +18,7 @@ import type {
   FamilyDoctor,
   Appointment,
   VitalReading,
+  ScreeningRecord,
 } from "./types";
 import { generateId, computeNextDue } from "./utils";
 import { VACCINE_CATALOG } from "./vaccine-data";
@@ -32,6 +33,7 @@ const STORAGE_KEYS = {
   familyDoctor: "@clairity/family-doctor",
   appointments: "@clairity/appointments",
   vitals: "@clairity/vitals",
+  screenings: "@clairity/screenings",
   favouriteLocation: "@clairity/favourite-location",
   preferredLanguage: "@clairity/preferred-language",
 } as const;
@@ -77,6 +79,7 @@ function useClairityState() {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [vitals, setVitals] = useState<VitalReading[]>([]);
+  const [screenings, setScreenings] = useState<ScreeningRecord[]>([]);
   const [healthCard, setHealthCard] = useState<HealthCardData | null>(null);
   const [familyDoctor, setFamilyDoctor] = useState<FamilyDoctor>(DEFAULT_FAMILY_DOCTOR);
   /** Places pinned for one-tap reuse when booking an appointment. */
@@ -98,6 +101,7 @@ function useClairityState() {
           doctorStr,
           appointmentsStr,
           vitalsStr,
+          screeningsStr,
           favouriteLocationStr,
           preferredLanguageStr,
         ] = await Promise.all([
@@ -109,6 +113,7 @@ function useClairityState() {
           AsyncStorage.getItem(STORAGE_KEYS.familyDoctor),
           AsyncStorage.getItem(STORAGE_KEYS.appointments),
           AsyncStorage.getItem(STORAGE_KEYS.vitals),
+          AsyncStorage.getItem(STORAGE_KEYS.screenings),
           AsyncStorage.getItem(STORAGE_KEYS.favouriteLocation),
           AsyncStorage.getItem(STORAGE_KEYS.preferredLanguage),
         ]);
@@ -133,6 +138,7 @@ function useClairityState() {
         if (medsStr) setMedications((JSON.parse(medsStr) as Medication[]).map((medication) => ({ ...medication, reminderEnabled: medication.reminderEnabled ?? false, reminderTime: medication.reminderTime ?? "", notificationId: medication.notificationId ?? null })));
         if (appointmentsStr) setAppointments(JSON.parse(appointmentsStr) as Appointment[]);
         if (vitalsStr) setVitals(JSON.parse(vitalsStr) as VitalReading[]);
+        if (screeningsStr) setScreenings(JSON.parse(screeningsStr) as ScreeningRecord[]);
         if (cardStr) setHealthCard(JSON.parse(cardStr) as HealthCardData);
         if (doctorStr) setFamilyDoctor({ ...DEFAULT_FAMILY_DOCTOR, ...(JSON.parse(doctorStr) as FamilyDoctor) });
         // Stored as a bare string when there was only one favourite; the array
@@ -182,6 +188,10 @@ function useClairityState() {
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEYS.vitals, JSON.stringify(vitals));
   }, [vitals, loaded]);
+
+  useEffect(() => {
+    if (loaded) AsyncStorage.setItem(STORAGE_KEYS.screenings, JSON.stringify(screenings));
+  }, [screenings, loaded]);
 
   useEffect(() => {
     if (loaded) {
@@ -383,6 +393,32 @@ function useClairityState() {
   const addVital = useCallback((reading: Omit<VitalReading, "id" | "createdAt">) => {
     const record: VitalReading = { ...reading, id: generateId(), createdAt: new Date().toISOString() };
     setVitals((prev) => [record, ...prev].sort((a, b) => b.takenAt.localeCompare(a.takenAt)));
+  }, []);
+
+  /** One record per screening: recording it again replaces the date. */
+  const recordScreening = useCallback((screeningId: string, month: number, year: number) => {
+    setScreenings((prev) => {
+      const existing = prev.find((entry) => entry.screeningId === screeningId);
+      if (existing) {
+        return prev.map((entry) =>
+          entry.screeningId === screeningId ? { ...entry, monthDone: month, yearDone: year } : entry,
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: generateId(),
+          screeningId,
+          monthDone: month,
+          yearDone: year,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    });
+  }, []);
+
+  const removeScreening = useCallback((screeningId: string) => {
+    setScreenings((prev) => prev.filter((entry) => entry.screeningId !== screeningId));
   }, []);
 
   const removeVital = useCallback((id: string) => {
@@ -679,6 +715,9 @@ function useClairityState() {
     medications,
     appointments,
     vitals,
+    screenings,
+    recordScreening,
+    removeScreening,
     addVital,
     removeVital,
     healthCard,
