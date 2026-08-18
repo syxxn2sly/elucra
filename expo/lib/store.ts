@@ -55,6 +55,7 @@ const DEFAULT_PROFILE: HealthProfile = {
   age: "",
   gender: "",
   province: "",
+  sexuallyActive: "",
   conditions: "",
   surgeries: "",
   medications: "",

@@ -56,6 +56,24 @@ function matchesCondition(screening: Screening, conditions: string): boolean {
   return screeningAppliesToConditions(screening, conditions);
 }
 
+/**
+ * Cervical screening is the one place several provinces base timing on sexual
+ * activity as well as age — BC and Ontario key their start age to it, and
+ * Manitoba, New Brunswick and the Northwest Territories start counting from
+ * first sexual contact rather than a birthday. Anatomy question, not identity;
+ * it is asked the same way regardless of gender.
+ */
+function cervicalActivityNote(sexuallyActive: string, age: number | null, rule: ScreeningRule): string | null {
+  if (age === null || !sexuallyActive || sexuallyActive === "Prefer not to say") return null;
+  if (sexuallyActive === "No") {
+    return "Several provinces base when this starts on sexual activity as well as age — since you've said you aren't currently, you may not need to start yet. Worth confirming with your provider rather than assuming either way.";
+  }
+  if (age < rule.startAge) {
+    return `A few provinces (B.C. among them) start cervical screening at first sexual activity rather than waiting for age ${rule.startAge}. Worth asking your provider whether that applies to you now.`;
+  }
+  return null;
+}
+
 export default function PreventiveCareScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
@@ -72,19 +90,40 @@ export default function PreventiveCareScreen() {
     Population screening ("what does my age group get offered") and follow-up
     tied to a condition ("what does having diabetes mean I should keep up
     with") are different asks and read badly interleaved.
+
+    Population screening is filtered to the age bracket itself — a 30-year-old
+    does not need a card telling them breast screening starts at 50, and a
+    76-year-old does not need to be told colorectal stopped at 74. With age
+    unset there is nothing to filter on, so everything shows rather than
+    nothing.
   */
-  const { population, tailored } = useMemo(() => {
+  const { population, hiddenCount, tailored } = useMemo(() => {
     const pop: Screening[] = [];
     const tail: Screening[] = [];
+    let hidden = 0;
+    const code = provinceCode(profile.province);
     for (const screening of SCREENINGS) {
       if (isConditionLinked(screening)) {
         if (matchesCondition(screening, profile.conditions)) tail.push(screening);
-      } else {
-        pop.push(screening);
+        continue;
       }
+      const parsedAge = Number.parseInt(profile.age, 10);
+      const ageKnown = Number.isFinite(parsedAge) ? parsedAge : null;
+      const standing = standingFor(ageKnown, ruleFor(screening, code));
+      /*
+        Cervical screening has a second entry criterion in several provinces —
+        sexual activity, not just age — so "below the band" is not automatically
+        "hide it" the way it is for the cancer screenings that are age-only.
+        Being under the age but sexually active is exactly the case the
+        early-start note exists to reach.
+      */
+      const earlyByActivity =
+        screening.id === "cervical" && standing === "before" && profile.sexuallyActive === "Yes";
+      if (standing === null || standing === "within" || earlyByActivity) pop.push(screening);
+      else hidden += 1;
     }
-    return { population: pop, tailored: tail };
-  }, [profile.conditions]);
+    return { population: pop, hiddenCount: hidden, tailored: tail };
+  }, [profile.conditions, profile.age, profile.province]);
 
   const recordFor = (screeningId: string) => screenings.find((entry) => entry.screeningId === screeningId) ?? null;
 
@@ -132,17 +171,36 @@ export default function PreventiveCareScreen() {
             ) : null}
 
             <Text style={styles.sectionLabel}>Routine screening for your age</Text>
-            {population.map((screening) => (
-              <ScreeningCard
-                key={screening.id}
-                screening={screening}
-                rule={ruleFor(screening, code)}
-                age={age}
-                record={recordFor(screening.id)}
-                onRecord={(month, year) => recordScreening(screening.id, month, year)}
-                onClear={() => removeScreening(screening.id)}
-              />
-            ))}
+            {population.length === 0 ? (
+              <Card style={styles.noticeCard}>
+                <Text style={styles.noticeText}>
+                  {age === null
+                    ? "Set your age in settings to see which screenings apply to you."
+                    : "Nothing routine applies at your current age. Colorectal, cervical and breast screening all have age windows — check back as you age into one, or ask your doctor if anything should start earlier."}
+                </Text>
+              </Card>
+            ) : (
+              population.map((screening) => (
+                <ScreeningCard
+                  key={screening.id}
+                  screening={screening}
+                  rule={ruleFor(screening, code)}
+                  age={age}
+                  record={recordFor(screening.id)}
+                  onRecord={(month, year) => recordScreening(screening.id, month, year)}
+                  onClear={() => removeScreening(screening.id)}
+                  activityNote={
+                    screening.id === "cervical" ? cervicalActivityNote(profile.sexuallyActive, age, ruleFor(screening, code)) : undefined
+                  }
+                />
+              ))
+            )}
+            {hiddenCount > 0 ? (
+              <Text style={styles.hiddenNote}>
+                {hiddenCount} more {hiddenCount === 1 ? "screening applies" : "screenings apply"} outside your
+                current age range — ask your doctor if any should start earlier or continue longer than usual.
+              </Text>
+            ) : null}
 
             {tailored.length > 0 ? (
               <>
@@ -186,6 +244,7 @@ function ScreeningCard({
   onRecord,
   onClear,
   conditionMatch,
+  activityNote,
 }: {
   screening: Screening;
   rule: ScreeningRule;
@@ -195,6 +254,8 @@ function ScreeningCard({
   onClear: () => void;
   /** The condition text that triggered this card, shown as the "why". */
   conditionMatch?: string;
+  /** Sexual-activity refinement, cervical screening only. */
+  activityNote?: string | null;
 }) {
   const standing = standingFor(age, rule);
   const nextDue = record ? computeNextDue(record.monthDone, record.yearDone, rule.intervalMonths) : null;
@@ -226,8 +287,10 @@ function ScreeningCard({
       <Text style={styles.cardWhat}>{screening.what}</Text>
 
       {rule.note ? <Text style={styles.cardNote}>{rule.note}</Text> : null}
+      {activityNote ? <Text style={styles.cardNote}>{activityNote}</Text> : null}
 
-      {standing ? (
+      {/* Suppressed when activityNote already explains the "before" case — the two would repeat each other. */}
+      {standing && !(standing === "before" && activityNote) ? (
         <Text style={styles.cardStanding}>
           {standing === "within"
             ? "Your age is inside this range. If you haven't already, record when you last had it below."
@@ -329,4 +392,5 @@ const styles = StyleSheet.create({
   sourceText: { ...Type.caption, color: C.textMuted, flex: 1, fontSize: 11 },
   pressed: { opacity: 0.85 },
   disclaimer: { ...Type.caption, color: C.textMuted, marginTop: Space.sm, lineHeight: 19 },
+  hiddenNote: { ...Type.caption, color: C.textMuted, marginBottom: Space.lg, lineHeight: 19 },
 });

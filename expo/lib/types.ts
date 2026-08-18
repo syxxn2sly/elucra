@@ -329,6 +329,15 @@ export interface HealthProfile {
   gender: string;
   /** Province or territory name, for screening programmes that differ by region. */
   province: string;
+  /**
+   * "Yes" / "No" / "Prefer not to say" / "" (unset).
+   *
+   * Only asked from age 16, and used only to refine the cervical screening
+   * card — several provinces base the start of that programme on sexual
+   * activity as well as age. Kept separate from gender deliberately: this is
+   * about anatomy and history, not identity.
+   */
+  sexuallyActive: string;
   conditions: string;
   surgeries: string;
   medications: string;

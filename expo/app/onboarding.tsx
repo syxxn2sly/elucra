@@ -1,6 +1,6 @@
 // CLAIRITY — Onboarding flow (smart multi-step health profile intake)
 import { router } from "expo-router";
-import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, MapPin, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
+import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, MapPin, Info, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
 import React, { useState, useCallback } from "react";
 import {
   StyleSheet,
@@ -50,6 +50,13 @@ interface Step {
   suggestions?: string[];
   /** Cap on multiChip selections. Unlimited when omitted. */
   maxItems?: number;
+  /**
+   * Skip this step unless the predicate holds against answers so far.
+   *
+   * Only the sexual-activity question uses this — asking it below age 16 has
+   * no screening use and nothing else in onboarding needs conditional steps.
+   */
+  showIf?: (data: Partial<HealthProfile>) => boolean;
 }
 
 const STEPS: Step[] = [
@@ -88,6 +95,20 @@ const STEPS: Step[] = [
     inputType: "chipSelect",
     optional: true,
     options: PROVINCES.map((entry) => entry.name),
+  },
+  {
+    key: "sexuallyActive",
+    title: "Are you sexually active?",
+    subtitle:
+      "A few provinces base when cervical screening starts on this as well as age. Skip it if you'd rather not say.",
+    icon: <Info color={C.primary} size={22} strokeWidth={2.5} />,
+    inputType: "chipSelect",
+    optional: true,
+    options: ["Yes", "No", "Prefer not to say"],
+    showIf: (data) => {
+      const age = Number.parseInt(data.age ?? "", 10);
+      return Number.isFinite(age) && age >= 16;
+    },
   },
   {
     key: "conditions",
@@ -181,14 +202,21 @@ export default function OnboardingScreen() {
   const [data, setData] = useState<Partial<HealthProfile>>({});
   const [chipLists, setChipLists] = useState<Record<string, string[]>>({});
 
-  const step = STEPS[stepIndex];
-  const progress = ((stepIndex + 1) / STEPS.length) * 100;
+  /*
+    Filtered against the answers given so far, not a fixed list — the
+    sexual-activity step only exists once age is known and is 16 or older.
+    Everything below indexes into this, not STEPS directly, so the step count,
+    the progress bar and back/forward all agree on what is actually being shown.
+  */
+  const steps = STEPS.filter((candidate) => !candidate.showIf || candidate.showIf(data));
+  const step = steps[stepIndex];
+  const progress = ((stepIndex + 1) / steps.length) * 100;
 
   const currentValue = (data[step.key] as string) ?? "";
   const currentChipList = chipLists[step.key] ?? [];
 
   const handleNext = useCallback(() => {
-    if (stepIndex < STEPS.length - 1) {
+    if (stepIndex < steps.length - 1) {
       setStepIndex(stepIndex + 1);
     } else {
       const finalProfile: HealthProfile = {
@@ -196,6 +224,7 @@ export default function OnboardingScreen() {
         age: data.age ?? "",
         gender: data.gender ?? "",
         province: data.province ?? "",
+        sexuallyActive: data.sexuallyActive ?? "",
         conditions: data.conditions ?? "",
         surgeries: data.surgeries ?? "",
         medications: data.medications ?? "",
@@ -210,7 +239,7 @@ export default function OnboardingScreen() {
       completeOnboarding(finalProfile);
       router.replace("/(tabs)");
     }
-  }, [stepIndex, data, completeOnboarding]);
+  }, [stepIndex, steps.length, data, completeOnboarding]);
 
   const handleSkip = useCallback(() => {
     handleNext();
@@ -280,7 +309,7 @@ export default function OnboardingScreen() {
           <View style={styles.backBtn} />
         )}
         <Text style={styles.stepCount}>
-          Step {stepIndex + 1} of {STEPS.length}
+          Step {stepIndex + 1} of {steps.length}
         </Text>
         <View style={styles.backBtn} />
       </View>
@@ -356,9 +385,9 @@ export default function OnboardingScreen() {
               </Pressable>
             )}
             <PrimaryButton
-              label={stepIndex === STEPS.length - 1 ? "Finish" : "Continue"}
+              label={stepIndex === steps.length - 1 ? "Finish" : "Continue"}
               onPress={handleNext}
-              icon={stepIndex === STEPS.length - 1 ? <Check color={C.textInverse} size={22} strokeWidth={2.5} /> : undefined}
+              icon={stepIndex === steps.length - 1 ? <Check color={C.textInverse} size={22} strokeWidth={2.5} /> : undefined}
               style={{ width: "100%" }}
             />
           </View>

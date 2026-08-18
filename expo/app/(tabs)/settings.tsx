@@ -19,7 +19,7 @@ import {
   CreditCard,
   FileHeart,
   Stethoscope,
-  Shield, Download , MapPin} from "lucide-react-native";
+  Shield, Download , MapPin, Info} from "lucide-react-native";
 import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
@@ -62,6 +62,8 @@ interface EditableField {
   type: "text" | "ageWheel" | "chipSelect" | "multiChip";
   options?: string[];
   suggestions?: string[];
+  /** Hide this field unless the predicate holds against the current profile. */
+  showIf?: (profile: HealthProfile) => boolean;
 }
 
 const FIELDS: EditableField[] = [
@@ -69,6 +71,18 @@ const FIELDS: EditableField[] = [
   { key: "age", label: "Age", icon: <Cake color={C.primary} size={18} strokeWidth={2.5} />, type: "ageWheel" },
   { key: "gender", label: "Gender", icon: <VenusAndMars color={C.primary} size={18} strokeWidth={2.5} />, type: "chipSelect", options: ["Male", "Female", "Other", "Prefer not to say"] },
   { key: "province", label: "Province", icon: <MapPin color={C.primary} size={18} strokeWidth={2.5} />, type: "chipSelect", options: PROVINCES.map((entry) => entry.name) },
+  {
+    key: "sexuallyActive",
+    label: "Sexually active",
+    icon: <Info color={C.primary} size={18} strokeWidth={2.5} />,
+    type: "chipSelect",
+    options: ["Yes", "No", "Prefer not to say"],
+    // Same age floor as onboarding — has no screening use below 16.
+    showIf: (profile) => {
+      const age = Number.parseInt(profile.age, 10);
+      return Number.isFinite(age) && age >= 16;
+    },
+  },
   { key: "conditions", label: "Medical Conditions", icon: <HeartPulse color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_CONDITIONS },
   { key: "surgeries", label: "Past Surgeries", icon: <Scissors color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_SURGERIES },
   { key: "medications", label: "Current Medications", icon: <Pill color={C.primary} size={18} strokeWidth={2.5} />, type: "multiChip", suggestions: COMMON_MEDICATIONS },
@@ -249,7 +263,7 @@ export default function SettingsScreen() {
         {/* Profile fields */}
         <SectionHeader title="Health Profile" />
         <View style={styles.fieldsList}>
-          {FIELDS.map((field) => {
+          {FIELDS.filter((field) => !field.showIf || field.showIf(profile)).map((field) => {
             const isEditing = editingKey === field.key;
             const value = (profile[field.key] as string) ?? "";
 
