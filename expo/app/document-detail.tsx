@@ -419,7 +419,7 @@ export default function DocumentDetailScreen() {
           <Card style={styles.card}>
             <Text style={styles.cardTitle}>Your Action Checklist</Text>
             {requiredItems.length > 0 ? (
-              <Text style={styles.subsectionLabel}>Required — you must do these</Text>
+              <Text style={styles.subsectionLabel}>Required</Text>
             ) : null}
             {requiredItems.map((item) => (
               <ChecklistRow
@@ -432,7 +432,7 @@ export default function DocumentDetailScreen() {
             ))}
             {optionalItems.length > 0 ? (
               <Text style={[styles.subsectionLabel, { marginTop: 16 }]}>
-                Optional — helpful but not urgent
+                Optional
               </Text>
             ) : null}
             {optionalItems.map((item) => (

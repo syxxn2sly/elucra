@@ -302,7 +302,7 @@ function DetailRow({ label, value, last }: { label: string; value: string; last?
   return (
     <View style={[styles.detailRow, !last && styles.detailRowBorder]}>
       <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value || "—"}</Text>
+      <Text style={styles.detailValue}>{value || "–"}</Text>
     </View>
   );
 }

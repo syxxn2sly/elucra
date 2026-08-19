@@ -49,7 +49,7 @@ export async function scheduleMedicationReminder(medication: Medication): Promis
   return Notifications.scheduleNotificationAsync({
     content: {
       title: "Medication reminder",
-      body: medication.dose ? `Time for ${medication.name} — ${medication.dose}` : `Time for ${medication.name}`,
+      body: medication.dose ? `Time for ${medication.name}, ${medication.dose}` : `Time for ${medication.name}`,
       sound: "default",
       data: { type: "medication", medicationId: medication.id },
     },

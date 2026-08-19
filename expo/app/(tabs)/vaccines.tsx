@@ -119,7 +119,7 @@ export default function VaccinesScreen() {
                       const done = given >= info.doseCount;
                       return (
                         <Text style={[styles.doseProgress, done && styles.doseProgressDone]}>
-                          {done ? `All ${info.doseCount} doses recorded` : `Dose ${given} of ${info.doseCount} — ${info.doseCount - given} to go`}
+                          {done ? `All ${info.doseCount} doses recorded` : `Dose ${given} of ${info.doseCount}, ${info.doseCount - given} to go`}
                         </Text>
                       );
                     })()}
@@ -292,7 +292,7 @@ function VaccineCatalogCard({
       {tracked ? (
         <View style={styles.trackedBadge}>
           <CheckCircle2 color={C.success} size={18} strokeWidth={2.5} />
-          <Text style={styles.trackedText}>Tracked — tap My Vaccines to manage</Text>
+          <Text style={styles.trackedText}>Tracked. Tap My Vaccines to manage.</Text>
         </View>
       ) : (
         <Pressable

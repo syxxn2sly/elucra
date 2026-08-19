@@ -132,7 +132,10 @@ export default function HealthCardSetupScreen() {
     await SecureStore.setItemAsync(CARD_KEY, encrypted);
 
     saveHealthCard(card);
-    router.back();
+    // Replaces rather than pops back: land on the saved card as confirmation
+    // of what was just written, and drop the input form from the stack so
+    // "back" from there doesn't return to a stale, already-submitted form.
+    router.replace("/healthcard");
   }, [cardNumber, name, versionCode, expiry, issuer, frontImageUri, backImageUri, saveHealthCard]);
 
   return (
@@ -192,7 +195,7 @@ export default function HealthCardSetupScreen() {
           />
           <CardCaptureSlot
             side="Back"
-            hint="Optional — kept for your records"
+            hint="Optional. Kept for your records."
             imageUri={backImageUri}
             onCamera={() => captureImage("back")}
             onGallery={() => pickImage("back")}

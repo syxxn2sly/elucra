@@ -279,7 +279,7 @@ export function MultiChipInput({
       {/* Add custom */}
       {atCap ? (
         <Text style={styles.capNote}>
-          That&apos;s {maxItems} — deselect one to choose a different option.
+          That&apos;s {maxItems}. Deselect one to choose a different option.
         </Text>
       ) : showCustom ? (
         <View style={styles.customRow}>
@@ -990,7 +990,7 @@ export function MonthYearWheel({
         onPress={openWheel}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={label ? `${triggerLabel} — ${label}` : triggerLabel}
+        accessibilityLabel={label ? `${triggerLabel}, ${label}` : triggerLabel}
       >
         <Text style={styles.wheelTriggerText}>{triggerLabel}</Text>
       </Pressable>

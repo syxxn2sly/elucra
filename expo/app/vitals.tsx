@@ -92,7 +92,7 @@ export default function VitalsScreen() {
     (reading: VitalReading) => {
       confirmDestructive(
         "Delete this reading?",
-        `${vitalDefinition(reading.kind).label} — ${formatVital(reading)}`,
+        `${vitalDefinition(reading.kind).label}: ${formatVital(reading)}`,
         "Delete",
         () => removeVital(reading.id),
       );

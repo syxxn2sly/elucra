@@ -35,7 +35,7 @@ export const VACCINE_CATALOG: VaccineInfo[] = [
     name: "Tetanus, Diphtheria, Pertussis (Tdap)",
     category: "suggested",
     description:
-      "Protects against three serious bacterial diseases — tetanus (lockjaw), diphtheria, and whooping cough.",
+      "Protects against three serious bacterial diseases: tetanus (lockjaw), diphtheria, and whooping cough.",
     protectsAgainst: "Tetanus, diphtheria, pertussis",
     cadenceMonths: 120,
     doseCount: 1,

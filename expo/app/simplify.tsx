@@ -345,7 +345,7 @@ export default function SimplifyScreen() {
           />
           <CaptureOption
             icon={<FileText color={C.docConsultation} size={30} strokeWidth={2.5} />}
-            iconBg="#E0E7FF"
+            iconBg={C.accentSoft}
             title="Upload a File"
             sub="Pick a PDF or image from your files"
             onPress={handleFile}
@@ -361,9 +361,9 @@ export default function SimplifyScreen() {
             <Text style={styles.expectTitle}>What you'll get</Text>
           </View>
           <ExpectItem text="Plain-English explanation of what the document means" />
-          <ExpectItem text="Action checklist — what to do, in priority order" />
-          <ExpectItem text="Recovery timeline — when each thing happens" />
-          <ExpectItem text="Warning signs — when to seek help immediately" />
+          <ExpectItem text="An action checklist, in priority order" />
+          <ExpectItem text="A recovery timeline" />
+          <ExpectItem text="Warning signs that need immediate care" />
           <ExpectItem text="Communication scripts in English, Punjabi, Hindi & Urdu" />
         </View>
 

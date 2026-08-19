@@ -137,7 +137,7 @@ export function PlaceField({
       {nearState === "finding" ? (
         <Text style={styles.note}>Finding your area…</Text>
       ) : nearState === "denied" ? (
-        <Text style={styles.note}>Location off — results are not narrowed to your area.</Text>
+        <Text style={styles.note}>Location off. Results are not narrowed to your area.</Text>
       ) : near ? (
         <Text style={styles.note}>Showing places near you first.</Text>
       ) : null}

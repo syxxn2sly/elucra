@@ -909,6 +909,13 @@ export async function extractHealthCard(input: { imageBase64: string; mimeType: 
  * is left out rather than guessed at, because a confident-sounding summary with
  * an invented detail in it is worse at a consultation than no summary at all.
  */
+export interface VisitSummary {
+  /** Plain text, headed sections, no markdown. */
+  summary: string;
+  /** Rendered as a checklist, not prose, so it is one thing to work through rather than a paragraph to reread at the desk. */
+  questions: string[];
+}
+
 export async function generateVisitSummary(input: {
   profile: HealthProfile;
   medications: { name: string; dose: string; frequency: string }[];
@@ -917,31 +924,37 @@ export async function generateVisitSummary(input: {
   vaccines: { name: string; received: string }[];
   /** Most recent reading per measure, plus how many are on file. */
   vitals: { label: string; latest: string; takenAt: string; count: number }[];
-}): Promise<string> {
+}): Promise<VisitSummary> {
   const content = await requestCompletion({
     model: MODEL_ID,
     max_tokens: 900,
     messages: [
       {
         role: "system",
-        content: `Write a short summary a patient can show their doctor at the start of an appointment. Use ONLY the supplied facts.
+        content: `Write a short summary a patient can show their doctor at the start of an appointment, from the supplied facts only.
 
-Organise it under these headings, omitting any heading with nothing to report:
-Start with the patient's name on its own line, exactly as recorded, then a blank line. If no name is recorded, start straight at ABOUT ME.
+Return JSON: {"summary": "...", "questions": ["...", "..."]}.
 
-ABOUT ME — age, sex, and any conditions and allergies recorded. Do not repeat the name here.
-CURRENT MEDICATIONS — name, dose and frequency exactly as recorded. Say "dose not recorded" where it is missing rather than leaving it out.
-RECENT RESULTS — the most recent documents and what they showed, in one line each.
-READINGS I TRACK — the latest value for each vital recorded, with its date and how many readings there are. Report the numbers exactly and say nothing about whether they are normal, high or concerning: they were taken at home in unknown conditions, and interpreting them is the clinician's job, not yours.
-UPCOMING — appointments already booked.
-QUESTIONS TO ASK — only questions that follow directly from a gap in the record, such as a medication with no dose recorded or a result the patient has no follow-up for. If nothing qualifies, omit this heading entirely.
+"summary" is organised under these headings, omitting any heading with nothing to report. Start with the patient's name on its own line, exactly as recorded, then a blank line. If no name is recorded, start straight at ABOUT ME.
 
-Do not diagnose, do not interpret results beyond what the supplied summary already says, do not recommend treatment, and do not invent symptoms, dates or measurements. Plain text, no markdown, under 250 words.`,
+ABOUT ME: age, sex, and any conditions and allergies recorded. Do not repeat the name here.
+CURRENT MEDICATIONS: name, dose and frequency exactly as recorded. Say "dose not recorded" where it is missing rather than leaving it out.
+RECENT RESULTS: the most recent documents and what they showed, in one line each.
+READINGS I TRACK: the latest value for each vital recorded, with its date and how many readings there are. Report the numbers exactly and say nothing about whether they are normal, high or concerning: they were taken at home in unknown conditions, and interpreting them is the clinician's job, not yours.
+UPCOMING: appointments already booked.
+
+"questions" is a separate list, not part of the summary text. Include only questions that follow directly from a gap in the record, such as a medication with no dose recorded or a result the patient has no follow-up for. One short question per entry, no numbering. Return an empty array if nothing qualifies.
+
+Do not diagnose, do not interpret results beyond what the supplied summary already says, do not recommend treatment, and do not invent symptoms, dates or measurements. "summary" must be plain text, no markdown, under 220 words.`,
       },
       { role: "user", content: JSON.stringify(input) },
     ],
   });
-  return content.trim();
+  const parsed = asRecord(JSON.parse(extractJson(content) ?? "{}"));
+  return {
+    summary: asString(parsed.summary),
+    questions: asArray(parsed.questions).map((entry) => asString(entry)).filter(Boolean),
+  };
 }
 
 export async function generateDoctorSummary(input: { title: string; facts: ExtractedFacts; profile: HealthProfile }): Promise<string> {

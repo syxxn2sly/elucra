@@ -66,7 +66,7 @@ const STEPS: Step[] = [
     subtitle: "So we can greet you personally throughout the app.",
     icon: <User color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "text",
-    placeholder: "e.g. Harpreet Singh",
+    placeholder: "e.g. Jane Doe",
     optional: false,
   },
   {
@@ -90,7 +90,7 @@ const STEPS: Step[] = [
     key: "province",
     title: "Where do you live?",
     subtitle:
-      "Screening programmes differ by province — this is how CLAIRITY knows which ages apply to you.",
+      "Screening programmes differ by province. This is how CLAIRITY knows which ages apply to you.",
     icon: <MapPin color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "chipSelect",
     optional: true,

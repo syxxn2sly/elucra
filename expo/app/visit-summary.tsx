@@ -1,7 +1,7 @@
 // CLAIRITY — a summary to show your doctor at the start of an appointment
 import { router } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { ClipboardCheck, Copy, RefreshCw, Share as ShareIcon, Stethoscope } from "lucide-react-native";
+import { Check, ClipboardCheck, Copy, RefreshCw, Share as ShareIcon, Stethoscope } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +19,7 @@ import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { generateVisitSummary } from "@/lib/ai-service";
+import type { VisitSummary } from "@/lib/ai-service";
 import { formatDateDisplay, formatMonthYear } from "@/lib/utils";
 import { VITAL_DEFINITIONS, formatVital } from "@/lib/vitals-data";
 import { Card, PrimaryButton, ScreenHeader } from "@/components/ui";
@@ -33,7 +34,8 @@ export default function VisitSummaryScreen() {
   const scrollPadding = useStackScrollPadding();
   const { profile, medications, documents, appointments, vaccines, vitals, loaded } = useClairity();
 
-  const [summary, setSummary] = useState("");
+  const [summary, setSummary] = useState<VisitSummary>({ summary: "", questions: [] });
+  const [checkedQuestions, setCheckedQuestions] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -43,7 +45,7 @@ export default function VisitSummaryScreen() {
     setError("");
     try {
       const now = Date.now();
-      const text = await generateVisitSummary({
+      const result = await generateVisitSummary({
         profile,
         medications: medications.map((med) => ({
           name: med.name,
@@ -88,7 +90,8 @@ export default function VisitSummaryScreen() {
             : null;
         }).filter((entry): entry is NonNullable<typeof entry> => entry !== null),
       });
-      setSummary(text);
+      setSummary(result);
+      setCheckedQuestions(new Set());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not build the summary. Please try again.");
     } finally {
@@ -113,19 +116,34 @@ export default function VisitSummaryScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
+  const fullText = useCallback(() => {
+    if (summary.questions.length === 0) return summary.summary;
+    const questionList = summary.questions.map((question) => `- ${question}`).join("\n");
+    return `${summary.summary}\n\nQUESTIONS TO ASK\n${questionList}`;
+  }, [summary]);
+
   const copy = useCallback(async () => {
-    await Clipboard.setStringAsync(summary);
+    await Clipboard.setStringAsync(fullText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [summary]);
+  }, [fullText]);
 
   const share = useCallback(async () => {
     try {
-      await RNShare.share({ message: summary });
+      await RNShare.share({ message: fullText() });
     } catch {
       // Cancelling the share sheet lands here; nothing to report.
     }
-  }, [summary]);
+  }, [fullText]);
+
+  const toggleQuestion = useCallback((index: number) => {
+    setCheckedQuestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }, []);
 
   const hasAnything =
     medications.length > 0 || documents.length > 0 || appointments.length > 0 || vitals.length > 0 || Boolean(profile.name);
@@ -171,9 +189,38 @@ export default function VisitSummaryScreen() {
           <>
             <Card style={styles.card}>
               <Text style={styles.summaryText} selectable>
-                {summary}
+                {summary.summary}
               </Text>
             </Card>
+
+            {/*
+              A checklist, not another paragraph in the summary text. The point
+              of this list is to be worked through in the room, one item ticked
+              off at a time, not reread from a wall of prose.
+            */}
+            {summary.questions.length > 0 ? (
+              <Card style={styles.card}>
+                <Text style={styles.cardTitle}>Questions to ask</Text>
+                {summary.questions.map((question, index) => (
+                  <Pressable
+                    key={question}
+                    onPress={() => toggleQuestion(index)}
+                    style={({ pressed }) => [styles.questionRow, pressed && styles.pressed]}
+                  >
+                    <View style={[styles.checkbox, checkedQuestions.has(index) && styles.checkboxDone]}>
+                      {checkedQuestions.has(index) ? (
+                        <Check color={C.textInverse} size={16} strokeWidth={2.5} />
+                      ) : null}
+                    </View>
+                    <Text
+                      style={[styles.questionText, checkedQuestions.has(index) && styles.questionTextDone]}
+                    >
+                      {question}
+                    </Text>
+                  </Pressable>
+                ))}
+              </Card>
+            ) : null}
 
             <View style={styles.actions}>
               <Pressable onPress={copy} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
@@ -195,7 +242,7 @@ export default function VisitSummaryScreen() {
             </View>
 
             <Text style={styles.disclaimer}>
-              Built from what you have recorded, and only that — anything CLAIRITY does not know is
+              Built from what you have recorded, and only that. Anything CLAIRITY does not know is
               left out rather than guessed at, so read it through before you hand it over. It is a
               starting point for the conversation, not a medical record and not a diagnosis.
             </Text>
@@ -225,6 +272,25 @@ const styles = StyleSheet.create({
   errorText: { ...Type.body, color: C.danger },
   emptyText: { ...Type.body, color: C.textMuted },
   summaryText: { ...Type.body, color: C.text, lineHeight: 25 },
+  cardTitle: { ...Type.label, color: C.text, marginBottom: Space.md },
+  questionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    paddingVertical: Space.sm,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: Radius.sm,
+    borderWidth: 2,
+    borderColor: C.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxDone: { backgroundColor: C.primary, borderColor: C.primary },
+  questionText: { ...Type.body, color: C.text, flex: 1, lineHeight: 22 },
+  questionTextDone: { color: C.textMuted, textDecorationLine: "line-through" },
   actions: { flexDirection: "row", gap: Space.sm },
   action: {
     flex: 1,

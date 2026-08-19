@@ -375,7 +375,7 @@ export default function VaccineDetailScreen() {
           {!activeProofUri ? (
             <View style={styles.unverifiedRow}>
               <HelpCircle color={C.textMuted} size={16} strokeWidth={2.5} />
-              <Text style={styles.unverifiedText}>Not verified — add proof to mark as verified</Text>
+              <Text style={styles.unverifiedText}>Not verified. Add proof to mark as verified.</Text>
             </View>
           ) : null}
         </Card>

@@ -28,7 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { Font, Radius, Space, Type } from "@/constants/theme";
-import { PROVINCES, SCREENINGS, ruleFor } from "@/lib/screening-data";
+import { PROVINCES, SCREENINGS, ruleFor, isConditionLinked, screeningAppliesToConditions } from "@/lib/screening-data";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import {
@@ -63,15 +63,25 @@ export default function HomeScreen() {
     due. CLAIRITY has no record of past screening, so the tile counts coverage
     and the screen says so in words.
   */
+  /*
+    Population screenings in the person's age band, plus condition-linked ones
+    whose trigger actually matches the profile. Counting every condition-linked
+    entry unconditionally was the bug here: they all carry startAge 0, so a
+    profile with no conditions recorded still showed diabetes and blood
+    pressure follow-up as "covered".
+  */
   const screeningCount = useMemo(() => {
     const age = Number.parseInt(profile.age, 10);
     if (!Number.isFinite(age)) return null;
     const code = PROVINCES.find((entry) => entry.name === profile.province)?.code ?? null;
     return SCREENINGS.filter((screening) => {
+      if (isConditionLinked(screening)) {
+        return screeningAppliesToConditions(screening, profile.conditions);
+      }
       const rule = ruleFor(screening, code);
       return age >= rule.startAge && (rule.stopAge === null || age <= rule.stopAge);
     }).length;
-  }, [profile.age, profile.province]);
+  }, [profile.age, profile.province, profile.conditions]);
 
   const undatedVaccines = vaccines.filter((v) => !v.hasDate);
 
@@ -142,7 +152,7 @@ export default function HomeScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroCardTitle}>Simplify a Document</Text>
                 <Text style={styles.heroCardSub}>
-                  Scan or upload a report — get plain English in seconds
+                  Scan or upload a report and get plain English in seconds
                 </Text>
               </View>
               <ArrowRight color={C.textInverse} size={24} />
@@ -162,7 +172,7 @@ export default function HomeScreen() {
             <Stethoscope color={C.primary} size={22} strokeWidth={2.5} />
             <View style={{ flex: 1 }}>
               <Text style={styles.visitCardTitle}>Summary for your doctor</Text>
-              <Text style={styles.visitCardSub}>Medications, recent results and questions — ready to show</Text>
+              <Text style={styles.visitCardSub}>Medications, recent results and questions, ready to show</Text>
             </View>
             <ArrowRight color={C.primary} size={20} />
           </Pressable>
@@ -212,7 +222,7 @@ export default function HomeScreen() {
           <QuickCard
             icon={<ShieldCheck color={C.docPathology} size={22} strokeWidth={2.5} />}
             label="Screening"
-            value={screeningCount === null ? "—" : screeningCount.toString()}
+            value={screeningCount === null ? "–" : screeningCount.toString()}
             sub={screeningCount === null ? "set your age" : "for your age"}
             onPress={() => router.push("/preventive-care")}
           />
@@ -221,7 +231,7 @@ export default function HomeScreen() {
             label="Health Card"
             value={healthCard ? "Saved" : "None"}
             sub={healthCard ? healthCard.issuer : "Add your card"}
-            onPress={() => router.push("/health-card-setup")}
+            onPress={() => router.push(healthCard ? "/healthcard" : "/health-card-setup")}
           />
         </View>
 

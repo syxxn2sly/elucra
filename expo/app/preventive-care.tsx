@@ -66,7 +66,7 @@ function matchesCondition(screening: Screening, conditions: string): boolean {
 function cervicalActivityNote(sexuallyActive: string, age: number | null, rule: ScreeningRule): string | null {
   if (age === null || !sexuallyActive || sexuallyActive === "Prefer not to say") return null;
   if (sexuallyActive === "No") {
-    return "Several provinces base when this starts on sexual activity as well as age — since you've said you aren't currently, you may not need to start yet. Worth confirming with your provider rather than assuming either way.";
+    return "Several provinces base when this starts on sexual activity as well as age. Since you've said you aren't currently, you may not need to start yet. Worth confirming with your provider rather than assuming either way.";
   }
   if (age < rule.startAge) {
     return `A few provinces (B.C. among them) start cervical screening at first sexual activity rather than waiting for age ${rule.startAge}. Worth asking your provider whether that applies to you now.`;
@@ -163,8 +163,8 @@ export default function PreventiveCareScreen() {
             {!profile.province ? (
               <Card style={styles.noticeCard}>
                 <Text style={styles.noticeText}>
-                  Without a province, the ages below are the national ones. Provinces differ —
-                  cervical screening starts at 21 in some and 25 in others — so setting yours makes
+                  Without a province, the ages below are the national ones. Provinces differ:
+                  cervical screening starts at 21 in some and 25 in others. Setting yours makes
                   this accurate for where you live.
                 </Text>
               </Card>
@@ -176,7 +176,7 @@ export default function PreventiveCareScreen() {
                 <Text style={styles.noticeText}>
                   {age === null
                     ? "Set your age in settings to see which screenings apply to you."
-                    : "Nothing routine applies at your current age. Colorectal, cervical and breast screening all have age windows — check back as you age into one, or ask your doctor if anything should start earlier."}
+                    : "Nothing routine applies at your current age. Colorectal, cervical and breast screening all have age windows. Check back as you age into one, or ask your doctor if anything should start earlier."}
                 </Text>
               </Card>
             ) : (
@@ -198,7 +198,7 @@ export default function PreventiveCareScreen() {
             {hiddenCount > 0 ? (
               <Text style={styles.hiddenNote}>
                 {hiddenCount} more {hiddenCount === 1 ? "screening applies" : "screenings apply"} outside your
-                current age range — ask your doctor if any should start earlier or continue longer than usual.
+                current age range. Ask your doctor if any should start earlier or continue longer than usual.
               </Text>
             ) : null}
 
@@ -226,7 +226,7 @@ export default function PreventiveCareScreen() {
               These are the ages and intervals a programme generally uses, read from the sources
               linked on each card, and they assume average risk. Your own history, and anything
               that runs in your family, can change what your doctor recommends and when. What you
-              record here stays on your device — CLAIRITY does not know what you have had unless
+              record here stays on your device. CLAIRITY does not know what you have had unless
               you tell it, and never assumes a screening happened.
             </Text>
           </>
@@ -280,7 +280,7 @@ function ScreeningCard({
         <Text style={styles.cardApplies}>
           {screening.appliesTo === "cervix"
             ? "Applies to people who have a cervix."
-            : "Applies to people who have breast tissue — which includes most men, though routine screening is not offered to them."}
+            : "Applies to people who have breast tissue, which includes most men, though routine screening is not offered to them."}
         </Text>
       ) : null}
 

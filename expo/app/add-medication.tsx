@@ -207,7 +207,7 @@ export default function AddMedicationScreen() {
                   placeholderTextColor={C.textMuted}
                   keyboardType="numbers-and-punctuation"
                 />
-                <Text style={styles.reminderHint}>We’ll ask for notification permission when you save. This time is your choice—it is not taken from the prescription.</Text>
+                <Text style={styles.reminderHint}>We’ll ask for notification permission when you save. This time is your choice. It is not taken from the prescription.</Text>
               </> : null}
             </View>
 
@@ -216,7 +216,7 @@ export default function AddMedicationScreen() {
               style={[styles.input, styles.inputMultiline]}
               value={notes}
               onChangeText={setNotes}
-              placeholder="e.g. Take with food. Prescribed by Dr. Patel."
+              placeholder="e.g. Take with food. Prescribed by Dr. Smith."
               placeholderTextColor={C.textMuted}
               multiline
               textAlignVertical="top"

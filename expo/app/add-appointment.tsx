@@ -65,7 +65,7 @@ export default function AddAppointmentScreen() {
   const [error, setError] = useState<string>("");
 
   const locationSuggestions = useMemo((): string[] => {
-    const doctorLocation = [familyDoctor.clinicName, familyDoctor.address].filter(Boolean).join(" — ");
+    const doctorLocation = [familyDoctor.clinicName, familyDoctor.address].filter(Boolean).join(", ");
     const priorLocations = appointments.map((appointment) => appointment.location);
     return [doctorLocation, ...priorLocations]
       // Without this the empty doctor placeholder became a chip with an icon and
@@ -320,7 +320,7 @@ export default function AddAppointmentScreen() {
         {nearState === "finding" ? (
           <Text style={styles.nearNote}>Finding your area…</Text>
         ) : nearState === "denied" ? (
-          <Text style={styles.nearNote}>Location off — results are not narrowed to your area.</Text>
+          <Text style={styles.nearNote}>Location off. Results are not narrowed to your area.</Text>
         ) : near ? (
           <Text style={styles.nearNote}>Showing places near you first.</Text>
         ) : null}

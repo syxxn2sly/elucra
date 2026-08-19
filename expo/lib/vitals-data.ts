@@ -109,9 +109,9 @@ export function formatVital(reading: {
 }): string {
   const definition = vitalDefinition(reading.kind);
   if (definition.paired) {
-    if (reading.systolic === null || reading.diastolic === null) return "—";
+    if (reading.systolic === null || reading.diastolic === null) return "–";
     return `${reading.systolic}/${reading.diastolic} ${definition.unit}`;
   }
-  if (reading.value === null) return "—";
+  if (reading.value === null) return "–";
   return `${reading.value.toFixed(definition.decimals)} ${definition.unit}`;
 }

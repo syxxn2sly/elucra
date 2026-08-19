@@ -101,7 +101,7 @@ export const SCREENINGS: Screening[] = [
       note: "Alberta and the Northwest Territories offer it every 1 to 2 years.",
     },
     source: {
-      label: "Canadian Partnership Against Cancer — colorectal screening parameters",
+      label: "Canadian Partnership Against Cancer: colorectal screening parameters",
       url: "https://www.partnershipagainstcancer.ca/topics/colorectal-screening-canada-2023-2024/programs/screening-parameters/",
       checked: CHECKED,
     },
@@ -110,7 +110,7 @@ export const SCREENINGS: Screening[] = [
     id: "cervical",
     label: "Cervical screening",
     what:
-      "A test of cells from the cervix, done during a pelvic exam. When it starts and how often varies more by province than any other screening — some start at 21, some at 25.",
+      "A test of cells from the cervix, done during a pelvic exam. When it starts and how often varies more by province than any other screening: some start at 21, some at 25.",
     appliesTo: "cervix",
     national: { startAge: 25, stopAge: 69, interval: "every 3 years", intervalMonths: 36 },
     byProvince: {
@@ -163,7 +163,7 @@ export const SCREENINGS: Screening[] = [
       },
     },
     source: {
-      label: "Canadian Partnership Against Cancer — cervical screening guidelines",
+      label: "Canadian Partnership Against Cancer: cervical screening guidelines",
       url: "https://www.partnershipagainstcancer.ca/topics/cervical-screening-canada-2023-2024/programs/guidelines/",
       checked: CHECKED,
     },
@@ -172,7 +172,7 @@ export const SCREENINGS: Screening[] = [
     id: "breast",
     label: "Breast screening (mammogram)",
     what:
-      "An X-ray of the breast. Several provinces have been lowering the age they start, and many will accept you from 40 if you ask, even where the routine invitation begins later — so this is worth asking about rather than waiting for a letter.",
+      "An X-ray of the breast. Several provinces have been lowering the age they start, and many will accept you from 40 if you ask, even where the routine invitation begins later. Worth asking about rather than waiting for a letter.",
     appliesTo: "breasts",
     national: {
       startAge: 50,
@@ -211,7 +211,7 @@ export const SCREENINGS: Screening[] = [
       },
     },
     source: {
-      label: "Canadian Partnership Against Cancer — breast screening guidelines",
+      label: "Canadian Partnership Against Cancer: breast screening guidelines",
       url: "https://www.partnershipagainstcancer.ca/topics/breast-screening-canada-2023-2024/programs/guidelines/",
       checked: CHECKED,
     },
@@ -240,7 +240,7 @@ export const SCREENINGS: Screening[] = [
       note: "Every 6 months is common once things have been stable and on target for a while.",
     },
     source: {
-      label: "Diabetes Canada — glycemic monitoring",
+      label: "Diabetes Canada: glycemic monitoring",
       url: "https://guidelines.diabetes.ca/cpg/chapter9",
       checked: CHECKED,
     },
@@ -260,7 +260,7 @@ export const SCREENINGS: Screening[] = [
       note: "In type 1 this usually starts 5 years after diagnosis and is yearly. In type 2 it starts at diagnosis, then every 1 to 2 years if nothing is found.",
     },
     source: {
-      label: "Diabetes Canada — retinopathy",
+      label: "Diabetes Canada: retinopathy",
       url: "https://guidelines.diabetes.ca/cpg/chapter30",
       checked: CHECKED,
     },
@@ -280,7 +280,7 @@ export const SCREENINGS: Screening[] = [
       note: "From diagnosis in type 2; usually from 5 years after diagnosis in type 1.",
     },
     source: {
-      label: "Diabetes Canada — chronic kidney disease",
+      label: "Diabetes Canada: chronic kidney disease",
       url: "https://guidelines.diabetes.ca/cpg/chapter29",
       checked: CHECKED,
     },
@@ -297,12 +297,31 @@ export const SCREENINGS: Screening[] = [
       stopAge: null,
       interval: "every 3 to 6 months",
       intervalMonths: 6,
-      note: "More often — every 1 to 2 months — while your blood pressure is still being brought to target.",
+      note: "More often, every 1 to 2 months, while your blood pressure is still being brought to target.",
     },
     source: {
-      label: "Hypertension Canada — diagnosis and follow-up",
+      label: "Hypertension Canada: diagnosis and follow-up",
       url: "https://hypertension.ca/guidelines/diagnosis-assessment/diagnosis-assessment-diagnosis/",
       checked: CHECKED,
+    },
+  },
+  {
+    id: "anemia-followup",
+    label: "Anemia follow-up bloodwork",
+    what: "Anemia has several different causes: iron deficiency, low B12 or folate, chronic disease. What gets rechecked, and how often, depends on which one and whether you are on treatment. Bring this up with whoever diagnosed it so the follow-up plan matches your case.",
+    appliesTo: "everyone",
+    conditions: ["anemia"],
+    national: {
+      startAge: 0,
+      stopAge: null,
+      interval: "varies by cause and treatment",
+      intervalMonths: null,
+      note: "For iron deficiency on treatment, B.C.'s guideline has hemoglobin rechecked at 2 to 4 weeks, normalizing over 2 to 4 months, then ferritin rechecked 3 to 6 months after that. This is a provincial guideline, not a national one, and a different cause follows a different plan.",
+    },
+    source: {
+      label: "BC Ministry of Health: iron deficiency diagnosis and management",
+      url: "https://www2.gov.bc.ca/gov/content/health/practitioner-professional-resources/bc-guidelines/iron-deficiency",
+      checked: "2026-08-18",
     },
   },
 ];

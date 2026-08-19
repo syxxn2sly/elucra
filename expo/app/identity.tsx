@@ -69,7 +69,7 @@ export default function IdentityScreen() {
             </View>
           </View>
 
-          <Field label="Doctor's name" value={draft.doctorName} onChangeText={(value) => setField("doctorName", value)} placeholder="e.g. Dr. A. Patel" />
+          <Field label="Doctor's name" value={draft.doctorName} onChangeText={(value) => setField("doctorName", value)} placeholder="e.g. Dr. Smith" />
           <PlaceField
             label="Clinic or practice"
             value={draft.clinicName}
