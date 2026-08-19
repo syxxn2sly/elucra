@@ -24,8 +24,9 @@ import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { VACCINE_CATALOG } from "@/lib/vaccine-data";
-import { formatDueCountdown, formatMonthYear, sortByDueDate } from "@/lib/utils";
+import { formatDueCountdown, formatMonthYear, isDueSoon, sortByDueDate } from "@/lib/utils";
 import { Card, Tag, SectionHeader, EmptyState } from "@/components/ui";
+import { MonthYearWheel } from "@/components/smart-inputs";
 import type { VaccineInfo, VaccineRecord } from "@/lib/types";
 
 const C = Colors.light;
@@ -35,7 +36,7 @@ type Tab = "suggested" | "popular" | "other" | "tracked";
 export default function VaccinesScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
-  const { vaccines, addVaccine } = useClairity();
+  const { vaccines, addVaccine, updateVaccineDate } = useClairity();
   const [tab, setTab] = useState<Tab>("suggested");
   const [search, setSearch] = useState("");
 
@@ -93,13 +94,31 @@ export default function VaccinesScreen() {
           const info = VACCINE_CATALOG.find((v) => v.id === vac.vaccineId);
           const countdown = formatDueCountdown(vac.nextDueDate);
           const isOverdue = countdown === "Overdue";
+          /*
+            A recurring single-shot vaccine (flu, and any other annual dose)
+            has no course to track, so "tap through to the detail screen and
+            reopen the date picker" was the only way to log this year's dose.
+            Surfacing an Update trigger right on the card, once it is actually
+            due, turns that into one tap instead of three.
+          */
+          const canQuickUpdate = Boolean(info) && info!.doseCount <= 1 && info!.cadenceMonths !== null && isDueSoon(vac.nextDueDate);
           return (
-            <Card
-              key={vac.id}
-              onPress={() => router.push({ pathname: "/vaccine-detail", params: { id: vac.id } })}
-            >
+            <Card key={vac.id}>
               <View style={styles.vacRow}>
-                <View style={styles.vacLeft}>
+                {/*
+                  A Pressable for navigation and a separate Pressable for the
+                  update action, both direct children of a plain Card rather
+                  than nested inside a Card-level onPress. A Pressable nested
+                  inside another Pressable never wins the touch responder on
+                  native, so a second action inside a tappable card silently
+                  does nothing. Same trap as the reports list delete button.
+                */}
+                <Pressable
+                  style={styles.vacLeft}
+                  onPress={() => router.push({ pathname: "/vaccine-detail", params: { id: vac.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${vac.name}`}
+                >
                   <View
                     style={[
                       styles.vacIcon,
@@ -113,7 +132,6 @@ export default function VaccinesScreen() {
                     <Text style={styles.vacDate}>Received: {formatMonthYear(vac.monthReceived, vac.yearReceived)}</Text>
                     {(() => {
                       // Only for courses: "1 of 1" on a flu shot is noise.
-                      const info = VACCINE_CATALOG.find((entry) => entry.id === vac.vaccineId);
                       if (!info || info.doseCount <= 1) return null;
                       const given = vac.doses.length;
                       const done = given >= info.doseCount;
@@ -130,14 +148,25 @@ export default function VaccinesScreen() {
                       </View>
                     ) : null}
                   </View>
+                </Pressable>
+                <View style={styles.vacRight}>
+                  {vac.nextDueDate ? (
+                    <Tag
+                      text={countdown}
+                      color={isOverdue ? C.danger : C.accent}
+                      bg={isOverdue ? C.dangerSoft : C.accentSoft}
+                    />
+                  ) : null}
+                  {canQuickUpdate ? (
+                    <MonthYearWheel
+                      month={null}
+                      year={null}
+                      label={`When did you get this year's ${vac.name}?`}
+                      triggerLabel="Update"
+                      onConfirm={(month, year) => updateVaccineDate(vac.id, month, year, true)}
+                    />
+                  ) : null}
                 </View>
-                {vac.nextDueDate ? (
-                  <Tag
-                    text={countdown}
-                    color={isOverdue ? C.danger : C.accent}
-                    bg={isOverdue ? C.dangerSoft : C.accentSoft}
-                  />
-                ) : null}
               </View>
             </Card>
           );
@@ -447,6 +476,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Space.md,
     flex: 1,
+  },
+  vacRight: {
+    alignItems: "flex-end",
+    gap: Space.sm,
+    flexShrink: 0,
   },
   vacIcon: {
     width: 46,

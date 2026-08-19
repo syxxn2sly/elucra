@@ -56,6 +56,18 @@ export function formatDueCountdown(dueDate: string | null): string {
 }
 
 /**
+ * True once a due date is close enough to act on: overdue, or within the
+ * month. Distinct from formatDueCountdown's day-count math being duplicated
+ * inline wherever a screen needs to decide whether to surface a renewal
+ * action rather than just display the countdown text.
+ */
+export function isDueSoon(dueDate: string | null): boolean {
+  if (!dueDate) return false;
+  const diffDays = Math.ceil((new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return diffDays <= 30;
+}
+
+/**
  * Sort vaccine records by next-due date (soonest first).
  * Undated vaccines go to the end.
  */
