@@ -42,3 +42,7 @@ yarn-error.*
 core
 node_modules
 .expo
+
+# local iOS archive output (ExportOptions.plist is kept — ship:local needs it)
+ios-archive/*
+!ios-archive/ExportOptions.plist
