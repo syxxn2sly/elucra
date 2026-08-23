@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "clairity-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start-web", "--", "--port", "8082"],
+      "cwd": "expo",
+      "port": 8082,
+      "autoPort": false
+    }
+  ]
+}

@@ -39,10 +39,46 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;
 const RATE_LIMIT_REQUESTS = 60;
 const RATE_LIMIT_WINDOW_SECONDS = 3600;
 
-function json(body: unknown, status: number): Response {
+/*
+  Browsers preflight this endpoint; the native app does not. `expo start --web`
+  runs on some localhost port, so without CORS every AI call fails in a browser
+  while working fine on device.
+
+  Only localhost is reflected, and deliberately so. Answering every origin would
+  turn this into an endpoint any web page could call with a token lifted from
+  the app bundle, which is precisely the exposure the proxy exists to contain.
+  A real web build gets its own origin added here, explicitly.
+*/
+function allowedOrigin(request: Request): string | null {
+  const origin = request.headers.get("origin");
+  if (!origin) return null;
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1" ? origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = allowedOrigin(request);
+  if (!origin) return {};
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-headers": "content-type, x-clairity-token",
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-max-age": "86400",
+    vary: "Origin",
+  };
+}
+
+function json(body: unknown, status: number, request?: Request): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(request ? corsHeaders(request) : {}),
+    },
   });
 }
 
@@ -60,23 +96,28 @@ async function underRateLimit(ip: string, env: Env): Promise<boolean> {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // The preflight carries no token: browsers send it before the real request,
+    // and refusing it here would mean the real request is never sent at all.
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders(request) });
+    }
     if (request.method !== "POST") {
-      return json({ error: { message: "Only POST is supported." } }, 405);
+      return json({ error: { message: "Only POST is supported." } }, 405, request);
     }
     if (new URL(request.url).pathname !== "/v1/messages") {
-      return json({ error: { message: "Unknown endpoint." } }, 404);
+      return json({ error: { message: "Unknown endpoint." } }, 404, request);
     }
 
     // Constant-time-ish comparison is overkill for a shared token, but an early
     // length check avoids leaking its length through timing on a long guess.
     const token = request.headers.get("x-clairity-token") ?? "";
     if (token.length !== env.CLIENT_TOKEN.length || token !== env.CLIENT_TOKEN) {
-      return json({ error: { message: "Not authorised." } }, 401);
+      return json({ error: { message: "Not authorised." } }, 401, request);
     }
 
     const declared = Number(request.headers.get("content-length") ?? "0");
     if (declared > MAX_BODY_BYTES) {
-      return json({ error: { message: "That document is too large to process." } }, 413);
+      return json({ error: { message: "That document is too large to process." } }, 413, request);
     }
 
     const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
@@ -84,12 +125,13 @@ export default {
       return json(
         { error: { message: "Too many requests. Please try again later." } },
         429,
+        request,
       );
     }
 
     const body = await request.text();
     if (body.length > MAX_BODY_BYTES) {
-      return json({ error: { message: "That document is too large to process." } }, 413);
+      return json({ error: { message: "That document is too large to process." } }, 413, request);
     }
 
     const upstream = await fetch(UPSTREAM, {
@@ -107,7 +149,7 @@ export default {
     // mean maintaining that mapping twice.
     return new Response(upstream.body, {
       status: upstream.status,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...corsHeaders(request) },
     });
   },
 };

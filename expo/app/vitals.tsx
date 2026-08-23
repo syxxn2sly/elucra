@@ -315,7 +315,22 @@ function AddReadingSheet({
         style={styles.sheetOverlay}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheet}>
+        {/*
+          The sheet closes the date picker on any tap that nothing else claims.
+
+          Without a Done button the only way to collapse the wheel was to find
+          the date field again, which is a small target and not where the hand
+          already is. Controls inside the sheet claim their own touches, so the
+          inputs still focus and "Save reading" still saves on the first tap;
+          this only catches the taps that would otherwise have gone nowhere.
+        */}
+        <Pressable
+          accessible={false}
+          style={styles.sheet}
+          onPress={() => {
+            if (pickingDate) setPickingDate(false);
+          }}
+        >
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{definition.label}</Text>
             <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Cancel">
@@ -417,7 +432,7 @@ function AddReadingSheet({
           {error ? <Text style={styles.sheetError}>{error}</Text> : null}
 
           <PrimaryButton label="Save reading" onPress={save} style={{ marginTop: Space.lg }} />
-        </View>
+        </Pressable>
       </KeyboardAvoidingView>
     </Modal>
   );
