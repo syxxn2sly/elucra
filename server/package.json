@@ -1,0 +1,13 @@
+{
+  "name": "clairity-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker holding the Anthropic key server-side, so it stops shipping inside the app binary.",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
+  }
+}

@@ -80,7 +80,10 @@ export type TranslationProvider = "claude" | "azure" | "none";
 
 export function translationProvider(): TranslationProvider {
   if (KEY && REGION) return "azure";
-  if (process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) return "claude";
+  // Claude is reachable either through the proxy (which holds the Anthropic key
+  // server-side) or, in local development only, with the key in the bundle.
+  // Checking only the latter would report "none" on every shipped build.
+  if (process.env.EXPO_PUBLIC_API_BASE || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) return "claude";
   return "none";
 }
 
