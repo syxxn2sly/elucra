@@ -689,7 +689,7 @@ export default function DocumentDetailScreen() {
         {/* Disclaimer */}
         <Text style={styles.disclaimer}>
           Explanations here are produced by software reading your document, and software
-          can misread. Every fact is linked to the place on the page it came from — check
+          can misread. Every fact is linked to the place on the page it came from. Check
           anything that matters against the original, especially doses and numbers. This
           explains your document; it does not diagnose, and it is not a substitute for your
           doctor, nurse or pharmacist.

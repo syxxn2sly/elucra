@@ -173,7 +173,24 @@ export default function HealthCardScreen() {
   const displayCard = cardData ?? healthCard;
   if (!displayCard) return null;
 
-  const currentImage = showFront ? displayCard.frontImageUri : displayCard.backImageUri;
+  /*
+    Only one side photographed is the normal case, not an edge case: plenty of
+    cards have nothing on the back worth keeping.
+
+    Selecting a side that was never uploaded used to leave `currentImage`
+    undefined, which rendered the whole block — image *and* the Front/Back
+    toggle — as null. The toggle was the only way back, so tapping "Back" on a
+    front-only card stranded you on an empty screen. Show whichever side exists,
+    and only offer the toggle when there is genuinely something to toggle between.
+  */
+  const hasFront = Boolean(displayCard.frontImageUri);
+  const hasBack = Boolean(displayCard.backImageUri);
+  const bothSides = hasFront && hasBack;
+  const currentImage = bothSides
+    ? showFront
+      ? displayCard.frontImageUri
+      : displayCard.backImageUri
+    : (displayCard.frontImageUri ?? displayCard.backImageUri);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -209,20 +226,22 @@ export default function HealthCardScreen() {
               accessibilityLabel="Open health card photo full screen"
               caption="Tap the close button when you are done"
             />
-            <View style={styles.flipToggle}>
-              <Pressable
-                onPress={() => setShowFront(true)}
-                style={({ pressed }) => [styles.flipBtn, showFront && styles.flipBtnActive, pressed && styles.pressed]}
-              >
-                <Text style={[styles.flipBtnText, showFront && styles.flipBtnTextActive]}>Front</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setShowFront(false)}
-                style={({ pressed }) => [styles.flipBtn, !showFront && styles.flipBtnActive, pressed && styles.pressed]}
-              >
-                <Text style={[styles.flipBtnText, !showFront && styles.flipBtnTextActive]}>Back</Text>
-              </Pressable>
-            </View>
+            {bothSides ? (
+              <View style={styles.flipToggle}>
+                <Pressable
+                  onPress={() => setShowFront(true)}
+                  style={({ pressed }) => [styles.flipBtn, showFront && styles.flipBtnActive, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.flipBtnText, showFront && styles.flipBtnTextActive]}>Front</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowFront(false)}
+                  style={({ pressed }) => [styles.flipBtn, !showFront && styles.flipBtnActive, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.flipBtnText, !showFront && styles.flipBtnTextActive]}>Back</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         ) : null}
 

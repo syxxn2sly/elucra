@@ -169,12 +169,14 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Build a summary to show your doctor"
           >
-            <Stethoscope color={C.primary} size={22} strokeWidth={2.5} />
+            <View style={styles.visitIconWrap}>
+              <Stethoscope color={C.primary} size={26} strokeWidth={2.5} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.visitCardTitle}>Summary for your doctor</Text>
               <Text style={styles.visitCardSub}>Medications, recent results and questions, ready to show</Text>
             </View>
-            <ArrowRight color={C.primary} size={20} />
+            <ArrowRight color={C.primary} size={24} />
           </Pressable>
         </View>
 
@@ -480,20 +482,39 @@ const styles = StyleSheet.create({
     marginTop: Space.xs,
   },
   // Snapshot grid
+  /*
+    The second half of the loop, and it was disappearing: on `surface` with a
+    hairline border it read as a list row under the solid hero, so the thing you
+    take *into* a visit looked like a settings entry.
+
+    It is lifted with fill and weight rather than a hue. The palette reserves
+    colour for clinical meaning, so tinting this for emphasis would spend a
+    signal the status system needs. Filled `primarySoft` with the same icon-chip
+    treatment as the hero makes the two read as a pair of actions, with the solid
+    one still clearly first.
+  */
   visitCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: Space.md,
-    backgroundColor: C.surface,
+    backgroundColor: C.primarySoft,
     borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: Radius.lg,
+    borderColor: C.borderStrong,
+    borderRadius: Radius.md,
     paddingVertical: Space.lg,
     paddingHorizontal: Space.lg,
     marginTop: Space.md,
   },
-  visitCardTitle: { ...Type.label, color: C.text },
-  visitCardSub: { ...Type.caption, color: C.textMuted, marginTop: 2 },
+  visitIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: C.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  visitCardTitle: { ...Type.title, color: C.text },
+  visitCardSub: { ...Type.caption, color: C.textMuted, marginTop: Space.xs },
   snapshotGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

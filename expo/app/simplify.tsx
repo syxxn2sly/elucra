@@ -278,7 +278,7 @@ export default function SimplifyScreen() {
       >
         <Text style={styles.subtitle}>
           Photograph, scan, or upload a medical document. CLAIRITY will read it and explain it in
-          plain language — what it means, what to do, and when to worry.
+          plain language: what it means, what to do, and when to worry.
         </Text>
 
         {/* Language is chosen before capture, not after: it changes what the

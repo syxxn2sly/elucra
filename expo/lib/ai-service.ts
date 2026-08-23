@@ -549,11 +549,11 @@ async function extractFacts(input: AnalysisInput): Promise<RawExtraction> {
         role: "system",
         content: `You are the strict extraction stage of a medical record system. You do NOT provide medical advice, explanations, reassurance, diagnosis, or interpretation. You only transcribe and classify what is visibly present in the source image.
 
-First assess whether the content can be READ, which is not the same as whether the photograph is tidy. Real documents are creased, folded, shadowed, held at an angle, and handwritten; none of that matters if the characters can still be made out. Set quality.isReadable=false only when clinically important content genuinely cannot be deciphered — not because the page is crumpled, dim, skewed, or written by hand.
+First assess whether the content can be READ, which is not the same as whether the photograph is tidy. Real documents are creased, folded, shadowed, held at an angle, and handwritten; none of that matters if the characters can still be made out. Set quality.isReadable=false only when clinically important content genuinely cannot be deciphered, not because the page is crumpled, dim, skewed, or written by hand.
 
 If only part is illegible, still extract everything you can read and record each unreadable item in facts.unknowns, saying what could not be made out. A partial reading of a real document is more useful than refusing the whole page.
 
-Set quality.score to your confidence that the characters you did transcribe are correct, from 0 to 1. Digital PDF text is at or near 1.0. A sharp photo is around 0.9. A creased or dim photo you can still read confidently is around 0.7 — score what you could read, not how the page looked. List the specific obstacles in quality.issues. Do not guess a value you cannot see: leave it out and note it in unknowns. If not medical, set classification.isMedicalDocument=false.
+Set quality.score to your confidence that the characters you did transcribe are correct, from 0 to 1. Digital PDF text is at or near 1.0. A sharp photo is around 0.9. A creased or dim photo you can still read confidently is around 0.7. Score what you could read, not how the page looked. List the specific obstacles in quality.issues. Do not guess a value you cannot see: leave it out and note it in unknowns. If not medical, set classification.isMedicalDocument=false.
 
 For each readable text block, create a sourceBlock using normalized 0-1000 bounding-box coordinates. Every fact MUST include sourceBlockIds that point to the exact block(s) containing it. If it is not explicit in the source, do not include it. Do not infer missing dosage, duration, diagnosis, urgency, normality, or clinical meaning. Preserve medication dose, route, frequency, duration, restrictions, and escalation wording exactly as written. Translate no content in this stage; detectedLanguage identifies the source language.
 
@@ -620,9 +620,11 @@ async function communicateFacts(extraction: RawExtraction): Promise<Communicated
         role: "system",
         content: `You are the communication stage of CLAIRITY. You receive source-linked extracted facts only, never the original image. You may discuss ONLY these facts. Never add medical knowledge, diagnoses, reassurance, recommendations to start/stop/change medication, or missing details.
 
-Write at an approximately grade 5–6 reading level. Explain rather than diagnose. Preserve doses, routes, frequencies, restrictions, and clinician instructions verbatim whenever they appear. Make every card item include sourceBlockIds from the facts it uses. Include every extracted red flag in warnings, with the action stated in the extracted fact. If a fact is unclear or missing, say so plainly and direct the person to ask their pharmacist or clinician; do not guess.
+Write at an approximately grade 5-6 reading level. Explain rather than diagnose.
 
-Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language, languageLabel, text, sourceBlockIds}] — write these in English only, with language "en" and languageLabel "English"; the app translates them on demand into whichever language the reader asks for. The summary and interpretation must not contain unsupported numbers.`,
+Punctuation: never use an em dash or an en dash. Where you would reach for one, either start a new sentence or use a comma or a colon. A dash usually joins two thoughts that are easier to read apart, and a reader who is anxious or reading in a second language does better with two short sentences than one long one. Keep sentences short for the same reason. Preserve doses, routes, frequencies, restrictions, and clinician instructions verbatim whenever they appear. Make every card item include sourceBlockIds from the facts it uses. Include every extracted red flag in warnings, with the action stated in the extracted fact. If a fact is unclear or missing, say so plainly and direct the person to ask their pharmacist or clinician; do not guess.
+
+Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language, languageLabel, text, sourceBlockIds}]. Write these in English only, with language "en" and languageLabel "English"; the app translates them on demand into whichever language the reader asks for. The summary and interpretation must not contain unsupported numbers.`,
       },
       { role: "user", content: JSON.stringify(factsOnly(extraction)) },
     ],
@@ -1002,9 +1004,10 @@ export async function translateStrings(texts: string[], languageName: string): P
           "3. Never reverse or drop a negation. 'Do not', 'avoid', 'stop taking' must stay negative.",
           "4. Render a medical term in plain words the reader will know rather than transliterating it, and put the English term in brackets straight after, e.g. 'white blood cells' becomes the everyday phrase followed by (white blood cells). Confine the explanation to that bracketed phrase.",
           "5. Match the reading level of the English: short sentences, everyday words, second person.",
-          "6. Add nothing. No advice, reassurance, diagnosis, or commentary, and no extra sentence explaining what a body part, test or medicine does — even if it is true and would be helpful. The English has been checked for accuracy and the translation has not, so anything you add reaches the reader unverified. One sentence in must be one sentence out.",
+          "6. Add nothing. No advice, reassurance, diagnosis, or commentary, and no extra sentence explaining what a body part, test or medicine does, even if it is true and would be helpful. The English has been checked for accuracy and the translation has not, so anything you add reaches the reader unverified. One sentence in must be one sentence out.",
+          "7. Never use an em dash or an en dash. Start a new sentence, or use a comma or a colon. This holds in every language, including ones where a dash would be idiomatic.",
           "",
-          'Return JSON only: {"translations": ["...", "..."]} — exactly one entry per input string, in the same order. Translate an empty string to an empty string.',
+          'Return JSON only: {"translations": ["...", "..."]}, with exactly one entry per input string, in the same order. Translate an empty string to an empty string.',
         ].join("\n"),
       },
       {
