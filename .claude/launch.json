@@ -4,9 +4,27 @@
     {
       "name": "clairity-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start-web", "--", "--port", "8082"],
+      "runtimeArgs": [
+        "run",
+        "start-web",
+        "--",
+        "--port",
+        "8082"
+      ],
       "cwd": "expo",
       "port": 8082,
+      "autoPort": false
+    },
+    {
+      "name": "clairity-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4173"
+      ],
+      "cwd": "site",
+      "port": 4173,
       "autoPort": false
     }
   ]
