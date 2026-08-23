@@ -20,7 +20,7 @@
  *     disk has. No drive, no build — so check for it before spending ten minutes.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,6 +32,7 @@ const archiveDir = resolve(projectDir, "ios-archive");
 const archivePath = resolve(archiveDir, "Clairity.xcarchive");
 const exportPath = resolve(archiveDir, "export");
 const exportOptions = resolve(archiveDir, "ExportOptions.plist");
+const infoPlist = resolve(iosDir, "Clairity/Info.plist");
 
 const TEAM_ID = "NTY73DX976";
 const CACHE_VOLUME = "/Volumes/BuildCache";
@@ -106,7 +107,23 @@ if (bump) {
 
 const building = app.expo.ios.buildNumber;
 
-// 4. Archive. Stale output would otherwise be exported and look like a success.
+/*
+  4. Push the number into the native project.
+
+  app.json is not what gets built. `ios/` is generated and gitignored, and its
+  Info.plist carries its own CFBundleVersion, which Expo syncs from app.json on
+  its own schedule — in practice a build behind, so build 31 archived as 30 and
+  App Store Connect rejected it for reusing a number. Ten minutes of build to
+  find out, and the number is already committed by then.
+
+  Writing it here makes the archive match app.json regardless of when Expo's own
+  sync decides to run. The check after the export is what actually holds the
+  guarantee.
+*/
+run("plutil", ["-replace", "CFBundleVersion", "-string", building, infoPlist]);
+step(`Set CFBundleVersion to ${building} in the native project`);
+
+// 5. Archive. Stale output would otherwise be exported and look like a success.
 rmSync(archivePath, { recursive: true, force: true });
 rmSync(exportPath, { recursive: true, force: true });
 
@@ -136,7 +153,7 @@ try {
   process.exit(1);
 }
 
-// 5. Export a signed .ipa for App Store distribution.
+// 6. Export a signed .ipa for App Store distribution.
 step("Exporting .ipa");
 console.log("");
 
@@ -157,8 +174,39 @@ try {
   process.exit(1);
 }
 
+/*
+  7. Confirm the .ipa really carries the number we think it does.
+
+  Everything above can succeed and still produce a binary stamped with the
+  previous build, which App Store Connect only tells you about after an upload:
+  "The bundle version must be higher than the previously uploaded version."
+  Reading it back here costs a second and turns that into a local failure.
+*/
+// The Info.plist inside the .ipa is a binary plist, so it is read with plutil
+// rather than by matching text: a regex over the bytes finds nothing.
+let shippedVersion = null;
+try {
+  shippedVersion = execSync(
+    `unzip -p "${exportPath}/Clairity.ipa" "Payload/Clairity.app/Info.plist" | plutil -extract CFBundleVersion raw -`,
+    { cwd: projectDir, encoding: "utf8" },
+  ).trim();
+} catch {
+  shippedVersion = null;
+}
+
+if (shippedVersion !== building) {
+  console.error(
+    `\nThe exported .ipa is build ${shippedVersion ?? "unreadable"}, but app.json says ${building}.\n\n` +
+      `App Store Connect would reject this for reusing a build number. The native\n` +
+      `Info.plist did not take the value, most likely because Expo rewrote it during\n` +
+      `the build. Run \`npx expo prebuild --platform ios\` to resync the native project,\n` +
+      `then run this again with --no-bump.\n`,
+  );
+  process.exit(1);
+}
+
 console.log(
-  `\n\x1b[1m✓ Build ${building} ready\x1b[0m\n\n` +
+  `\n\x1b[1m✓ Build ${building} ready\x1b[0m  (verified inside the .ipa)\n\n` +
     `  ${exportPath}/Clairity.ipa\n\n` +
     `Open Transporter, sign in, drag the .ipa in, and hit Deliver. It shows up in\n` +
     `TestFlight once App Store Connect finishes processing — usually 10-30 minutes.\n`,
