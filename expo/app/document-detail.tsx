@@ -50,7 +50,8 @@ export default function DocumentDetailScreen() {
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { documents, toggleChecklistItem, removeDocument, profile, addAppointment, appointments } = useClairity();
-  const [expandedScript, setExpandedScript] = useState<string | null>("en");
+  /** Index of the open script, as a string. "0" opens the first one by default. */
+  const [expandedScript, setExpandedScript] = useState<string | null>("0");
   const [showImage, setShowImage] = useState(false);
   const [doctorSummary, setDoctorSummary] = useState<string | null>(null);
   const [doctorLoading, setDoctorLoading] = useState(false);
@@ -76,6 +77,7 @@ export default function DocumentDetailScreen() {
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [flagsOpen, setFlagsOpen] = useState(false);
   const [translatedScripts, setTranslatedScripts] = useState<Record<string, string[]>>({});
+  const [translatedPurposes, setTranslatedPurposes] = useState<Record<string, string[]>>({});
   const [scriptError, setScriptError] = useState("");
   const translated = Boolean(savedDoc?.originalResult);
 
@@ -93,8 +95,21 @@ export default function DocumentDetailScreen() {
     setScriptError("");
     (async () => {
       try {
-        const texts = await translateTexts(englishScripts.map((script) => script.text), scriptLang);
-        if (!cancelled) setTranslatedScripts((prev) => ({ ...prev, [scriptLang]: texts }));
+        /*
+          The purposes travel with the bodies in one call. They are headers the
+          reader has to understand to pick a script, so leaving them in English
+          under a French body would defeat the point of translating at all.
+
+          One request rather than two: the translator charges per call, and a
+          second round trip would let the headers and bodies arrive apart.
+        */
+        const bodies = englishScripts.map((script) => script.text);
+        const purposes = englishScripts.map((script) => script.purpose ?? "");
+        const all = await translateTexts([...bodies, ...purposes], scriptLang);
+        if (!cancelled) {
+          setTranslatedScripts((prev) => ({ ...prev, [scriptLang]: all.slice(0, bodies.length) }));
+          setTranslatedPurposes((prev) => ({ ...prev, [scriptLang]: all.slice(bodies.length) }));
+        }
       } catch (error) {
         if (cancelled) return;
         // Fall back to English rather than an empty card, and say why.
@@ -112,18 +127,23 @@ export default function DocumentDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scriptLang, englishScripts.length]);
 
-  /** The script as it should read right now: cached translation, or the English. */
+  /**
+   * The script as it should read right now: cached translation, or the English.
+   *
+   * The index is passed in rather than looked up. It used to be found with
+   * `findIndex(entry => entry.language === script.language)`, but every script
+   * arrives as English, so that matched the first one every time and each block
+   * rendered script one's translation regardless of which script it was.
+   */
   const displayedScript = useCallback(
-    (script: CommunicationScript): CommunicationScript => {
+    (script: CommunicationScript, index: number): CommunicationScript => {
       if (scriptLang === "en") return script;
-      const cached = translatedScripts[scriptLang];
-      const index = englishScripts.findIndex((entry) => entry.language === script.language);
-      const text = cached?.[index];
-      return text
-        ? { ...script, text, language: scriptLang, languageLabel: languageLabel(scriptLang) }
-        : script;
+      const text = translatedScripts[scriptLang]?.[index];
+      if (!text) return script;
+      const purpose = translatedPurposes[scriptLang]?.[index] || script.purpose;
+      return { ...script, text, purpose, language: scriptLang, languageLabel: languageLabel(scriptLang) };
     },
-    [scriptLang, translatedScripts, englishScripts],
+    [scriptLang, translatedScripts, translatedPurposes],
   );
   // Memoised because swapping in the English allocates a new object, and `doc`
   // is a dependency of three callbacks below — without this they would be
@@ -578,19 +598,23 @@ export default function DocumentDetailScreen() {
 
             {scriptError ? <Text style={styles.langError}>{scriptError}</Text> : null}
 
-            {doc.result.scripts.map((script) => {
-              const shown = displayedScript(script);
+            {doc.result.scripts.map((script, index) => {
+              const shown = displayedScript(script, index);
               return (
                 <ScriptBlock
-                  key={script.language}
+                  key={index}
                   script={shown}
                   loading={scriptLang !== "en" && !translatedScripts[scriptLang]}
                   rtl={isRightToLeft(scriptLang)}
-                  expanded={expandedScript === script.language}
+                  /*
+                    Keyed by position, not by language. Every script is English,
+                    so identifying them by `script.language` made them one block
+                    as far as this state was concerned: opening either opened
+                    both, and closing either closed both.
+                  */
+                  expanded={expandedScript === String(index)}
                   onToggle={() =>
-                    setExpandedScript(
-                      expandedScript === script.language ? null : script.language,
-                    )
+                    setExpandedScript(expandedScript === String(index) ? null : String(index))
                   }
                 />
               );
@@ -741,7 +765,14 @@ function ScriptBlock({
   return (
     <View style={styles.scriptBlock}>
       <Pressable onPress={onToggle} style={styles.scriptHeader}>
-        <Text style={styles.scriptLang}>{script.languageLabel}</Text>
+        {/*
+          The purpose, not the language. The language is chosen in the picker
+          directly above and is the same for every block, so repeating it here
+          left two collapsed rows both reading "English" with nothing to tell
+          them apart. Documents saved before scripts carried a purpose fall back
+          to the old label rather than showing an empty header.
+        */}
+        <Text style={styles.scriptLang}>{script.purpose || script.languageLabel}</Text>
         <View style={styles.scriptHeaderRight}>
           {loading ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
           {expanded ? <ChevronUp color={C.textMuted} size={18} strokeWidth={2.5} /> : <ChevronDown color={C.textMuted} size={18} strokeWidth={2.5} />}

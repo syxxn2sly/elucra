@@ -92,12 +92,19 @@ export default function IdentityScreen() {
           />
           <Field label="Clinic phone" value={draft.phone} onChangeText={(value) => setField("phone", value)} placeholder="e.g. 416 555 1234" keyboardType="phone-pad" />
           <Field label="Clinic fax (optional)" value={draft.fax} onChangeText={(value) => setField("fax", value)} placeholder="e.g. 416 555 5678" keyboardType="phone-pad" />
-          <PlaceField
+          {/*
+            A plain field, not a second place lookup. Choosing the clinic above
+            already fills this in, so searching here meant searching for the same
+            clinic twice — and the second search offered its *name* as an
+            address, which is how this ends up reading "Copper Ridge Medical
+            Centre" where a street belongs. Left editable for the case the lookup
+            has no address, or has the wrong one.
+          */}
+          <Field
             label="Clinic address (optional)"
             value={draft.address}
             onChangeText={(value) => setField("address", value)}
             placeholder="Street, city, postal code"
-            onPickPlace={(place) => setField("address", place.address || place.label)}
           />
           <Field label="After-hours instructions (optional)" value={draft.afterHoursInstructions} onChangeText={(value) => setField("afterHoursInstructions", value)} placeholder="e.g. Call the clinic's after-hours line" multiline />
 

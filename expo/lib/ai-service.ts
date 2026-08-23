@@ -624,7 +624,7 @@ Write at an approximately grade 5-6 reading level. Explain rather than diagnose.
 
 Punctuation: never use an em dash or an en dash. Where you would reach for one, either start a new sentence or use a comma or a colon. A dash usually joins two thoughts that are easier to read apart, and a reader who is anxious or reading in a second language does better with two short sentences than one long one. Keep sentences short for the same reason. Preserve doses, routes, frequencies, restrictions, and clinician instructions verbatim whenever they appear. Make every card item include sourceBlockIds from the facts it uses. Include every extracted red flag in warnings, with the action stated in the extracted fact. If a fact is unclear or missing, say so plainly and direct the person to ask their pharmacist or clinician; do not guess.
 
-Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language, languageLabel, text, sourceBlockIds}]. Write these in English only, with language "en" and languageLabel "English"; the app translates them on demand into whichever language the reader asks for. The summary and interpretation must not contain unsupported numbers.`,
+Return JSON with: summary (string); interpretation (string); checklist [{id,text,required,sourceBlockIds}]; timeline [{id,when,label,detail,sourceBlockIds}]; warnings [{id,symptom,action,isEmergency,sourceBlockIds}]; scripts [{language, languageLabel, purpose, text, sourceBlockIds}], where purpose is at most six words naming who the script is for and what it asks, e.g. "Asking the clinic when your appointment is" or "Asking your pharmacist about a side effect". Two scripts on one document must not share a purpose. Write these in English only, with language "en" and languageLabel "English"; the app translates them on demand into whichever language the reader asks for. The summary and interpretation must not contain unsupported numbers.`,
       },
       { role: "user", content: JSON.stringify(factsOnly(extraction)) },
     ],
@@ -648,7 +648,7 @@ Return JSON with: summary (string); interpretation (string); checklist [{id,text
     scripts: asArray(parsed.scripts).map((item) => {
       const obj = asRecord(item);
       const language = asString(obj.language);
-      return { language: ["en", "pa", "hi", "ur"].includes(language) ? language as CommunicationScript["language"] : "en", languageLabel: asString(obj.languageLabel) || "English", text: asString(obj.text), sourceBlockIds: normalizeSourceIds(obj.sourceBlockIds) };
+      return { language: ["en", "pa", "hi", "ur"].includes(language) ? language as CommunicationScript["language"] : "en", languageLabel: asString(obj.languageLabel) || "English", purpose: asString(obj.purpose), text: asString(obj.text), sourceBlockIds: normalizeSourceIds(obj.sourceBlockIds) };
     }).filter((item) => item.text && item.sourceBlockIds.length > 0),
   };
 }

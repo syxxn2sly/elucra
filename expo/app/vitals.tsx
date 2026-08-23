@@ -301,7 +301,12 @@ function AddReadingSheet({
       takenAt: takenAt.toISOString(),
       note: note.trim(),
     });
-  }, [first, second, note, definition, kind, onSave]);
+    // `takenAt` belongs here. Without it this closed over whichever date was
+    // current the last time one of the other dependencies changed, and `first`
+    // is one of them: typing the value refreshed the closure, so setting the
+    // date *before* typing saved correctly and setting it *after* silently
+    // saved today. That reads as "only some vitals keep the date".
+  }, [first, second, note, definition, kind, takenAt, onSave]);
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -389,11 +394,13 @@ function AddReadingSheet({
                 maximumDate={new Date()}
                 onChange={handlePickerChange}
               />
-              {Platform.OS === "ios" ? (
-                <Pressable onPress={() => setPickingDate(false)} style={styles.donePickerButton}>
-                  <Text style={styles.donePickerText}>Done</Text>
-                </Pressable>
-              ) : null}
+              {/*
+                No Done button. The spinner already reports every turn through
+                `onChange`, so the date on the field above is always what the
+                wheel is showing — a button to "confirm" it only implied that
+                scrolling alone had not counted. The field itself collapses the
+                picker when the reading is dated.
+              */}
             </View>
           ) : null}
 

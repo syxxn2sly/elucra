@@ -85,6 +85,18 @@ export interface CommunicationScript extends SourceLinked {
    */
   language: string;
   languageLabel: string;
+  /**
+   * What this script is for, in a few words: "Asking when your appointment is".
+   *
+   * The header used to show `languageLabel`, which named the language the
+   * reader had just chosen and said nothing about the script. Two scripts for
+   * one document both read "English", so the only way to tell them apart was to
+   * open both and read them.
+   *
+   * Optional because documents saved before this existed have no purpose on
+   * them, and they still have to open.
+   */
+  purpose?: string;
   text: string;
 }
 

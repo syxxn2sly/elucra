@@ -123,7 +123,11 @@ export default function PreventiveCareScreen() {
       else hidden += 1;
     }
     return { population: pop, hiddenCount: hidden, tailored: tail };
-  }, [profile.conditions, profile.age, profile.province]);
+    // `sexuallyActive` is read above for the cervical early-start case, so it
+    // belongs here too. Without it, answering that question in the profile left
+    // this list showing whatever it had computed under the previous answer until
+    // an unrelated field happened to change.
+  }, [profile.conditions, profile.age, profile.province, profile.sexuallyActive]);
 
   const recordFor = (screeningId: string) => screenings.find((entry) => entry.screeningId === screeningId) ?? null;
 
