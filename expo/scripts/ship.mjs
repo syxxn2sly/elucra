@@ -62,16 +62,10 @@ step(`Build number ${previous} → ${next}`);
 // 3. Commit it, so the build is traceable to a commit and the number is not
 //    lost if the build fails and you try again later.
 run("git", ["add", "app.json"]);
-run("git", [
-  "-c",
-  "user.name=Syaan Merchant",
-  "-c",
-  "user.email=syaanmerchant09@icloud.com",
-  "commit",
-  "--author=Syaan Merchant <syaanmerchant09@icloud.com>",
-  "-m",
-  `Bump iOS build number to ${next}`,
-]);
+// No identity is pinned here on purpose. It used to pass an address inline,
+// which overrode the repository's own git config and stamped every bump commit
+// with it regardless of what the repo was set to use.
+run("git", ["commit", "-m", `Bump iOS build number to ${next}`]);
 step(`Committed the bump`);
 
 // 4. Build, and hand it straight to App Store Connect unless told not to.

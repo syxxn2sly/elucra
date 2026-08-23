@@ -90,16 +90,10 @@ if (bump) {
   step(`Build number ${current} → ${next}`);
 
   run("git", ["add", "app.json"]);
-  run("git", [
-    "-c",
-    "user.name=Syaan Merchant",
-    "-c",
-    "user.email=syaanmerchant09@icloud.com",
-    "commit",
-    "--author=Syaan Merchant <syaanmerchant09@icloud.com>",
-    "-m",
-    `Bump iOS build number to ${next}`,
-  ]);
+  // No identity is pinned here on purpose. It used to pass an address inline,
+  // which overrode the repository's own git config and stamped every bump
+  // commit with it regardless of what the repo was set to use.
+  run("git", ["commit", "-m", `Bump iOS build number to ${next}`]);
   step("Committed the bump");
 } else {
   step(`Building at build number ${current} (no bump)`);
