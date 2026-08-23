@@ -23,7 +23,7 @@
         "http.server",
         "4173"
       ],
-      "cwd": "site",
+      "cwd": "docs",
       "port": 4173,
       "autoPort": false
     }

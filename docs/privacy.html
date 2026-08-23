@@ -1,141 +1,296 @@
-<!doctype html>
-<html lang="en">
-<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CLAIRITY — Privacy Policy</title>
+<title>Clairity Privacy Policy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Nunito+Sans:wght@400;600&display=swap">
+
 <style>
-  :root { --bg:#F2E9DA; --surface:#FDF9F1; --text:#2A2119; --muted:#7C6B57; --border:#D9C8AC; }
-  * { box-sizing:border-box; }
-  body { margin:0; padding:0; background:var(--bg); color:var(--text);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
-  .wrap { max-width:720px; margin:0 auto; padding:48px 24px 72px; }
-  h1 { font-size:2rem; margin:0 0 4px; letter-spacing:-0.5px; }
-  .updated { color:var(--muted); font-size:.9rem; margin-bottom:32px; }
-  h2 { font-size:1.15rem; margin:36px 0 10px; }
-  p, li { color:#3D3226; }
-  a { color:var(--text); }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px;
-          padding:18px 22px; margin:20px 0; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.94rem; display:block; overflow-x:auto; }
-  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
-  th { font-weight:600; }
-  code { background:var(--surface); border:1px solid var(--border); border-radius:5px;
-         padding:1px 5px; font-size:.9em; }
-  footer { margin-top:48px; color:var(--muted); font-size:.88rem; }
+  /* Same tokens as index.html, which are the app's own from
+     expo/constants/colors.ts and theme.ts. */
+  :root {
+    --ground: #F2E9DA;
+    --surface: #FDF9F1;
+    --surface-alt: #E9DDC9;
+    --ink: #2A2119;
+    --muted: #7C6B57;
+    --rule: #E6D9C4;
+    --rule-strong: #D9C8AC;
+    --warning: #A8760F;
+
+    --r-md: 14px;
+    --r-lg: 18px;
+
+    --head: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+    --body: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, Menlo, "SF Mono", Consolas, monospace;
+
+    --gutter: clamp(20px, 5vw, 64px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B1510;
+      --surface: #262019;
+      --surface-alt: #151009;
+      --ink: #DFD2BD;
+      --muted: #A5947E;
+      --rule: #352B21;
+      --rule-strong: #453A2D;
+      --warning: #DCA94E;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #1B1510;
+    --surface: #262019;
+    --surface-alt: #151009;
+    --ink: #DFD2BD;
+    --muted: #A5947E;
+    --rule: #352B21;
+    --rule-strong: #453A2D;
+    --warning: #DCA94E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: var(--head); font-weight: 700; margin: 0; line-height: 1.25; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+
+  .wrap { max-width: 820px; margin: 0 auto; padding-inline: var(--gutter); }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 28px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark { font-family: var(--head); font-weight: 700; font-size: 19px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .masthead a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; }
+  .masthead a:hover { color: var(--ink); }
+
+  header.page { padding-block: clamp(34px, 6vw, 60px) 0; }
+  header.page h1 { font-size: clamp(32px, 5vw, 46px); letter-spacing: -0.02em; }
+  .updated { margin-top: 12px; color: var(--muted); font-size: 14.5px; }
+
+  .summary {
+    margin-top: 28px;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-lg);
+    padding: clamp(18px, 3vw, 26px);
+  }
+  .summary h2 { font-size: 16px; font-weight: 600; }
+  .summary p { margin-top: 10px; }
+
+  section { padding-block: clamp(30px, 4vw, 46px); }
+  section + section { border-top: 1px solid var(--rule); }
+  section h2 { font-size: clamp(21px, 2.8vw, 26px); letter-spacing: -0.01em; }
+  section p + p, section > * + p { margin-top: 14px; }
+  section ul { margin: 14px 0 0; padding-left: 20px; }
+  section li { margin-top: 8px; }
+
+  .tablewrap { overflow-x: auto; margin-top: 20px; border: 1px solid var(--rule); border-radius: var(--r-lg); }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; background: var(--surface); }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 14.5px; }
+  th { font-family: var(--body); font-weight: 600; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td code { font-family: var(--mono); font-size: 12.5px; color: var(--muted); display: block; margin-top: 3px; }
+
+  .note {
+    border-left: 2px solid var(--warning);
+    padding-left: 18px;
+    margin-top: 22px;
+  }
+
+  footer { border-top: 1px solid var(--rule); padding-block: 32px 56px; color: var(--muted); font-size: 14px; }
 </style>
-</head>
-<body>
+
 <div class="wrap">
+  <header class="masthead">
+    <div class="wordmark">Clairity</div>
+    <a href="./">Back to Clairity</a>
+  </header>
 
-<h1>Privacy Policy</h1>
-<p class="updated">CLAIRITY &middot; last updated 30 July 2026</p>
+  <header class="page">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated 22 August 2026</p>
 
-<div class="card">
-  <p style="margin:0"><strong>The short version.</strong> Your health information is stored on your
-  phone, not on our servers &mdash; we don't operate any. We have no accounts, no logins and no
-  analytics, so we cannot see your data even if we wanted to. When you ask CLAIRITY to explain a
-  document, that document is sent to an AI service to be read. That is the one time your health
-  information leaves your device, and it only happens when you ask.</p>
+    <div class="summary">
+      <h2>The short version</h2>
+      <p>
+        Your health record is stored on your phone. There is no account, no sign-in and no
+        analytics, and no server holds your history. When you ask Clairity to explain a
+        document, that one document is sent away to be read by an AI service. That is the
+        only time your health information leaves your device, and it only happens when you
+        ask for it.
+      </p>
+    </div>
+  </header>
+
+  <section>
+    <h2>What stays on your phone</h2>
+    <p>
+      All of it, by default. Your health profile, saved reports and their explanations,
+      vaccine records, medications, appointments and saved places are written to your
+      device's own storage. Your health card is held in the operating system's encrypted
+      keychain and unlocked with Face ID, Touch ID or your device passcode.
+    </p>
+    <p>
+      Deleting the app deletes all of it. There is no copy elsewhere, and no way for anyone
+      to restore it for you. The app offers an export file for exactly this reason.
+    </p>
+  </section>
+
+  <section>
+    <h2>What leaves your phone, and when</h2>
+    <p>
+      Each service below receives only what is named, only for the feature named, and only
+      when you use that feature.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Clairity API proxy<code>clairity-api.clairity.workers.dev</code></td>
+            <td>
+              The document you chose, on its way to Anthropic. The proxy exists so the
+              Anthropic credentials are not inside the app. It does not store documents or
+              explanations. It does keep a count of requests per IP address for up to one
+              hour, to stop one caller exhausting the service. Run on Cloudflare Workers.
+            </td>
+            <td>Only when you scan a document or a health card</td>
+          </tr>
+          <tr>
+            <td>Anthropic (Claude)<code>api.anthropic.com</code></td>
+            <td>
+              The photo or PDF you chose, and the age, sex, allergies and conditions from
+              your profile, so the explanation can be relevant to you. Reached through the
+              proxy above rather than directly.
+            </td>
+            <td>Only when you scan a document or a health card</td>
+          </tr>
+          <tr>
+            <td>Photon (OpenStreetMap)<code>photon.komoot.io</code></td>
+            <td>What you type into a clinic or location field, and your approximate coordinates if you tap the near-me control</td>
+            <td>While you type a place name</td>
+          </tr>
+          <tr>
+            <td>Geoapify<code>api.geoapify.com</code></td>
+            <td>The same, if the app has been configured to use it instead of Photon</td>
+            <td>While you type a place name</td>
+          </tr>
+          <tr>
+            <td>US National Library of Medicine<code>rxnav.nlm.nih.gov, clinicaltables.nlm.nih.gov</code></td>
+            <td>A medication name, to check its spelling and standard form</td>
+            <td>While you type a medication name</td>
+          </tr>
+          <tr>
+            <td>openFDA<code>api.fda.gov</code></td>
+            <td>A medication name, to look up its generic and brand names</td>
+            <td>When you save a medication</td>
+          </tr>
+          <tr>
+            <td>Microsoft Azure Translator<code>api.cognitive.microsofttranslator.com</code></td>
+            <td>
+              The text of an explanation, if you have chosen another language and the app
+              has been configured with a translation key. Otherwise translation is done by
+              Claude and nothing is sent to Microsoft.
+            </td>
+            <td>Only when translating a report</td>
+          </tr>
+          <tr>
+            <td>CDC and REST Countries<code>wwwnc.cdc.gov, restcountries.com</code></td>
+            <td>A country name, for travel vaccine guidance. No health information.</td>
+            <td>When you open Travel</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note">
+      Each of these is a third party with its own privacy policy, and what they do with
+      what they receive is governed by their terms rather than this one.
+    </p>
+  </section>
+
+  <section>
+    <h2>Your location</h2>
+    <p>
+      Location is never requested unless you tap the near-me control on a place field, and
+      it is used for one thing: ranking search results so a nearby clinic appears before
+      one in another province. The coordinates are not saved, not written into any field,
+      and not attached to any appointment. Declining the permission leaves everything
+      working, just unranked.
+    </p>
+  </section>
+
+  <section>
+    <h2>What Clairity does not do</h2>
+    <ul>
+      <li>No accounts, no sign-in, no email address collected.</li>
+      <li>No analytics, crash reporting, tracking pixels or advertising identifiers.</li>
+      <li>No selling or sharing of your information. There is nothing to sell, because it is never received.</li>
+      <li>No cross-app or cross-site tracking.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Children</h2>
+    <p>
+      Clairity is not directed at children under 13, and their information is not knowingly
+      collected. A parent may of course keep a child's records on their own device.
+    </p>
+  </section>
+
+  <section>
+    <h2>Not medical advice</h2>
+    <p>
+      Clairity explains what a document says. It does not diagnose, it does not decide what
+      you should do, and it is not a substitute for your doctor, nurse or pharmacist.
+      Explanations are generated by software and can be wrong. Every fact it shows links
+      back to the place on the page it came from so that you can check it. Please do,
+      especially for doses and numbers, and speak to a qualified clinician about anything
+      that matters.
+    </p>
+  </section>
+
+  <section>
+    <h2>Changes</h2>
+    <p>
+      If this policy changes in a way that affects what leaves your device, the date at the
+      top will change and the new version will be published here before the change ships.
+    </p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <p>
+      Questions, or anything here that looks wrong:
+      <a href="mailto:clairity.health@gmail.com">clairity.health@gmail.com</a>
+    </p>
+  </section>
 </div>
-
-<h2>What stays on your phone</h2>
-<p>All of it, by default. Your health profile, saved reports and their explanations, vaccine records,
-medications, appointments and saved places are written to your device's own storage. Your health card
-is held in the operating system's encrypted keychain (iOS Keychain / Android Keystore) and unlocked
-with Face&nbsp;ID, Touch&nbsp;ID or your device passcode.</p>
-<p>Deleting the app deletes all of it. There is no copy elsewhere and no way for us to restore it.</p>
-
-<h2>What leaves your phone, and when</h2>
-<p>CLAIRITY has no backend of its own. It talks directly to the services below, only for the feature
-named, and only when you use that feature.</p>
-
-<table>
-  <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
-  <tr>
-    <td><strong>Anthropic</strong> (Claude)<br><code>api.anthropic.com</code></td>
-    <td>The photo or PDF you chose, and the age, sex, allergies and conditions from your profile so
-        the explanation can be relevant to you</td>
-    <td>Only when you scan a document or a health card</td>
-  </tr>
-  <tr>
-    <td><strong>Photon</strong> (OpenStreetMap)<br><code>photon.komoot.io</code></td>
-    <td>What you type into a clinic or location field, and your approximate coordinates if you tap
-        the near-me control</td>
-    <td>While you type a place name</td>
-  </tr>
-  <tr>
-    <td><strong>Geoapify</strong><br><code>api.geoapify.com</code></td>
-    <td>The same, if the app has been configured to use it instead of Photon</td>
-    <td>While you type a place name</td>
-  </tr>
-  <tr>
-    <td><strong>US National Library of Medicine</strong><br><code>rxnav.nlm.nih.gov</code>,
-        <code>clinicaltables.nlm.nih.gov</code></td>
-    <td>A medication name, to check its spelling and standard form</td>
-    <td>While you type a medication name</td>
-  </tr>
-  <tr>
-    <td><strong>openFDA</strong><br><code>api.fda.gov</code></td>
-    <td>A medication name, to look up its generic and brand names</td>
-    <td>When you save a medication</td>
-  </tr>
-  <tr>
-    <td><strong>Microsoft Azure Translator</strong><br><code>api.cognitive.microsofttranslator.com</code></td>
-    <td>The text of an explanation, if you have chosen another language <em>and</em> the app has been
-        configured with a translation key. Otherwise translation is done by Anthropic and nothing is
-        sent to Microsoft.</td>
-    <td>Only when translating a report</td>
-  </tr>
-  <tr>
-    <td><strong>CDC</strong> and <strong>REST Countries</strong><br><code>wwwnc.cdc.gov</code>,
-        <code>restcountries.com</code></td>
-    <td>A country name, for travel vaccine guidance. No health information.</td>
-    <td>When you open Travel</td>
-  </tr>
-</table>
-
-<p>Each of these is a third party with its own privacy policy, and their handling of what they
-receive is governed by their terms rather than ours.</p>
-
-<h2>Your location</h2>
-<p>Location is never requested unless you tap the near-me control on a place field, and it is used
-for one thing: ranking search results so a nearby clinic appears before one in another province. The
-coordinates are not saved, not written into any field, and not attached to any appointment. Declining
-the permission leaves everything working, just unranked.</p>
-
-<h2>What we don't do</h2>
-<ul>
-  <li>No accounts, no sign-in, no email address collected</li>
-  <li>No analytics, crash reporting, tracking pixels or advertising identifiers</li>
-  <li>No selling or sharing of your information &mdash; there is nothing to sell, because we never
-      receive it</li>
-  <li>No cross-app or cross-site tracking</li>
-</ul>
-
-<h2>Children</h2>
-<p>CLAIRITY is not directed at children under 13 and we do not knowingly collect their information.
-A parent may of course keep a child's records on their own device.</p>
-
-<h2>Not medical advice</h2>
-<p>CLAIRITY explains what a document says. It does not diagnose, does not decide what you should do,
-and is not a substitute for your doctor, nurse or pharmacist. Explanations are generated by software
-and can be wrong. Every fact it shows links back to the place on the page it came from so you can
-check it &mdash; please do, especially for doses and numbers, and speak to a qualified clinician
-about anything that matters.</p>
-
-<h2>Changes</h2>
-<p>If this policy changes in a way that affects what leaves your device, the date at the top will
-change and the new version will be published here before the change ships.</p>
-
-<h2>Contact</h2>
-<p>Questions, or anything here that looks wrong:
-<a href="mailto:clairity.health@gmail.com">clairity.health@gmail.com</a></p>
 
 <footer>
-  Place data &copy; OpenStreetMap contributors, available under the Open Database License.
+  <div class="wrap">
+    Place data &copy; OpenStreetMap contributors, available under the Open Database License.
+  </div>
 </footer>
-
-</div>
-</body>
-</html>

@@ -1,98 +1,904 @@
-<!doctype html>
-<html lang="en">
-<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CLAIRITY — your medical documents, made clear</title>
-<meta name="description" content="CLAIRITY turns medical paperwork into plain English. Photograph a lab result or open a PDF, and see what it actually says.">
+<title>Clairity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Nunito+Sans:wght@400;600&display=swap">
+
 <style>
-  :root { --bg:#F2E9DA; --surface:#FDF9F1; --text:#2A2119; --muted:#7C6B57; --border:#D9C8AC; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text);
-         font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
-  .wrap { max-width:760px; margin:0 auto; padding:64px 24px 80px; }
-  .mark { display:inline-block; background:var(--text); color:var(--bg); font-weight:700;
-          letter-spacing:2px; font-size:.78rem; padding:7px 13px; border-radius:9px; }
-  h1 { font-size:clamp(2.1rem,6vw,3rem); line-height:1.12; letter-spacing:-1px; margin:26px 0 14px; }
-  .lede { font-size:1.18rem; color:#3D3226; max-width:34em; }
-  h2 { font-size:1.3rem; margin:52px 0 8px; letter-spacing:-0.3px; }
-  p { color:#3D3226; }
-  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:26px; }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px; }
-  .card h3 { margin:0 0 7px; font-size:1.03rem; }
-  .card p { margin:0; font-size:.95rem; color:var(--muted); line-height:1.55; }
-  .note { background:var(--surface); border:1px solid var(--border); border-radius:14px;
-          padding:18px 22px; margin-top:34px; font-size:.95rem; color:#3D3226; }
-  a { color:var(--text); }
-  footer { margin-top:60px; padding-top:22px; border-top:1px solid var(--border);
-           color:var(--muted); font-size:.9rem; display:flex; gap:18px; flex-wrap:wrap; }
+  /* ------------------------------------------------------------------
+     Tokens lifted from the app: expo/constants/colors.ts and theme.ts.
+     The site is not a reinterpretation of Clairity, it is the same
+     system rendered in a browser, so these values are copied rather
+     than approximated.
+     ------------------------------------------------------------------ */
+  :root {
+    --ground: #F2E9DA;
+    --surface: #FDF9F1;
+    --surface-alt: #E9DDC9;
+    --ink: #2A2119;
+    --muted: #7C6B57;
+    --rule: #E6D9C4;
+    --rule-strong: #D9C8AC;
+    --inverse: #FDF9F1;
+
+    /* Clinical only. The palette reserves colour for meaning, so these
+       appear where something is low, safe, or worth checking, and
+       nowhere else. */
+    --danger: #BF4A34;
+    --danger-soft: #F8E3DB;
+    --success: #56704E;
+    --success-soft: #E4EBDE;
+    --warning: #A8760F;
+    --warning-soft: #F9ECD3;
+
+    --highlight: #E9DDC9;
+
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 18px;
+    --r-xl: 22px;
+
+    --head: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+    --body: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, Menlo, "SF Mono", Consolas, monospace;
+
+    --measure: 62ch;
+    --gutter: clamp(20px, 5vw, 64px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B1510;
+      --surface: #262019;
+      --surface-alt: #151009;
+      --ink: #DFD2BD;
+      --muted: #A5947E;
+      --rule: #352B21;
+      --rule-strong: #453A2D;
+      --inverse: #1B1510;
+
+      --danger: #E88C72;
+      --danger-soft: #3B2018;
+      --success: #A0C094;
+      --success-soft: #212B1E;
+      --warning: #DCA94E;
+      --warning-soft: #3A2C14;
+
+      --highlight: #2F2820;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #1B1510;
+    --surface: #262019;
+    --surface-alt: #151009;
+    --ink: #DFD2BD;
+    --muted: #A5947E;
+    --rule: #352B21;
+    --rule-strong: #453A2D;
+    --inverse: #1B1510;
+
+    --danger: #E88C72;
+    --danger-soft: #3B2018;
+    --success: #A0C094;
+    --success-soft: #212B1E;
+    --warning: #DCA94E;
+    --warning-soft: #3A2C14;
+
+    --highlight: #2F2820;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--head);
+    font-weight: 700;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  p { margin: 0; }
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding-inline: var(--gutter);
+  }
+
+  .eyebrow {
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 28px;
+    flex-wrap: wrap;
+  }
+
+  .wordmark {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .masthead nav {
+    display: flex;
+    gap: 26px;
+    font-size: 15px;
+    font-weight: 600;
+    flex-wrap: wrap;
+  }
+
+  .masthead nav a {
+    text-decoration: none;
+    color: var(--muted);
+    padding-block: 4px;
+    border-bottom: 2px solid transparent;
+  }
+  .masthead nav a:hover,
+  .masthead nav a:focus-visible { color: var(--ink); border-bottom-color: var(--rule-strong); }
+
+  /* ---------- hero ---------- */
+
+  .hero { padding-block: clamp(28px, 6vw, 68px) clamp(32px, 6vw, 72px); }
+
+  /* The headline alone left half the width empty on a desktop, which read as
+     unfinished rather than as deliberate space. The list of what Clairity
+     actually accepts is the most useful thing that could sit there: it answers
+     "will it read mine?", which is the first question anyone has. */
+  .hero-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(28px, 5vw, 72px);
+    align-items: end;
+  }
+  @media (max-width: 900px) {
+    .hero-top { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  }
+
+  .hero-copy { max-width: 40ch; }
+
+  .accepts { display: flex; flex-direction: column; gap: 0; }
+  .accepts dt {
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .accepts dd {
+    margin: 0;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 15.5px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .accepts dd span:last-child { color: var(--muted); font-size: 13.5px; text-align: right; }
+
+  .hero h1 {
+    font-size: clamp(38px, 6.2vw, 66px);
+    letter-spacing: -0.02em;
+  }
+
+  .hero-lede {
+    margin-top: 20px;
+    font-size: clamp(18px, 2.1vw, 21px);
+    color: var(--muted);
+    max-width: 46ch;
+  }
+
+  .hero-note {
+    margin-top: 22px;
+    font-size: 15px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero-note::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: var(--rule-strong);
+    flex: none;
+  }
+
+  /* ---------- the reading demo ---------- */
+
+  .reader {
+    margin-top: clamp(36px, 5vw, 60px);
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-xl);
+    overflow: hidden;
+  }
+
+  @media (max-width: 860px) {
+    .reader { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .panel { background: var(--surface); padding: clamp(20px, 3vw, 30px); }
+  .panel-alt { background: var(--surface); }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .panel-title { font-family: var(--head); font-weight: 600; font-size: 15px; }
+
+  /* the scanned page */
+
+  .doc {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .doc-line {
+    padding: 5px 9px;
+    border-radius: var(--r-sm);
+    border-left: 2px solid transparent;
+    transition: background-color 140ms ease, border-color 140ms ease;
+  }
+
+  .doc-line.lit {
+    background: var(--highlight);
+    border-left-color: var(--ink);
+  }
+
+  .doc-head {
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    padding-top: 10px;
+  }
+
+  .flag { color: var(--danger); }
+
+  /* the explanation */
+
+  .facts { display: flex; flex-direction: column; gap: 8px; }
+
+  .fact {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease;
+  }
+
+  .fact:hover { background: var(--surface-alt); }
+  .fact:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .fact[aria-pressed="true"] {
+    background: var(--surface-alt);
+    border-color: var(--rule-strong);
+  }
+
+  .fact-text { display: block; }
+
+  .fact-src {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--success);
+    background: var(--success-soft);
+    border-radius: 999px;
+    padding: 5px 11px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; flex: none; }
+
+  .reader-foot {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border-top: 1px solid var(--rule);
+    padding: 14px clamp(20px, 3vw, 30px);
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  /* ---------- generic sections ---------- */
+
+  section { padding-block: clamp(44px, 7vw, 90px); }
+
+  .section-head { max-width: var(--measure); }
+  .section-head h2 { font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -0.015em; margin-top: 12px; }
+  .section-head p { margin-top: 16px; color: var(--muted); }
+
+  .rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+  /* pipeline: a genuine three-stage sequence, so it is numbered */
+
+  .stages {
+    margin-top: clamp(28px, 4vw, 46px);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  .stage { background: var(--surface); padding: clamp(20px, 2.6vw, 28px); }
+  .stage-n {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .stage h3 { font-size: 17px; font-weight: 600; margin-top: 10px; }
+  .stage p { margin-top: 10px; font-size: 15px; color: var(--muted); }
+
+  /* feature list */
+
+  .features {
+    margin-top: clamp(28px, 4vw, 46px);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+    gap: 26px 34px;
+  }
+
+  .feature { padding-top: 18px; border-top: 1px solid var(--rule); }
+  .feature h3 { font-size: 16px; font-weight: 600; }
+  .feature p { margin-top: 8px; font-size: 15px; color: var(--muted); }
+
+  /* language strip */
+
+  .langs {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .lang {
+    font-size: 14px;
+    padding: 6px 13px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    color: var(--muted);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: start;
+  }
+  @media (max-width: 800px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: clamp(20px, 3vw, 28px);
+  }
+  .card h3 { font-size: 16px; font-weight: 600; }
+  .card p { margin-top: 10px; font-size: 15px; color: var(--muted); }
+  .card + .card { margin-top: 16px; }
+
+  .limits { border-left: 2px solid var(--warning); padding-left: 18px; }
+  .limits li { margin-top: 10px; color: var(--muted); }
+  .limits ul { margin: 0; padding-left: 18px; }
+
+  /* footer */
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-block: 40px 56px;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .foot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 28px;
+  }
+  footer h4 { font-family: var(--head); font-size: 13px; font-weight: 600; color: var(--ink); margin: 0 0 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--ink); }
+  .colophon { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
 </style>
-</head>
-<body>
+
 <div class="wrap">
+  <header class="masthead">
+    <div class="wordmark">Clairity</div>
+    <nav>
+      <a href="#reading">How it reads</a>
+      <a href="#inside">What it holds</a>
+      <a href="#languages">Languages</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#support">Support</a>
+    </nav>
+  </header>
 
-  <span class="mark">CLAIRITY</span>
+  <div class="hero">
+    <div class="hero-top">
+      <div class="hero-copy">
+        <h1>Your results, in words you already use.</h1>
+        <p class="hero-lede">
+          Clairity reads a lab report, a prescription, a discharge summary or a referral,
+          and explains it in plain English. Every sentence it writes stays tied to the line
+          on the page it came from.
+        </p>
+        <p class="hero-note">Free. On iPhone.</p>
+      </div>
 
-  <h1>Your medical documents, made clear.</h1>
-  <p class="lede">Photograph a lab result, a prescription, a discharge letter &mdash; or open the PDF
-  your clinic sent you &mdash; and read what it actually says, in plain English.</p>
+      <dl class="accepts">
+        <dt>What it will read</dt>
+        <dd><span>Blood work and lab panels</span><span>photo or PDF</span></dd>
+        <dd><span>Prescriptions</span><span>photo or PDF</span></dd>
+        <dd><span>Discharge summaries</span><span>photo or PDF</span></dd>
+        <dd><span>Referrals and requisitions</span><span>photo or PDF</span></dd>
+        <dd><span>Imaging and pathology reports</span><span>photo or PDF</span></dd>
+        <dd><span>Vaccination records</span><span>photo or PDF</span></dd>
+      </dl>
+    </div>
 
-  <h2>What it does</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>Explains the paperwork</h3>
-      <p>What the document says, what the numbers mean next to their normal range, and what you're
-      meant to do next.</p>
-    </div>
-    <div class="card">
-      <h3>Shows you where it got that</h3>
-      <p>Every fact links back to the exact spot on the page it came from, so you can check it
-      against the original rather than take its word.</p>
-    </div>
-    <div class="card">
-      <h3>Reads real paper</h3>
-      <p>Creased, dim, photographed at an angle, handwritten notes in the margin. Also PDFs, which
-      it reads best of all.</p>
-    </div>
-    <div class="card">
-      <h3>Keeps track of the rest</h3>
-      <p>Vaccines and what's due, medications and doses, appointments with reminders, and your health
-      card behind Face&nbsp;ID.</p>
-    </div>
-    <div class="card">
-      <h3>Speaks your language</h3>
-      <p>Explanations can be translated, with the original English kept alongside so nothing is lost
-      in the move.</p>
-    </div>
-    <div class="card">
-      <h3>Stays on your phone</h3>
-      <p>No account, no cloud, no analytics. Your records live on your device and nowhere else.</p>
+    <!-- The hero is the product mechanic, not a picture of it: each
+         explanation carries the ids of the source lines it was drawn
+         from, which is exactly what the app's pipeline produces. -->
+    <div class="reader">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">The page you photographed</span>
+        </div>
+        <div class="doc" id="doc">
+          <div class="doc-line doc-head">Complete blood count</div>
+          <div class="doc-line" data-line="b1">HGB       11.2 g/dL     (ref 12.0-15.5)</div>
+          <div class="doc-line" data-line="b2">MCV       74 fL         (ref 80-100)</div>
+          <div class="doc-line" data-line="b3">FERRITIN  8 ng/mL       (ref 15-150)</div>
+          <div class="doc-line doc-head">Impression</div>
+          <div class="doc-line" data-line="b4">Microcytic anaemia, consistent with iron deficiency.</div>
+          <div class="doc-line doc-head">Plan</div>
+          <div class="doc-line" data-line="b5">Ferrous sulfate 325 mg PO daily. Repeat CBC in 8 weeks.</div>
+          <div class="doc-line flag" data-line="b6">Return sooner if breathless at rest or chest pain.</div>
+        </div>
+      </div>
+
+      <div class="panel panel-alt">
+        <div class="panel-head">
+          <span class="panel-title">What it means</span>
+          <span class="verified"><span class="dot"></span>Numbers checked against the page</span>
+        </div>
+        <div class="facts" id="facts">
+          <button class="fact" type="button" aria-pressed="false" data-refs="b1 b2">
+            <span class="fact-text">Your red blood cells are smaller than usual, and you are carrying less haemoglobin than the normal range.</span>
+            <span class="fact-src">From 2 lines</span>
+          </button>
+          <button class="fact" type="button" aria-pressed="false" data-refs="b3">
+            <span class="fact-text">Your iron stores are low. Ferritin is the number that shows this, and yours is 8 where the range starts at 15.</span>
+            <span class="fact-src">From 1 line</span>
+          </button>
+          <button class="fact" type="button" aria-pressed="false" data-refs="b4">
+            <span class="fact-text">Together that pattern is iron-deficiency anaemia.</span>
+            <span class="fact-src">From 1 line</span>
+          </button>
+          <button class="fact" type="button" aria-pressed="false" data-refs="b5">
+            <span class="fact-text">The plan is an iron tablet, 325 mg once a day, and the same blood test again in 8 weeks.</span>
+            <span class="fact-src">From 1 line</span>
+          </button>
+          <button class="fact" type="button" aria-pressed="false" data-refs="b6">
+            <span class="fact-text">Go back sooner than 8 weeks if you are breathless while resting, or your chest hurts.</span>
+            <span class="fact-src">From 1 line</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="reader-foot">
+        Tap any explanation to light up the line it came from. An illustrative report, not a real patient.
+      </p>
     </div>
   </div>
-
-  <h2>Careful by design</h2>
-  <p>Medical documents are a bad place to guess. CLAIRITY reads a document in one pass and writes the
-  explanation in another, then checks the explanation back against the page &mdash; anything it can't
-  trace to the source is withheld rather than shown, and it tells you when it has withheld something.
-  Where a page was hard to read, it says so instead of quietly presenting a shaky reading as a
-  confident one.</p>
-
-  <div class="note">
-    <strong>Not medical advice.</strong> CLAIRITY explains what your document says. It doesn't
-    diagnose and it isn't a substitute for your doctor, nurse or pharmacist. Explanations are
-    generated by software and can be wrong &mdash; check anything that matters, especially doses,
-    with a qualified clinician.
-  </div>
-
-  <h2>Availability</h2>
-  <p>CLAIRITY is in private beta on TestFlight and is not yet on the App Store.</p>
-
-  <footer>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="mailto:clairity.health@gmail.com">Contact</a>
-    <span>&copy; 2026 Syaan Merchant</span>
-  </footer>
-
 </div>
-</body>
-</html>
+
+<hr class="rule">
+
+<section id="reading">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">How it reads a document</p>
+      <h2>Three passes, because one would be guessing.</h2>
+      <p>
+        A single model call that reads a page and explains it in one go can invent a
+        number and sound just as fluent doing it. Clairity separates reading from
+        explaining, then checks the explanation back against what was read.
+      </p>
+    </div>
+
+    <!-- Numbered because it genuinely is a sequence: each stage only
+         receives what the one before it produced. -->
+    <div class="stages">
+      <div class="stage">
+        <div class="stage-n">01</div>
+        <h3>Read</h3>
+        <p>
+          The page is transcribed into facts, each one tagged with where on the sheet it
+          appeared. Nothing is interpreted yet. Anything genuinely illegible is marked
+          unknown rather than guessed.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-n">02</div>
+        <h3>Explain</h3>
+        <p>
+          A second pass receives only those facts, never the image. It can rewrite them in
+          plain language, and it has nothing else to draw on, so there is no outside
+          medical knowledge for it to add.
+        </p>
+      </div>
+      <div class="stage">
+        <div class="stage-n">03</div>
+        <h3>Check</h3>
+        <p>
+          Your phone then compares the explanation against the facts. A figure that does
+          not appear on the page, or a warning that traces to nothing, is removed before
+          you ever see it.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="inside">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">What it holds</p>
+      <h2>The paperwork of being a patient, in one place.</h2>
+      <p>
+        Explaining one document helps once. Most of what makes appointments stressful is
+        not having the rest of it to hand.
+      </p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <h3>A summary for your doctor</h3>
+        <p>
+          Medications, recent results and the questions you meant to ask, gathered into
+          something you can hold up in the room.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Things to say</h3>
+        <p>
+          Scripts for the calls people put off, each labelled by what it is for: asking
+          the clinic when your appointment is, asking a pharmacist about a side effect.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Medications</h3>
+        <p>
+          Doses and schedules, with names normalised against a drug reference so the same
+          medicine written two ways is still one medicine.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Vaccines</h3>
+        <p>
+          What you have had and what is outstanding, including multi-dose courses that are
+          easy to lose track of halfway through.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Readings you take at home</h3>
+        <p>
+          Blood pressure, glucose, oxygen, weight and temperature, dated when you took
+          them, with the reference figures shown beside them.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Screening that fits you</h3>
+        <p>
+          What is due is filtered by age, province and the conditions on your profile,
+          rather than a general list you have to sort through yourself.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Your health card</h3>
+        <p>
+          Photographed and kept behind Face ID, for the moment at a desk when you need the
+          number and cannot find the card.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>Appointments</h3>
+        <p>
+          What is coming and what has been, with the paperwork from each visit attached to
+          the visit it came from.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="languages">
+  <div class="wrap">
+    <div class="split">
+      <div class="section-head">
+        <p class="eyebrow">Sixteen languages</p>
+        <h2>Translated after the checking, not before.</h2>
+        <p>
+          The English explanation is verified first, then translated. Doing it the other
+          way round would hand every safety check a mistranslated page to validate.
+        </p>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Numbers pass through untouched</h3>
+          <p>
+            Doses, strengths, dates and measurements are carried across exactly as written,
+            in the same digits and the same units. A dosage is the one thing a translation
+            must never round or reformat.
+          </p>
+        </div>
+        <div class="card">
+          <h3>The English stays beside it</h3>
+          <p>
+            For instructions and warnings, both versions are shown together. A dropped
+            "do not" reads perfectly fluently in any language, and keeping the original in
+            view is the honest way to handle that.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="langs">
+      <span class="lang">English</span>
+      <span class="lang">Fran&#231;ais</span>
+      <span class="lang">Espa&#241;ol</span>
+      <span class="lang">&#20013;&#25991;</span>
+      <span class="lang">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</span>
+      <span class="lang">&#2602;&#2672;&#2588;&#2622;&#2604;&#2624;</span>
+      <span class="lang">Tagalog</span>
+      <span class="lang">Italiano</span>
+      <span class="lang">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</span>
+      <span class="lang">&#2711;&#2753;&#2716;&#2736;&#2750;&#2724;&#2752;</span>
+      <span class="lang">Kiswahili</span>
+      <span class="lang">&#1575;&#1585;&#1583;&#1608;</span>
+      <span class="lang">Ti&#7871;ng Vi&#7879;t</span>
+      <span class="lang">Portugu&#234;s</span>
+      <span class="lang">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</span>
+      <span class="lang">&#54620;&#44397;&#50612;</span>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="split">
+      <div class="section-head">
+        <p class="eyebrow">Privacy</p>
+        <h2>Your record lives on your phone.</h2>
+        <p>
+          Clairity has no account to sign into and no server holding your history. What
+          you enter and what you save stays in the app's own storage on your device.
+        </p>
+      </div>
+      <div>
+        <div class="card">
+          <h3>What leaves the device, and when</h3>
+          <p>
+            One thing does: when you ask for a document to be explained, that page is sent
+            to Anthropic's Claude API to be read, through a small service that holds the
+            API credentials so they are never inside the app. Nothing else goes with it.
+            Your other records, your health card and your profile are not uploaded.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Deleting it means deleting it</h3>
+          <p>
+            Because the record is only on this phone, removing the app removes the data,
+            and there is no copy elsewhere to ask for. That cuts both ways, which is why
+            the app offers an export file before it offers the button that erases
+            everything.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Your health card</h3>
+          <p>
+            Stored encrypted and opened with Face ID, Touch ID, or your device passcode.
+            It is never sent anywhere.
+          </p>
+        </div>
+        <div class="card">
+          <h3>The full policy</h3>
+          <p>
+            Every service the app talks to, what each one receives and when, is listed in
+            the <a href="privacy.html">privacy policy</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="limits">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">What it is not</p>
+      <h2>Clairity explains your document. It does not practise medicine.</h2>
+    </div>
+    <div class="limits" style="margin-top: 26px; max-width: 68ch;">
+      <ul>
+        <li>It does not diagnose, and it does not tell you whether a result is good or bad news.</li>
+        <li>It will not suggest starting, stopping or changing a medication.</li>
+        <li>Software reading a page can misread it. Check anything that matters against the original, especially doses and numbers.</li>
+        <li>It is not a substitute for your doctor, nurse or pharmacist, and it is not for emergencies. If something is urgent, call your local emergency number.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="support">
+  <div class="wrap">
+    <div class="split">
+      <div class="section-head">
+        <p class="eyebrow">Support</p>
+        <h2>Something wrong, or something missing?</h2>
+        <p>
+          Clairity is a small, independent project. Mail is read by the person who builds
+          it, and a note about what you were doing when it went wrong is genuinely the most
+          useful thing you can send.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Get in touch</h3>
+        <p>
+          <a href="mailto:clairity.health@gmail.com">clairity.health@gmail.com</a>
+        </p>
+        <p>
+          If a document was read wrongly, please describe what it said and what Clairity
+          said instead. Please do not email the document itself.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h4>Clairity</h4>
+        <p>Medical documents, made clear.</p>
+      </div>
+      <div>
+        <h4>The app</h4>
+        <p><a href="#reading">How it reads a document</a><br>
+           <a href="#inside">What it holds</a><br>
+           <a href="#languages">Languages</a></p>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <p><a href="privacy.html">Privacy policy</a><br>
+           <a href="#limits">Limitations</a><br>
+           <a href="#support">Support</a></p>
+      </div>
+    </div>
+    <p class="colophon">
+      Clairity 1.0 &middot; Not a medical device.
+      In an emergency, call your local emergency number.
+    </p>
+  </div>
+</footer>
+
+<script>
+  /* Clicking an explanation lights the lines it was drawn from. This is
+     the same relationship the app renders: every card item carries the
+     ids of the source blocks behind it. */
+  (function () {
+    const doc = document.getElementById("doc");
+    const facts = document.getElementById("facts");
+    if (!doc || !facts) return;
+
+    const lines = new Map();
+    doc.querySelectorAll("[data-line]").forEach((el) => lines.set(el.dataset.line, el));
+
+    const buttons = Array.from(facts.querySelectorAll(".fact"));
+
+    function clear() {
+      lines.forEach((el) => el.classList.remove("lit"));
+      buttons.forEach((b) => b.setAttribute("aria-pressed", "false"));
+    }
+
+    function show(button) {
+      const already = button.getAttribute("aria-pressed") === "true";
+      clear();
+      if (already) return;
+      button.setAttribute("aria-pressed", "true");
+      button.dataset.refs.split(" ").forEach((id) => lines.get(id)?.classList.add("lit"));
+    }
+
+    buttons.forEach((b) => {
+      b.addEventListener("click", () => show(b));
+      b.addEventListener("mouseenter", () => {
+        if (buttons.some((x) => x.getAttribute("aria-pressed") === "true")) return;
+        b.dataset.refs.split(" ").forEach((id) => lines.get(id)?.classList.add("lit"));
+      });
+      b.addEventListener("mouseleave", () => {
+        if (buttons.some((x) => x.getAttribute("aria-pressed") === "true")) return;
+        lines.forEach((el) => el.classList.remove("lit"));
+      });
+    });
+
+    // Open on the first one so the relationship is visible without a hover,
+    // which is the only way it reads on a touch screen.
+    show(buttons[0]);
+  })();
+</script>
