@@ -15,13 +15,14 @@
  *     sources into ios/build/generated, and archiving into that same tree wipes
  *     them mid-build ("Build input file cannot be found: ...-generated.cpp").
  *
- *   - ~/Library/Developer/Xcode/DerivedData is a symlink to the BuildCache
- *     external drive, because a full archive needs more room than the internal
- *     disk has. No drive, no build — so check for it before spending ten minutes.
+ *   - An archive needs several GB of scratch space. DerivedData used to be
+ *     symlinked to an external drive because the internal disk was nearly full;
+ *     that drive dropped off mid-write and corrupted the build database, so the
+ *     caches live on the internal disk again and this checks the space instead.
  */
 
 import { execFileSync, execSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,7 +36,8 @@ const exportOptions = resolve(archiveDir, "ExportOptions.plist");
 const infoPlist = resolve(iosDir, "Clairity/Info.plist");
 
 const TEAM_ID = "NTY73DX976";
-const CACHE_VOLUME = "/Volumes/BuildCache";
+/** An archive uses roughly 5 GiB of intermediates; this leaves headroom. */
+const MIN_FREE_GIB = 8;
 
 const bump = !process.argv.includes("--no-bump");
 
@@ -44,13 +46,22 @@ const run = (cmd, args, opts = {}) =>
 
 const step = (msg) => console.log(`\n\x1b[1m› ${msg}\x1b[0m`);
 
-// 1. The caches live on the external drive. Without it, DerivedData is a broken
-//    symlink and xcodebuild fails in a way that does not mention the drive.
-if (!existsSync(CACHE_VOLUME)) {
+/*
+  1. Enough room to build.
+
+  An archive writes several GB of intermediates. Running out partway produces
+  errors that name a missing object file rather than the disk, which sends you
+  looking in the wrong place. Checking up front costs nothing.
+*/
+const freeGiB = Number(
+  execSync("df -g / | tail -1 | awk '{print $4}'", { encoding: "utf8" }).trim(),
+);
+if (Number.isFinite(freeGiB) && freeGiB < MIN_FREE_GIB) {
   console.error(
-    `\n${CACHE_VOLUME} is not mounted.\n\n` +
-      `Xcode's DerivedData and the CocoaPods cache are symlinked there. Plug the\n` +
-      `BuildCache drive in and run again.\n`,
+    `\nOnly ${freeGiB} GiB free on the internal disk; an archive needs about ${MIN_FREE_GIB}.\n\n` +
+      `Clear space and run again. The usual culprits:\n` +
+      `  rm -rf ~/Library/Developer/Xcode/DerivedData/*\n` +
+      `  rm -rf ~/Library/Caches/CocoaPods/*\n`,
   );
   process.exit(1);
 }
