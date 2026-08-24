@@ -183,13 +183,26 @@
   .check.done .ct { color: #6B5A46; text-decoration: line-through; text-decoration-color: #B7A88E; }
   .check .cm { display: block; font-size: 13.5px; color: #6B5A46; margin-top: 1px; }
 
-  /* document categories: chips to filter, a coloured spine to scan */
-  .catrow { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+  /*
+    Document categories: one strip that scrolls, never a wrapping grid.
+
+    Wrapping produced a 2-2-1 rag that read as an accident, and it would land
+    differently for every user — there are ten categories in the palette, and
+    which appear depends on what someone has scanned. A single line has one
+    shape regardless.
+  */
+  .catrow {
+    display: flex; gap: 7px; margin-top: 12px; flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+    /* the last chip fades rather than being sliced, so it reads as scrollable */
+    mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+  }
+  .catrow::-webkit-scrollbar { display: none; }
   .cat {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
     border: 1px solid #D9C8AC; background: #FDF9F1; border-radius: 999px;
     padding: 9px 13px; font-size: 13.5px; font-weight: 600; color: #6B5A46;
-    min-height: 44px;
+    min-height: 44px; white-space: nowrap;
   }
   .cat.on { background: #2A2119; color: #FDF9F1; border-color: #2A2119; font-weight: 700; }
   .cat i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
@@ -603,6 +616,8 @@
               <span class="cat"><i style="background:#6B5A46"></i>Imaging 1</span>
               <span class="cat"><i style="background:#56704E"></i>Prescription 1</span>
               <span class="cat"><i style="background:#8B610C"></i>Discharge 1</span>
+              <span class="cat"><i style="background:#6B5A46"></i>Referral</span>
+              <span class="cat"><i style="background:#56704E"></i>Vaccination</span>
             </div>
 
             <p class="t-section" style="margin-top:20px">This month</p>
@@ -655,7 +670,8 @@
         </div>
         <div class="notes">
           <div class="note"><span class="num">11</span><p><b>Categories are back</b>, as filter chips and as a coloured spine on each row. The palette already carries <code>docBloodWork</code>, <code>docImaging</code>, <code>docPrescription</code> and seven more — they were defined and then not used to sort anything.</p></div>
-          <div class="note"><span class="num">12</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
+          <div class="note"><span class="num">12</span><p><b>One scrolling line, not a wrapping grid.</b> Wrapping gave a 2-2-1 rag that looked accidental, and with ten possible categories it would rag differently for every user. A strip has the same shape whether you have three types or ten, and the fade at the edge says there is more.</p></div>
+          <div class="note"><span class="num">13</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
         </div>
       </div>
 
@@ -696,8 +712,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">13</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
-          <div class="note"><span class="num">14</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
+          <div class="note"><span class="num">14</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
+          <div class="note"><span class="num">15</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
         </div>
       </div>
 
@@ -732,7 +748,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">15</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
+          <div class="note"><span class="num">16</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
         </div>
       </div>
 
@@ -762,7 +778,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">16</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
+          <div class="note"><span class="num">17</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
         </div>
       </div>
 
@@ -794,7 +810,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">17</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
+          <div class="note"><span class="num">18</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
         </div>
       </div>
 
@@ -833,7 +849,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">18</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
+          <div class="note"><span class="num">19</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
         </div>
       </div>
 
@@ -899,7 +915,62 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">19</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
+          <div class="note"><span class="num">20</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= VITAL DETAIL ================= -->
+      <div class="screen-block">
+        <h3>Weight, opened</h3>
+        <p class="why">The chart you already have, given the room to be the point of the screen.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-eyebrow">Readings</p>
+            <p class="t-screen" style="margin-top:6px">Weight</p>
+
+            <div class="card" style="margin-top:16px">
+              <div style="display:flex;align-items:baseline;gap:9px">
+                <div style="font-family:var(--head);font-weight:800;font-size:36px;line-height:1">71.2</div>
+                <div style="font-size:16px;color:#6B5A46">kg</div>
+              </div>
+              <div class="t-sec" style="margin-top:5px;font-size:15px">18 Aug, most recent</div>
+
+              <!-- descriptive, never evaluative: the line, and what it did -->
+              <svg viewBox="0 0 300 96" width="100%" height="96" style="margin-top:14px;overflow:visible" role="img" aria-label="Weight from 2 June to 18 August, falling from 73.8 to 71.2 kilograms">
+                <polyline points="6,20 66,30 126,26 186,52 246,58 294,66"
+                          fill="none" stroke="#2A2119" stroke-width="2.5"
+                          stroke-linejoin="round" stroke-linecap="round"/>
+                <circle cx="294" cy="66" r="5" fill="#2A2119"/>
+              </svg>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:#6B5A46">
+                <span>2 Jun</span><span>18 Aug</span>
+              </div>
+              <div style="border-top:1px solid #E6D9C4;margin:14px -16px 0;padding:13px 16px 0">
+                <div class="t-body"><b>Down 2.6 kg since June.</b></div>
+                <div class="t-sec" style="margin-top:3px">
+                  A statement about the numbers, not a judgement of them.
+                </div>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:22px">Every reading</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val">71.2 kg</div>
+                <div class="sub">18 Aug</div></div></div>
+              <div class="row"><div class="grow"><div class="val">71.8 kg</div>
+                <div class="sub">4 Aug · after a week away</div></div></div>
+              <div class="row"><div class="grow"><div class="val">72.6 kg</div>
+                <div class="sub">12 Jul</div></div></div>
+              <div class="row"><div class="grow"><div class="val">73.8 kg</div>
+                <div class="sub">2 Jun</div></div></div>
+            </div>
+            <div style="height:18px"></div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">21</span><p><b>Yes — the chart already exists.</b> <code>vital-trend.tsx</code> draws it with react-native-svg today, two lines for blood pressure because systolic and diastolic move independently. What changes is that it gets the top of its own screen rather than sitting inside a stack of grouped cards.</p></div>
+          <div class="note"><span class="num">22</span><p><b>"Down 2.6 kg since June", never "improving."</b> That restraint is already written into the component, and it is the right call for home readings taken at different times on an unvalidated scale.</p></div>
         </div>
       </div>
 
@@ -958,9 +1029,9 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">20</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
-          <div class="note"><span class="num">21</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
-          <div class="note"><span class="num">22</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
+          <div class="note"><span class="num">23</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
+          <div class="note"><span class="num">24</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
+          <div class="note"><span class="num">25</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
         </div>
       </div>
 
@@ -1001,7 +1072,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">23</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
+          <div class="note"><span class="num">26</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
         </div>
       </div>
 
@@ -1033,8 +1104,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">24</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
-          <div class="note"><span class="num">25</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
+          <div class="note"><span class="num">27</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
+          <div class="note"><span class="num">28</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
         </div>
       </div>
 
