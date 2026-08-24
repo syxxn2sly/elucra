@@ -26,6 +26,18 @@
       "cwd": "site",
       "port": 4173,
       "autoPort": false
+    },
+    {
+      "name": "elucra-docs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4175"
+      ],
+      "cwd": "docs",
+      "port": 4175,
+      "autoPort": false
     }
   ]
 }

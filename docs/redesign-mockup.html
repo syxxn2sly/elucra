@@ -166,6 +166,47 @@
     background: #2A2119; margin: 5px auto 0;
   }
 
+  /* Health snapshot: kept as a grid because it navigates well, but each tile
+     now leads with a value that means something rather than a row count. */
+  .snapgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .snap {
+    background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 14px;
+    padding: 13px 14px; min-height: 92px;
+  }
+  .snap.attn { border-color: #8B610C; border-width: 1.5px; }
+  .snap .sl { font-size: 13.5px; font-weight: 700; color: #6B5A46; }
+  .snap .sv { font-family: var(--head); font-weight: 800; font-size: 20px; margin-top: 4px; line-height: 1.2; }
+  .snap .ss { font-size: 13px; color: #6B5A46; margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+  .dot.green { background: #56704E; }
+  .dot.amber { background: #8B610C; }
+  .dot.red { background: #B34530; }
+
+  /* form controls, denser than today but still 44pt+ */
+  .field { margin-top: 14px; }
+  .field label { display: block; font-size: 14px; font-weight: 700; color: #6B5A46; margin-bottom: 5px; }
+  .input {
+    background: #FDF9F1; border: 1px solid #D9C8AC; border-radius: 12px;
+    padding: 12px 14px; min-height: 48px; font-size: 16px; display: flex; align-items: center;
+  }
+  .input.ph { color: #6B5A46; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+  .chip {
+    border: 1px solid #D9C8AC; background: #FDF9F1; border-radius: 999px;
+    padding: 10px 14px; font-size: 14.5px; min-height: 44px; display: flex; align-items: center;
+  }
+  .chip.on { background: #2A2119; color: #FDF9F1; border-color: #2A2119; font-weight: 700; }
+
+  .btn-primary {
+    background: #2A2119; color: #FDF9F1; border-radius: 14px; padding: 15px;
+    text-align: center; font-family: var(--head); font-weight: 700; font-size: 17px;
+    margin-top: 18px; min-height: 52px;
+  }
+  .empty { text-align: center; padding: 30px 16px; }
+  .empty .eg { font-size: 34px; }
+  .empty .et { font-family: var(--head); font-weight: 700; font-size: 18px; margin-top: 10px; }
+  .empty .es { font-size: 15px; color: #6B5A46; margin-top: 6px; }
+
   .seg { display: flex; background: #E9DDC9; border-radius: 12px; padding: 4px; gap: 4px; }
   .seg div { flex: 1; text-align: center; padding: 9px; border-radius: 9px; font-weight: 700; font-size: 15px; color: #6B5A46; min-height: 44px; display: grid; place-items: center; }
   .seg div.on { background: #FDF9F1; color: #2A2119; }
@@ -326,41 +367,27 @@
               </div>
             </div>
 
-            <p class="t-section" style="margin-top:26px">Worth your attention</p>
-            <div class="rowgroup" style="margin-top:10px">
-              <div class="row">
-                <div class="sev-red" style="width:4px;height:34px;border-radius:99px;background:#B34530"></div>
-                <div class="grow">
-                  <div class="val">3 vaccines need a date</div>
-                  <div class="sub">Added during setup, not yet dated</div>
-                </div>
-                <span class="chev">›</span>
+            <p class="t-section" style="margin-top:26px">Health snapshot</p>
+            <div class="snapgrid">
+              <div class="snap attn">
+                <div class="sl">Vaccines</div>
+                <div class="sv">3 need dates</div>
+                <div class="ss"><span class="dot amber"></span>Needs you</div>
               </div>
-              <div class="row">
-                <div style="width:4px;height:34px;border-radius:99px;background:#8B610C"></div>
-                <div class="grow">
-                  <div class="val">Cervical screening is due</div>
-                  <div class="sub">Ontario offers it from 25</div>
-                </div>
-                <span class="chev">›</span>
+              <div class="snap">
+                <div class="sl">Blood pressure</div>
+                <div class="sv">118/76</div>
+                <div class="ss"><span class="dot green"></span>Usual range · Aug 21</div>
               </div>
-            </div>
-
-            <p class="t-section" style="margin-top:24px">Recent readings</p>
-            <div class="rowgroup" style="margin-top:10px">
-              <div class="row">
-                <div class="grow">
-                  <div class="val">Blood pressure &nbsp;118/76</div>
-                  <div class="sub">Aug 21 · inside the usual range</div>
-                </div>
-                <span class="chev">›</span>
+              <div class="snap">
+                <div class="sl">Medicines</div>
+                <div class="sv">2 current</div>
+                <div class="ss"><span class="dot green"></span>Both have a schedule</div>
               </div>
-              <div class="row">
-                <div class="grow">
-                  <div class="val">Oxygen &nbsp;97%</div>
-                  <div class="sub">Mar 15, 2024 · inside the usual range</div>
-                </div>
-                <span class="chev">›</span>
+              <div class="snap">
+                <div class="sl">Documents</div>
+                <div class="sv">5 saved</div>
+                <div class="ss">Latest Aug 22</div>
               </div>
             </div>
           </div>
@@ -376,7 +403,7 @@
 
         <div class="notes">
           <div class="note"><span class="num">1</span><p><b>"Understand a document"</b> replaces "Simplify". One primary action, visually dominant, not one of six equal rectangles.</p></div>
-          <div class="note"><span class="num">2</span><p><b>Health Snapshot is gone.</b> "11 vitals" told you the row count. "118/76, inside the usual range" tells you the thing you opened the app to learn.</p></div>
+          <div class="note"><span class="num">2</span><p><b>Health snapshot stays — the grid navigates well.</b> What changes is the tiles: "11 vitals readings" was a row count, "118/76, usual range" is the thing you opened the app to learn. A count survives where the count <em>is</em> the meaning, like "3 need dates".</p></div>
           <div class="note"><span class="num">3</span><p><b>Documents enters the tab bar</b>, Vaccines moves under Health. The core proposition now has a permanent home.</p></div>
           <div class="note"><span class="num">4</span><p><b>Two grouped lists, not eight cards.</b> Severity is a bar plus words, never colour alone.</p></div>
         </div>
@@ -526,6 +553,391 @@
           <div class="note"><span class="num">8</span><p><b>One container holding six rows</b>, rather than six containers. The review asked for 30–40% fewer cards; this screen drops about 80%.</p></div>
           <div class="note"><span class="num">9</span><p><b>"Recommended for you" now says by what</b> — age and province — and admits what it does not know. If it cannot say, it should not imply.</p></div>
           <div class="note"><span class="num">10</span><p><b>"+ Track this vaccine" → "+ Track."</b> Still a 44pt target; a third of the width.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= DOCUMENTS ================= -->
+      <div class="screen-block">
+        <h3>Documents</h3>
+        <p class="why">Promoted into the tab bar. Sorted by what you last needed, not by type.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Documents</p>
+            <div class="input ph" style="margin-top:14px">Search your documents</div>
+
+            <p class="t-section" style="margin-top:22px">This month</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Sinus &amp; nasal X-ray</div>
+                  <div class="sub"><span class="dot green" style="display:inline-block"></span> Nothing urgent · Aug 22</div>
+                </div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Blood count</div>
+                  <div class="sub"><span class="dot amber" style="display:inline-block"></span> Iron is low · Aug 14</div>
+                </div><span class="chev">›</span>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:22px">Earlier</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val">Discharge summary</div>
+                <div class="sub">Jul 3</div></div><span class="chev">›</span></div>
+              <div class="row"><div class="grow"><div class="val">Prescription — Foquest</div>
+                <div class="sub">Jun 28</div></div><span class="chev">›</span></div>
+            </div>
+            <div style="height:16px"></div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><span class="ti">⌂</span>Home</div>
+            <div class="tab on"><span class="ti">▤</span>Documents</div>
+            <div class="tab"><span class="ti">♡</span>Health</div>
+            <div class="tab"><span class="ti">▦</span>Calendar</div>
+            <div class="tab"><span class="ti">☰</span>More</div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">11</span><p><b>Each row carries its conclusion</b>, not its file type. "Iron is low" is why you would open it again.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= SCAN ================= -->
+      <div class="screen-block">
+        <h3>Understand a document</h3>
+        <p class="why">One instruction, one action. Language chosen before capture, as today.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Understand a document</p>
+            <p class="t-body" style="margin-top:10px;color:#6B5A46">
+              Photograph or upload a medical document. It will be read and explained in plain
+              English, with every sentence linked to the line it came from.
+            </p>
+
+            <div class="primary-action" style="margin-top:22px">
+              <div class="glyph on-dark">◎</div>
+              <div class="grow"><div class="pa-t">Take a photo</div>
+              <div class="pa-s">Works on creased, dim or handwritten pages</div></div>
+            </div>
+            <div class="secondary-action">
+              <div class="glyph on-light">↑</div>
+              <div class="grow"><div class="t-title">Choose a file</div>
+              <div class="t-sec" style="margin-top:2px">PDF or image</div></div>
+            </div>
+
+            <p class="t-section" style="margin-top:24px">Explain it in</p>
+            <div class="chips" style="margin-top:9px">
+              <span class="chip on">English</span><span class="chip">Français</span>
+              <span class="chip">ਪੰਜਾਬੀ</span><span class="chip">中文</span><span class="chip">More…</span>
+            </div>
+
+            <p class="t-sec" style="margin-top:20px;margin-bottom:18px">
+              Your document is sent to be read, then deleted from the service. Nothing else on
+              your phone is sent with it.
+            </p>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">12</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
+          <div class="note"><span class="num">13</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= DOCTOR SUMMARY ================= -->
+      <div class="screen-block">
+        <h3>Summary for your doctor</h3>
+        <p class="why">The review called the mental model fuzzy. This says what it produces before you tap.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Summary for your doctor</p>
+            <p class="t-body" style="margin-top:10px;color:#6B5A46">
+              A one-page handout you can show or send. Built from what is already in the app.
+            </p>
+
+            <p class="t-section" style="margin-top:22px">It will include</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val">2 medicines</div>
+                <div class="sub">Name, dose and schedule</div></div><span class="chev">✓</span></div>
+              <div class="row"><div class="grow"><div class="val">2 recent results</div>
+                <div class="sub">X-ray Aug 22, blood count Aug 14</div></div><span class="chev">✓</span></div>
+              <div class="row"><div class="grow"><div class="val">4 questions</div>
+                <div class="sub">Yours, plus ones suggested by your reports</div></div><span class="chev">✓</span></div>
+              <div class="row"><div class="grow"><div class="val">Allergies and conditions</div>
+                <div class="sub">From your profile</div></div><span class="chev">✓</span></div>
+            </div>
+
+            <div class="btn-primary">Build the summary</div>
+            <p class="t-sec" style="margin-top:12px;margin-bottom:18px">
+              Your name is not included. You can edit anything before sharing.
+            </p>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">14</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= MEDICATIONS ================= -->
+      <div class="screen-block">
+        <h3>Medicines</h3>
+        <p class="why">Rows, and a schedule you can read at a glance.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Medicines</p>
+            <div class="rowgroup" style="margin-top:16px">
+              <div class="row">
+                <div class="grow"><div class="val">Foquest</div>
+                <div class="sub">70 mg · once daily, morning</div></div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow"><div class="val">Ferrous sulfate</div>
+                <div class="sub">325 mg · once daily</div></div><span class="chev">›</span>
+              </div>
+            </div>
+            <div class="secondary-action" style="margin-top:14px">
+              <div class="glyph on-light">+</div>
+              <div class="grow"><div class="t-title">Add a medicine</div></div>
+            </div>
+            <div style="height:18px"></div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">15</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= ADD MEDICATION ================= -->
+      <div class="screen-block">
+        <h3>Add a medicine</h3>
+        <p class="why">Denser fields, and frequency becomes structured instead of free text.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Add a medicine</p>
+            <div class="field"><label>Name</label><div class="input">Foquest</div>
+              <p class="t-sec" style="margin-top:5px">Checked against a drug reference as you type</p></div>
+            <div class="field"><label>Dose</label><div class="input">70 mg</div></div>
+            <div class="field">
+              <label>How often</label>
+              <div class="chips">
+                <span class="chip on">Once daily</span><span class="chip">Twice daily</span>
+                <span class="chip">3× daily</span><span class="chip">Weekly</span>
+                <span class="chip">As needed</span><span class="chip">Other…</span>
+              </div>
+            </div>
+            <div class="field"><label>When</label>
+              <div class="chips"><span class="chip on">Morning</span><span class="chip">Midday</span>
+              <span class="chip">Evening</span><span class="chip">Bedtime</span></div>
+            </div>
+            <div class="btn-primary">Save</div>
+            <div style="height:18px"></div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">16</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= VACCINE DOSE ================= -->
+      <div class="screen-block">
+        <h3>Recording a dose</h3>
+        <p class="why">Three kinds of certainty, because health records are messy.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Influenza</p>
+            <p class="t-sec" style="margin-top:6px;font-size:16px">Dose 1 of 1</p>
+
+            <p class="t-section" style="margin-top:22px">When did you have it?</p>
+            <div class="chips" style="margin-top:10px">
+              <span class="chip on">I know the date</span>
+              <span class="chip">Roughly</span>
+              <span class="chip">I don't remember</span>
+            </div>
+
+            <div class="field" style="margin-top:18px">
+              <label>Date</label>
+              <div class="input">18 October 2025</div>
+            </div>
+
+            <div class="sev sev-amber" style="margin-top:18px">
+              <div class="lab">Why this matters</div>
+              <p class="t-body" style="margin-top:5px">
+                A rough date still lets the app work out when the next one is due. An exact
+                date you are unsure of is worse than an honest guess.
+              </p>
+            </div>
+
+            <div class="btn-primary">Save</div>
+            <div style="height:18px"></div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">17</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= VITALS ================= -->
+      <div class="screen-block">
+        <h3>Readings</h3>
+        <p class="why">Latest value and its range first; the history below.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Blood pressure</p>
+            <div class="card" style="margin-top:16px">
+              <div style="font-family:var(--head);font-weight:800;font-size:34px;line-height:1.1">118/76</div>
+              <div class="t-sec" style="margin-top:6px;font-size:15px">
+                <span class="dot green" style="display:inline-block"></span>
+                Inside the usual range · 21 Aug
+              </div>
+              <div style="height:54px;margin-top:14px;border-radius:9px;background:linear-gradient(180deg,#E9DDC9,#FDF9F1);display:grid;place-items:center;color:#6B5A46;font-size:13px">
+                6 readings since June
+              </div>
+            </div>
+            <p class="t-sec" style="margin-top:12px">
+              Usually 90/60 to 120/80 at rest. This does not tell you whether a reading is a
+              problem — that is a conversation for your clinician.
+            </p>
+
+            <p class="t-section" style="margin-top:22px">History</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val">118/76</div>
+                <div class="sub">21 Aug · before breakfast</div></div></div>
+              <div class="row"><div class="grow"><div class="val">124/80</div>
+                <div class="sub">14 Aug</div></div></div>
+            </div>
+            <div style="height:18px"></div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">18</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= APPOINTMENTS ================= -->
+      <div class="screen-block">
+        <h3>Appointments</h3>
+        <p class="why">The review called this an isolated CRUD screen. It now connects to the rest.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Calendar</p>
+            <p class="t-section" style="margin-top:20px">Next</p>
+            <div class="card" style="margin-top:10px">
+              <div class="t-title" style="font-size:19px">Cardiology follow-up</div>
+              <div class="t-sec" style="margin-top:4px;font-size:15px">Thu 4 Sept, 2:15pm · Copper Ridge Medical Centre</div>
+
+              <div style="border-top:1px solid #E6D9C4;margin:14px -16px 0;padding:14px 16px 0">
+                <div class="t-eyebrow">Bring</div>
+                <div class="chips" style="margin-top:8px">
+                  <span class="chip">Health card</span><span class="chip">Medicine list</span>
+                  <span class="chip">X-ray report</span>
+                </div>
+              </div>
+              <div class="disclose" style="margin-top:14px">
+                <div><div class="dt">Prepare 4 questions</div>
+                <div class="ds">From your recent reports</div></div><span class="chev">›</span>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:22px">Been and gone</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val">Imaging — sinus X-ray</div>
+                <div class="sub">22 Aug · report attached</div></div><span class="chev">›</span></div>
+            </div>
+            <div style="height:16px"></div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><span class="ti">⌂</span>Home</div>
+            <div class="tab"><span class="ti">▤</span>Documents</div>
+            <div class="tab"><span class="ti">♡</span>Health</div>
+            <div class="tab on"><span class="ti">▦</span>Calendar</div>
+            <div class="tab"><span class="ti">☰</span>More</div>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">19</span><p><b>"Bring" is suggested, not typed.</b> The app already knows your health card, medicines and which report prompted the referral.</p></div>
+          <div class="note"><span class="num">20</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= SCREENING ================= -->
+      <div class="screen-block">
+        <h3>Screening</h3>
+        <p class="why">Reports what a programme offers. Never asserts that you are due.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Screening</p>
+            <p class="t-body" style="margin-top:8px;color:#6B5A46">
+              What Ontario offers at your age. It does not know your history, so it cannot tell
+              you that you are due.
+            </p>
+
+            <div class="rowgroup" style="margin-top:18px">
+              <div class="row">
+                <div style="width:4px;height:38px;border-radius:99px;background:#8B610C"></div>
+                <div class="grow"><div class="val">Cervical screening</div>
+                <div class="sub">Offered from 25, every 3 years</div></div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div style="width:4px;height:38px;border-radius:99px;background:#E6D9C4"></div>
+                <div class="grow"><div class="val">Breast screening</div>
+                <div class="sub">Offered from 40</div></div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div style="width:4px;height:38px;border-radius:99px;background:#E6D9C4"></div>
+                <div class="grow"><div class="val">Colorectal screening</div>
+                <div class="sub">Offered from 50</div></div><span class="chev">›</span>
+              </div>
+            </div>
+
+            <p class="t-sec" style="margin-top:16px;margin-bottom:18px">
+              Sources: Canadian Partnership Against Cancer, Ontario Health.
+            </p>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">21</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= HEALTH CARD ================= -->
+      <div class="screen-block">
+        <h3>Health card</h3>
+        <p class="why">The number is why you opened it, so the number is the screen.</p>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Health card</p>
+            <div style="background:#2A2119;color:#FDF9F1;border-radius:18px;padding:20px;margin-top:16px">
+              <div style="font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.72">Card number</div>
+              <div style="font-family:var(--mono);font-size:27px;letter-spacing:.06em;margin-top:9px;font-variant-numeric:tabular-nums">1234 567 890 AB</div>
+              <div style="display:flex;gap:10px;margin-top:16px">
+                <div style="flex:1;text-align:center;background:rgba(253,249,241,.15);border-radius:11px;padding:12px;font-weight:700;font-size:15px;min-height:44px">Copy</div>
+                <div style="flex:1;text-align:center;background:rgba(253,249,241,.15);border-radius:11px;padding:12px;font-weight:700;font-size:15px;min-height:44px">Hide</div>
+              </div>
+            </div>
+            <div class="rowgroup" style="margin-top:14px">
+              <div class="row"><div class="grow"><div class="val">Expires</div>
+                <div class="sub">March 2029</div></div></div>
+              <div class="row"><div class="grow"><div class="val">Photo of the card</div>
+                <div class="sub">Front only</div></div><span class="chev">›</span></div>
+            </div>
+            <p class="t-sec" style="margin-top:14px;margin-bottom:18px">
+              Kept encrypted on this phone and opened with Face ID. Never sent anywhere.
+            </p>
+          </div>
+        </div>
+        <div class="notes">
+          <div class="note"><span class="num">22</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
+          <div class="note"><span class="num">23</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
         </div>
       </div>
 
