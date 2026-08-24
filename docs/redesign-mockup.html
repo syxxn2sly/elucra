@@ -168,6 +168,21 @@
 
   /* Health snapshot: kept as a grid because it navigates well, but each tile
      now leads with a value that means something rather than a row count. */
+  /* A checklist, not chips. Chips filter; a checkbox is a thing you do.
+     Reuses the same pattern the report's "what to do" items already use. */
+  .checklist { margin-top: 10px; display: flex; flex-direction: column; }
+  .check { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; min-height: 44px; }
+  .check + .check { border-top: 1px solid #EFE6D6; }
+  .box {
+    width: 24px; height: 24px; border-radius: 7px; border: 2px solid #B7A88E;
+    flex: none; display: grid; place-items: center; margin-top: 1px;
+    font-size: 14px; font-weight: 700; color: transparent;
+  }
+  .box.on { background: #56704E; border-color: #56704E; color: #FDF9F1; }
+  .check .ct { font-size: 16px; line-height: 1.4; }
+  .check.done .ct { color: #6B5A46; text-decoration: line-through; text-decoration-color: #B7A88E; }
+  .check .cm { display: block; font-size: 13.5px; color: #6B5A46; margin-top: 1px; }
+
   /* document categories: chips to filter, a coloured spine to scan */
   .catrow { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
   .cat {
@@ -681,8 +696,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">12</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
-          <div class="note"><span class="num">13</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
+          <div class="note"><span class="num">13</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
+          <div class="note"><span class="num">14</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
         </div>
       </div>
 
@@ -717,7 +732,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">14</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
+          <div class="note"><span class="num">15</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
         </div>
       </div>
 
@@ -747,7 +762,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">15</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
+          <div class="note"><span class="num">16</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
         </div>
       </div>
 
@@ -779,7 +794,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">16</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
+          <div class="note"><span class="num">17</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
         </div>
       </div>
 
@@ -818,7 +833,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">17</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
+          <div class="note"><span class="num">18</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
         </div>
       </div>
 
@@ -884,7 +899,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">18</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
+          <div class="note"><span class="num">19</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
         </div>
       </div>
 
@@ -902,10 +917,23 @@
               <div class="t-sec" style="margin-top:4px;font-size:15px">Thu 4 Sept, 2:15pm · Copper Ridge Medical Centre</div>
 
               <div style="border-top:1px solid #E6D9C4;margin:14px -16px 0;padding:14px 16px 0">
-                <div class="t-eyebrow">Bring</div>
-                <div class="chips" style="margin-top:8px">
-                  <span class="chip">Health card</span><span class="chip">Medicine list</span>
-                  <span class="chip">X-ray report</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div class="t-eyebrow">Bring</div>
+                  <div style="font-size:13px;font-weight:700;color:#6B5A46">1 of 3</div>
+                </div>
+                <div class="checklist">
+                  <div class="check done">
+                    <span class="box on">✓</span>
+                    <span class="ct">Health card</span>
+                  </div>
+                  <div class="check">
+                    <span class="box"></span>
+                    <span class="ct">Medicine list <span class="cm">Foquest, ferrous sulfate</span></span>
+                  </div>
+                  <div class="check">
+                    <span class="box"></span>
+                    <span class="ct">X-ray report <span class="cm">22 Aug, already saved</span></span>
+                  </div>
                 </div>
               </div>
               <div class="disclose" style="margin-top:14px">
@@ -930,8 +958,9 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">19</span><p><b>"Bring" is suggested, not typed.</b> The app already knows your health card, medicines and which report prompted the referral.</p></div>
-          <div class="note"><span class="num">20</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
+          <div class="note"><span class="num">20</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
+          <div class="note"><span class="num">21</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
+          <div class="note"><span class="num">22</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
         </div>
       </div>
 
@@ -972,7 +1001,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">21</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
+          <div class="note"><span class="num">23</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
         </div>
       </div>
 
@@ -1004,8 +1033,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">22</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
-          <div class="note"><span class="num">23</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
+          <div class="note"><span class="num">24</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
+          <div class="note"><span class="num">25</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
         </div>
       </div>
 
