@@ -147,6 +147,22 @@
   .disclose .dt { font-family: var(--head); font-weight: 700; font-size: 16px; }
   .disclose .ds { font-size: 14px; color: #6B5A46; margin-top: 2px; }
 
+  /* Language control. Sixteen languages is a headline feature; it cannot be
+     three taps deep, but it must not outrank the finding either. */
+  .lang {
+    flex: none; border: 1.5px solid #2A2119; background: transparent; color: #2A2119;
+    border-radius: 999px; padding: 8px 12px; font-family: var(--body);
+    font-weight: 700; font-size: 14px; min-height: 44px; white-space: nowrap;
+    margin-top: 2px;
+  }
+  .alsoen {
+    margin-top: 11px; padding-top: 10px; border-top: 1px dashed rgba(179,69,48,.42);
+  }
+  .alsoen-lab {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: #B34530;
+  }
+
   .track {
     border: 1.5px solid #2A2119; color: #2A2119; background: transparent;
     border-radius: 999px; font-family: var(--body); font-weight: 700; font-size: 14.5px;
@@ -462,7 +478,11 @@
           <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
           <div class="sc">
             <p class="t-eyebrow">Sinus &amp; nasal X-ray · Aug 22</p>
-            <p class="t-screen" style="margin-top:7px">Your report, explained</p>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:7px">
+              <p class="t-screen" style="flex:1">Your report, explained</p>
+              <!-- Reachable in one tap, but below the finding in reading order -->
+              <button class="lang">🌐 English ▾</button>
+            </div>
 
             <div class="sev sev-green" style="margin-top:18px">
               <div class="lab">Main finding</div>
@@ -492,6 +512,18 @@
                 You cannot breathe through your nose at all, the pain becomes severe, or you
                 develop a fever.
               </p>
+              <!--
+                When the reader has chosen another language, warnings and
+                instructions keep the English underneath. A dropped negation
+                reads perfectly fluently in any language, so the checked text
+                stays where a pharmacist or family member can see it.
+              -->
+              <div class="alsoen">
+                <div class="alsoen-lab">Also in English</div>
+                <p class="t-sec" style="margin-top:3px">
+                  Shown here whenever you are reading in another language.
+                </p>
+              </div>
             </div>
 
             <div class="disclose" style="margin-top:22px">
@@ -525,8 +557,10 @@
 
         <div class="notes">
           <div class="note"><span class="num">5</span><p><b>The four questions answered in order:</b> what was found, what it means, what to do, when to worry. Everything else is a row you can open.</p></div>
-          <div class="note"><span class="num">6</span><p><b>Confidence collapses to one line.</b> Six beige boxes announcing "95%" made a good result feel like an alarm. Now: 8 clear, 2 worth checking, tap to review only those.</p></div>
-          <div class="note"><span class="num">7</span><p><b>Green is used once</b>, and only because the finding is genuinely reassuring. Red appears once, on the only thing that is urgent.</p></div>
+          <div class="note"><span class="num">6</span><p><b>The language control was missing from my first pass</b>, which was a real omission — sixteen languages is a headline feature and it is in the App Store description. It sits in the header: one tap, but after the finding in reading order, so it never outranks the medicine.</p></div>
+          <div class="note"><span class="num">7</span><p><b>Warnings keep the English underneath</b> when you are reading in another language. A dropped negation reads perfectly fluently in any language, so the text that actually passed the checks stays visible for a pharmacist or a family member.</p></div>
+          <div class="note"><span class="num">8</span><p><b>Confidence collapses to one line.</b> Six beige boxes announcing "95%" made a good result feel like an alarm. Now: 8 clear, 2 worth checking, tap to review only those.</p></div>
+          <div class="note"><span class="num">9</span><p><b>Green is used once</b>, and only because the finding is genuinely reassuring. Red appears once, on the only thing that is urgent.</p></div>
         </div>
       </div>
 
@@ -594,9 +628,9 @@
         </div>
 
         <div class="notes">
-          <div class="note"><span class="num">8</span><p><b>One container holding six rows</b>, rather than six containers. The review asked for 30–40% fewer cards; this screen drops about 80%.</p></div>
-          <div class="note"><span class="num">9</span><p><b>"Recommended for you" now says by what</b> — age and province — and admits what it does not know. If it cannot say, it should not imply.</p></div>
-          <div class="note"><span class="num">10</span><p><b>"+ Track this vaccine" → "+ Track."</b> Still a 44pt target; a third of the width.</p></div>
+          <div class="note"><span class="num">10</span><p><b>One container holding six rows</b>, rather than six containers. The review asked for 30–40% fewer cards; this screen drops about 80%.</p></div>
+          <div class="note"><span class="num">11</span><p><b>"Recommended for you" now says by what</b> — age and province — and admits what it does not know. If it cannot say, it should not imply.</p></div>
+          <div class="note"><span class="num">12</span><p><b>"+ Track this vaccine" → "+ Track."</b> Still a 44pt target; a third of the width.</p></div>
         </div>
       </div>
 
@@ -669,9 +703,9 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">11</span><p><b>Categories are back</b>, as filter chips and as a coloured spine on each row. The palette already carries <code>docBloodWork</code>, <code>docImaging</code>, <code>docPrescription</code> and seven more — they were defined and then not used to sort anything.</p></div>
-          <div class="note"><span class="num">12</span><p><b>One scrolling line, not a wrapping grid.</b> Wrapping gave a 2-2-1 rag that looked accidental, and with ten possible categories it would rag differently for every user. A strip has the same shape whether you have three types or ten, and the fade at the edge says there is more.</p></div>
-          <div class="note"><span class="num">13</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
+          <div class="note"><span class="num">13</span><p><b>Categories are back</b>, as filter chips and as a coloured spine on each row. The palette already carries <code>docBloodWork</code>, <code>docImaging</code>, <code>docPrescription</code> and seven more — they were defined and then not used to sort anything.</p></div>
+          <div class="note"><span class="num">14</span><p><b>One scrolling line, not a wrapping grid.</b> Wrapping gave a 2-2-1 rag that looked accidental, and with ten possible categories it would rag differently for every user. A strip has the same shape whether you have three types or ten, and the fade at the edge says there is more.</p></div>
+          <div class="note"><span class="num">15</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
         </div>
       </div>
 
@@ -712,8 +746,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">14</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
-          <div class="note"><span class="num">15</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
+          <div class="note"><span class="num">16</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
+          <div class="note"><span class="num">17</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
         </div>
       </div>
 
@@ -748,7 +782,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">16</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
+          <div class="note"><span class="num">18</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
         </div>
       </div>
 
@@ -778,7 +812,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">17</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
+          <div class="note"><span class="num">19</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
         </div>
       </div>
 
@@ -810,7 +844,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">18</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
+          <div class="note"><span class="num">20</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
         </div>
       </div>
 
@@ -849,7 +883,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">19</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
+          <div class="note"><span class="num">21</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
         </div>
       </div>
 
@@ -915,7 +949,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">20</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
+          <div class="note"><span class="num">22</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
         </div>
       </div>
 
@@ -969,8 +1003,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">21</span><p><b>Yes — the chart already exists.</b> <code>vital-trend.tsx</code> draws it with react-native-svg today, two lines for blood pressure because systolic and diastolic move independently. What changes is that it gets the top of its own screen rather than sitting inside a stack of grouped cards.</p></div>
-          <div class="note"><span class="num">22</span><p><b>"Down 2.6 kg since June", never "improving."</b> That restraint is already written into the component, and it is the right call for home readings taken at different times on an unvalidated scale.</p></div>
+          <div class="note"><span class="num">23</span><p><b>Yes — the chart already exists.</b> <code>vital-trend.tsx</code> draws it with react-native-svg today, two lines for blood pressure because systolic and diastolic move independently. What changes is that it gets the top of its own screen rather than sitting inside a stack of grouped cards.</p></div>
+          <div class="note"><span class="num">24</span><p><b>"Down 2.6 kg since June", never "improving."</b> That restraint is already written into the component, and it is the right call for home readings taken at different times on an unvalidated scale.</p></div>
         </div>
       </div>
 
@@ -1029,9 +1063,9 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">23</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
-          <div class="note"><span class="num">24</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
-          <div class="note"><span class="num">25</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
+          <div class="note"><span class="num">25</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
+          <div class="note"><span class="num">26</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
+          <div class="note"><span class="num">27</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
         </div>
       </div>
 
@@ -1072,7 +1106,7 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">26</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
+          <div class="note"><span class="num">28</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
         </div>
       </div>
 
@@ -1104,8 +1138,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">27</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
-          <div class="note"><span class="num">28</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
+          <div class="note"><span class="num">29</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
+          <div class="note"><span class="num">30</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
         </div>
       </div>
 
