@@ -1,0 +1,637 @@
+<meta charset="utf-8">
+<title>Elucra Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap">
+
+<style>
+  /* ---------------------------------------------------------------
+     Page chrome. Theme-aware, because this is a document about the
+     app rather than the app itself.
+     --------------------------------------------------------------- */
+  :root {
+    --page: #E8E2D6;
+    --page-2: #F4F0E8;
+    --ink: #23201C;
+    --ink-2: #5C5348;
+    --rule: #D6CEC0;
+    --pill: #DCD4C4;
+    --head: "Nunito", ui-rounded, system-ui, sans-serif;
+    --body: "Nunito Sans", system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #16130F; --page-2: #201C17; --ink: #E7DECE;
+      --ink-2: #A99C89; --rule: #332C24; --pill: #2B241C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #16130F; --page-2: #201C17; --ink: #E7DECE;
+    --ink-2: #A99C89; --rule: #332C24; --pill: #2B241C;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font-family: var(--body); font-size: 16.5px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3 { font-family: var(--head); margin: 0; line-height: 1.22; text-wrap: balance; }
+  p { margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(18px,4vw,44px); }
+
+  header.top { padding-block: clamp(34px,6vw,64px) 0; }
+  .kicker { font-weight: 700; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+  header.top h1 { font-size: clamp(30px,5vw,50px); font-weight: 800; letter-spacing: -.02em; margin-top: 12px; }
+  header.top p { margin-top: 16px; color: var(--ink-2); max-width: 62ch; font-size: clamp(16px,1.9vw,18px); }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .fact {
+    font-family: var(--mono); font-size: 13px; padding: 7px 12px;
+    border-radius: 999px; background: var(--pill); color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .fact b { font-weight: 700; }
+
+  section { padding-block: clamp(36px,5vw,64px); }
+  section > .wrap > h2 { font-size: clamp(22px,3vw,32px); font-weight: 800; letter-spacing: -.015em; }
+  section > .wrap > h2 + p { margin-top: 14px; color: var(--ink-2); max-width: 66ch; }
+  hr.rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+  /* ---------------------------------------------------------------
+     Phone frames. The screens inside are deliberately single-theme:
+     they depict the app's light appearance, not this page's theme.
+     --------------------------------------------------------------- */
+  .screens {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: clamp(24px,3vw,40px); margin-top: 34px; align-items: start;
+  }
+  .screen-block > h3 {
+    font-size: 19px; font-weight: 700; margin-bottom: 6px;
+  }
+  .screen-block > .why { color: var(--ink-2); font-size: 15px; margin-bottom: 18px; }
+
+  .phone {
+    background: #F2E9DA; border: 1px solid #D9C8AC; border-radius: 30px;
+    padding: 0; overflow: hidden; color: #2A2119;
+    font-family: var(--body); box-shadow: 0 10px 30px rgba(35,28,20,.10);
+    max-width: 390px; width: 100%;
+  }
+  .status {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px 4px; font-size: 13px; font-weight: 700; color: #2A2119;
+    font-variant-numeric: tabular-nums;
+  }
+  .sc { padding: 8px 18px 0; }
+
+  /* app type scale, per the review's recommendation */
+  .t-screen { font-family: var(--head); font-weight: 800; font-size: 27px; line-height: 1.2; letter-spacing: -.01em; }
+  .t-section { font-family: var(--head); font-weight: 700; font-size: 19px; margin: 0; }
+  .t-title { font-family: var(--head); font-weight: 700; font-size: 17px; }
+  .t-body { font-size: 16px; line-height: 1.55; }
+  .t-sec { font-size: 15px; color: #6B5A46; line-height: 1.5; }
+  .t-eyebrow { font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6B5A46; }
+
+  /* one card style, used sparingly */
+  .card { background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 16px; padding: 16px; }
+  .rowgroup { background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 16px; overflow: hidden; }
+  .row {
+    display: flex; align-items: center; gap: 13px; padding: 15px 16px; min-height: 60px;
+    border-bottom: 1px solid #EFE6D6;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row .grow { flex: 1; min-width: 0; }
+  .row .val { font-family: var(--head); font-weight: 700; font-size: 17px; }
+  .row .sub { font-size: 14.5px; color: #6B5A46; margin-top: 1px; }
+  .chev { color: #6B5A46; font-size: 19px; }
+
+  .primary-action {
+    background: #2A2119; color: #FDF9F1; border-radius: 18px; padding: 20px 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .primary-action .pa-t { font-family: var(--head); font-weight: 800; font-size: 20px; }
+  .primary-action .pa-s { font-size: 14.5px; color: rgba(253,249,241,.86); margin-top: 3px; line-height: 1.45; }
+  .glyph {
+    width: 46px; height: 46px; border-radius: 13px; flex: none;
+    display: grid; place-items: center; font-size: 21px;
+  }
+  .glyph.on-dark { background: rgba(253,249,241,.17); }
+  .glyph.on-light { background: #E9DDC9; }
+
+  .secondary-action {
+    margin-top: 12px; background: #E9DDC9; border: 1px solid #D9C8AC;
+    border-radius: 18px; padding: 17px 16px; display: flex; align-items: center; gap: 14px;
+  }
+
+  /* semantic, contrast-checked */
+  .sev { border-left: 3px solid; padding: 13px 15px; border-radius: 0 12px 12px 0; }
+  .sev-red { border-color: #B34530; background: #F8E3DB; }
+  .sev-amber { border-color: #8B610C; background: #F9ECD3; }
+  .sev-green { border-color: #56704E; background: #E4EBDE; }
+  .sev .lab { font-size: 12.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .sev-red .lab { color: #B34530; }
+  .sev-amber .lab { color: #8B610C; }
+  .sev-green .lab { color: #56704E; }
+
+  .finding {
+    font-family: var(--head); font-weight: 800; font-size: 22px; line-height: 1.3;
+    margin-top: 8px;
+  }
+
+  .disclose {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px; background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 14px;
+    margin-top: 10px; min-height: 56px;
+  }
+  .disclose .dt { font-family: var(--head); font-weight: 700; font-size: 16px; }
+  .disclose .ds { font-size: 14px; color: #6B5A46; margin-top: 2px; }
+
+  .track {
+    border: 1.5px solid #2A2119; color: #2A2119; background: transparent;
+    border-radius: 999px; font-family: var(--body); font-weight: 700; font-size: 14.5px;
+    padding: 9px 15px; min-height: 44px; min-width: 44px; white-space: nowrap;
+  }
+
+  .tabbar {
+    display: flex; margin-top: 18px; border-top: 1px solid #E6D9C4;
+    background: #FDF9F1; padding: 9px 4px 16px;
+  }
+  .tab { flex: 1; text-align: center; font-size: 11.5px; font-weight: 700; color: #6B5A46; }
+  .tab .ti { font-size: 19px; display: block; margin-bottom: 3px; }
+  .tab.on { color: #2A2119; }
+  .tab.on .ti { position: relative; }
+  .tab.on::after {
+    content: ""; display: block; width: 22px; height: 3px; border-radius: 999px;
+    background: #2A2119; margin: 5px auto 0;
+  }
+
+  .seg { display: flex; background: #E9DDC9; border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg div { flex: 1; text-align: center; padding: 9px; border-radius: 9px; font-weight: 700; font-size: 15px; color: #6B5A46; min-height: 44px; display: grid; place-items: center; }
+  .seg div.on { background: #FDF9F1; color: #2A2119; }
+
+  /* annotation notes beside each screen */
+  .notes { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .note { display: flex; gap: 11px; align-items: flex-start; }
+  .num {
+    flex: none; width: 23px; height: 23px; border-radius: 999px; background: var(--ink);
+    color: var(--page-2); font-size: 12px; font-weight: 700; display: grid; place-items: center;
+    font-family: var(--mono); margin-top: 2px;
+  }
+  .note p { font-size: 14.5px; color: var(--ink-2); }
+  .note b { color: var(--ink); font-weight: 700; }
+
+  /* before / after */
+  .ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 22px; margin-top: 28px; }
+  .ba-col > h4 { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 12px; }
+  .demo { background: #F2E9DA; border: 1px solid #D9C8AC; border-radius: 18px; padding: 16px; color: #2A2119; }
+  .oldbox { background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 13px; padding: 13px; margin-bottom: 9px; }
+  .oldbox .oc { font-size: 11px; color: #7C6B57; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+  .oldbox .on2 { font-size: 12.5px; color: #7C6B57; margin-top: 4px; }
+
+  table.tok { width: 100%; border-collapse: collapse; margin-top: 22px; font-size: 15px; }
+  table.tok th, table.tok td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  table.tok th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 700; }
+  table.tok td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .swatch { display: inline-block; width: 13px; height: 13px; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); vertical-align: -2px; margin-right: 7px; }
+  .pass { color: #56704E; font-weight: 700; }
+  .fail { color: #B34530; font-weight: 700; }
+  .tablewrap { overflow-x: auto; }
+
+  footer { border-top: 1px solid var(--rule); padding-block: 30px 60px; color: var(--ink-2); font-size: 14.5px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">Design response · 23 August 2026</p>
+    <h1>Hierarchy, contrast, and the report screen.</h1>
+    <p>
+      A redesign pass against the review. It deliberately changes nothing decorative: the
+      palette, the typefaces and the warmth stay. What changes is what the interface
+      emphasises, how readable the quiet text is, and the order in which a frightened person
+      meets the information in their own report.
+    </p>
+    <div class="facts">
+      <span class="fact">secondary text <b>4.26 → 5.49</b></span>
+      <span class="fact">body type <b>13 → 16px</b></span>
+      <span class="fact">cards on Home <b>8 → 3</b></span>
+      <span class="fact">tap targets <b>≥44pt</b></span>
+    </div>
+  </header>
+</div>
+
+<hr class="rule" style="margin-top:44px">
+
+<section>
+  <div class="wrap">
+    <h2>The measurement that settles the colour argument</h2>
+    <p>
+      The review suspected the muted text failed contrast. It does, and two semantic colours
+      fail worse. These are computed against the canvas <span class="fact" style="padding:2px 8px">#F2E9DA</span>,
+      which is what most secondary text actually sits on.
+    </p>
+
+    <div class="tablewrap">
+      <table class="tok">
+        <thead>
+          <tr><th>Token</th><th>Now</th><th>Ratio</th><th>Replace with</th><th>Ratio</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Secondary text</td>
+            <td class="n"><span class="swatch" style="background:#7C6B57"></span>#7C6B57</td>
+            <td class="n fail">4.26 ✗</td>
+            <td class="n"><span class="swatch" style="background:#6B5A46"></span>#6B5A46</td>
+            <td class="n pass">5.49 ✓</td>
+          </tr>
+          <tr>
+            <td>Danger</td>
+            <td class="n"><span class="swatch" style="background:#BF4A34"></span>#BF4A34</td>
+            <td class="n fail">4.11 ✗</td>
+            <td class="n"><span class="swatch" style="background:#B34530"></span>#B34530</td>
+            <td class="n pass">4.58 ✓</td>
+          </tr>
+          <tr>
+            <td>Warning</td>
+            <td class="n"><span class="swatch" style="background:#A8760F"></span>#A8760F</td>
+            <td class="n fail">3.31 ✗</td>
+            <td class="n"><span class="swatch" style="background:#8B610C"></span>#8B610C</td>
+            <td class="n pass">4.57 ✓</td>
+          </tr>
+          <tr>
+            <td>Success</td>
+            <td class="n"><span class="swatch" style="background:#56704E"></span>#56704E</td>
+            <td class="n pass">4.56 ✓</td>
+            <td class="n">unchanged</td>
+            <td class="n pass">4.56 ✓</td>
+          </tr>
+          <tr>
+            <td>Primary text</td>
+            <td class="n"><span class="swatch" style="background:#2A2119"></span>#2A2119</td>
+            <td class="n pass">13.12 ✓</td>
+            <td class="n">unchanged</td>
+            <td class="n pass">13.12 ✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:20px">
+      Worth noting for anyone defending the old values: <b>#7C6B57 passes on <code>surface</code>
+      (4.88)</b> and fails only on <code>background</code>. That is exactly why it slipped through —
+      it looks fine in a card and fails in the places between them.
+    </p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>Three screens</h2>
+    <p>
+      Home, because it sets what the product thinks matters. The report, because it is the
+      flagship and the review called it the weakest. Vaccines, because it is where card
+      fatigue is worst.
+    </p>
+
+    <div class="screens">
+
+      <!-- ================= HOME ================= -->
+      <div class="screen-block">
+        <h3>Home</h3>
+        <p class="why">Status you can act on, instead of a count of rows in a database.</p>
+
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Hello, Syaan</p>
+            <p class="t-sec" style="margin-top:6px;font-size:16px">What would you like to understand today?</p>
+
+            <div class="primary-action" style="margin-top:20px">
+              <div class="glyph on-dark">▤</div>
+              <div class="grow">
+                <div class="pa-t">Understand a document</div>
+                <div class="pa-s">Scan or upload a report and read it in plain English</div>
+              </div>
+            </div>
+
+            <div class="secondary-action">
+              <div class="glyph on-light">✎</div>
+              <div class="grow">
+                <div class="t-title">Summary for your doctor</div>
+                <div class="t-sec" style="margin-top:2px">A one-page handout: your medicines, recent results and questions</div>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:26px">Worth your attention</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row">
+                <div class="sev-red" style="width:4px;height:34px;border-radius:99px;background:#B34530"></div>
+                <div class="grow">
+                  <div class="val">3 vaccines need a date</div>
+                  <div class="sub">Added during setup, not yet dated</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div style="width:4px;height:34px;border-radius:99px;background:#8B610C"></div>
+                <div class="grow">
+                  <div class="val">Cervical screening is due</div>
+                  <div class="sub">Ontario offers it from 25</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:24px">Recent readings</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Blood pressure &nbsp;118/76</div>
+                  <div class="sub">Aug 21 · inside the usual range</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Oxygen &nbsp;97%</div>
+                  <div class="sub">Mar 15, 2024 · inside the usual range</div>
+                </div>
+                <span class="chev">›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabbar">
+            <div class="tab on"><span class="ti">⌂</span>Home</div>
+            <div class="tab"><span class="ti">▤</span>Documents</div>
+            <div class="tab"><span class="ti">♡</span>Health</div>
+            <div class="tab"><span class="ti">▦</span>Calendar</div>
+            <div class="tab"><span class="ti">☰</span>More</div>
+          </div>
+        </div>
+
+        <div class="notes">
+          <div class="note"><span class="num">1</span><p><b>"Understand a document"</b> replaces "Simplify". One primary action, visually dominant, not one of six equal rectangles.</p></div>
+          <div class="note"><span class="num">2</span><p><b>Health Snapshot is gone.</b> "11 vitals" told you the row count. "118/76, inside the usual range" tells you the thing you opened the app to learn.</p></div>
+          <div class="note"><span class="num">3</span><p><b>Documents enters the tab bar</b>, Vaccines moves under Health. The core proposition now has a permanent home.</p></div>
+          <div class="note"><span class="num">4</span><p><b>Two grouped lists, not eight cards.</b> Severity is a bar plus words, never colour alone.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= REPORT ================= -->
+      <div class="screen-block">
+        <h3>The report</h3>
+        <p class="why">Meaning, then urgency, then action. Provenance moved below the fold.</p>
+
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-eyebrow">Sinus &amp; nasal X-ray · Aug 22</p>
+            <p class="t-screen" style="margin-top:7px">Your report, explained</p>
+
+            <div class="sev sev-green" style="margin-top:18px">
+              <div class="lab">Main finding</div>
+              <div class="finding">Nothing urgent was found.</div>
+            </div>
+
+            <p class="t-section" style="margin-top:24px">What this means</p>
+            <p class="t-body" style="margin-top:8px">
+              The scan looked at the air spaces in your face and the bones of your nose. The
+              report describes them as normal. It does not explain why you have symptoms, so
+              that is the question for your doctor.
+            </p>
+
+            <p class="t-section" style="margin-top:22px">What to do next</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Book a follow-up</div>
+                  <div class="sub">Dr. Ebrahimi asked to review this with you. No rush stated.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sev sev-red" style="margin-top:20px">
+              <div class="lab">Get help sooner if</div>
+              <p class="t-body" style="margin-top:7px">
+                You cannot breathe through your nose at all, the pain becomes severe, or you
+                develop a fever.
+              </p>
+            </div>
+
+            <div class="disclose" style="margin-top:22px">
+              <div>
+                <div class="dt">Questions to ask</div>
+                <div class="ds">4 suggested, based on this report</div>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="disclose">
+              <div>
+                <div class="dt">Share with your doctor</div>
+                <div class="ds">A short handover note</div>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="disclose">
+              <div>
+                <div class="dt">How Elucra read this</div>
+                <div class="ds">8 sections read clearly · 2 worth checking</div>
+              </div>
+              <span class="chev">›</span>
+            </div>
+
+            <p class="t-sec" style="margin:18px 0 20px">
+              Software reading a page can misread it. Check anything that matters against the
+              original, especially doses and numbers.
+            </p>
+          </div>
+        </div>
+
+        <div class="notes">
+          <div class="note"><span class="num">5</span><p><b>The four questions answered in order:</b> what was found, what it means, what to do, when to worry. Everything else is a row you can open.</p></div>
+          <div class="note"><span class="num">6</span><p><b>Confidence collapses to one line.</b> Six beige boxes announcing "95%" made a good result feel like an alarm. Now: 8 clear, 2 worth checking, tap to review only those.</p></div>
+          <div class="note"><span class="num">7</span><p><b>Green is used once</b>, and only because the finding is genuinely reassuring. Red appears once, on the only thing that is urgent.</p></div>
+        </div>
+      </div>
+
+      <!-- ================= VACCINES ================= -->
+      <div class="screen-block">
+        <h3>Vaccines</h3>
+        <p class="why">Rows instead of cards, and an honest answer to "recommended by what?"</p>
+
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
+          <div class="sc">
+            <p class="t-screen">Vaccines</p>
+            <div class="seg" style="margin-top:16px">
+              <div>Mine</div><div class="on">Browse</div>
+            </div>
+
+            <p class="t-section" style="margin-top:24px">Recommended for you</p>
+            <p class="t-sec" style="margin-top:6px">
+              Because you are 21 and live in Ontario. Not medical advice, and not based on your
+              medical history.
+            </p>
+
+            <div class="rowgroup" style="margin-top:12px">
+              <div class="row">
+                <div class="grow">
+                  <div class="val">HPV</div>
+                  <div class="sub">Free in Ontario up to age 26</div>
+                </div>
+                <button class="track">+ Track</button>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Influenza</div>
+                  <div class="sub">Yearly, from October</div>
+                </div>
+                <button class="track">+ Track</button>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="val">Td booster</div>
+                  <div class="sub">Every 10 years</div>
+                </div>
+                <button class="track">+ Track</button>
+              </div>
+            </div>
+
+            <p class="t-section" style="margin-top:24px">Everything else</p>
+            <div class="rowgroup" style="margin-top:12px">
+              <div class="row">
+                <div class="grow"><div class="val">Pneumococcal</div><div class="sub">Usually 65+</div></div>
+                <button class="track">+ Track</button>
+              </div>
+              <div class="row">
+                <div class="grow"><div class="val">RSV</div><div class="sub">Usually 60+, or pregnancy</div></div>
+                <button class="track">+ Track</button>
+              </div>
+              <div class="row">
+                <div class="grow"><div class="val">Shingles</div><div class="sub">Usually 50+</div></div>
+                <button class="track">+ Track</button>
+              </div>
+            </div>
+
+            <div style="height:18px"></div>
+          </div>
+        </div>
+
+        <div class="notes">
+          <div class="note"><span class="num">8</span><p><b>One container holding six rows</b>, rather than six containers. The review asked for 30–40% fewer cards; this screen drops about 80%.</p></div>
+          <div class="note"><span class="num">9</span><p><b>"Recommended for you" now says by what</b> — age and province — and admits what it does not know. If it cannot say, it should not imply.</p></div>
+          <div class="note"><span class="num">10</span><p><b>"+ Track this vaccine" → "+ Track."</b> Still a 44pt target; a third of the width.</p></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>The confidence panel, before and after</h2>
+    <p>
+      Singled out because the review is right that the idea is strong and the execution
+      undermines it. Six large boxes each announcing a 90-something percent score reads as six
+      warnings. The information is the same; the emotional register is not.
+    </p>
+
+    <div class="ba">
+      <div class="ba-col">
+        <h4>Before</h4>
+        <div class="demo">
+          <div class="oldbox">
+            <div class="oc">Page 1 · 95% read confidence</div>
+            <div class="on2">Queensway X-Ray &amp; Ultrasound, 1 Queensway…</div>
+          </div>
+          <div class="oldbox">
+            <div class="oc">Page 1 · 93% read confidence</div>
+            <div class="on2">Requisition: sinuses and nasal bones…</div>
+          </div>
+          <div class="oldbox">
+            <div class="oc">Page 1 · 91% read confidence</div>
+            <div class="on2">Referring physician: Dr. Ebrahimi…</div>
+          </div>
+          <div class="oldbox" style="margin-bottom:0">
+            <div class="oc">Page 1 · 95% read confidence</div>
+            <div class="on2">Clinical history: nasal obstruction…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ba-col">
+        <h4>After</h4>
+        <div class="demo">
+          <p class="t-title">How Elucra read this</p>
+          <div class="sev sev-green" style="margin-top:12px">
+            <div class="lab">Read clearly</div>
+            <p class="t-body" style="margin-top:5px">8 of 10 sections, including every number.</p>
+          </div>
+          <div class="sev sev-amber" style="margin-top:10px">
+            <div class="lab">Worth checking</div>
+            <p class="t-body" style="margin-top:5px">2 sections were faint on the page.</p>
+          </div>
+          <div class="disclose" style="margin-top:14px">
+            <div>
+              <div class="dt">Review those 2</div>
+              <div class="ds">Shown beside the original</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+          <p class="t-sec" style="margin-top:14px">
+            A percentage is not something a reader can act on. "Two sections were faint, here
+            they are" is.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>What this pass deliberately did not do</h2>
+    <p>
+      The review's closing instruction was to spend the next pass on hierarchy, accessibility
+      and report UX rather than decoration, so:
+    </p>
+    <div class="rowgroup" style="margin-top:20px; background:transparent; border-color:var(--rule)">
+      <div class="row" style="border-color:var(--rule)">
+        <div class="grow"><div class="val" style="font-family:var(--head)">No new palette</div>
+        <div class="sub" style="color:var(--ink-2)">The warm neutrals stay. Only the muted values move, and only far enough to pass.</div></div>
+      </div>
+      <div class="row" style="border-color:var(--rule)">
+        <div class="grow"><div class="val" style="font-family:var(--head)">No new typefaces</div>
+        <div class="sub" style="color:var(--ink-2)">Same Nunito pairing. The scale changes, not the voice.</div></div>
+      </div>
+      <div class="row" style="border-color:var(--rule)">
+        <div class="grow"><div class="val" style="font-family:var(--head)">No shadows, radii or ornament touched</div>
+        <div class="sub" style="color:var(--ink-2)">Density now comes from grouping rather than from shrinking the text.</div></div>
+      </div>
+    </div>
+
+    <p style="margin-top:26px">
+      Two items from the review are product decisions rather than design ones, and are left
+      open: whether vaccine recommendations should genuinely personalise on medical history,
+      and whether medication frequency becomes a structured field. Both change what the app
+      stores, not how it looks.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Elucra · redesign pass against the 23 August review · contrast ratios computed against
+    <span class="fact" style="padding:2px 8px">#F2E9DA</span> using WCAG 2.1 relative luminance.
+  </div>
+</footer>

@@ -111,9 +111,10 @@ if (bump) {
 }
 
 const building = app.expo.ios.buildNumber;
+const displayName = app.expo.name;
 
 /*
-  4. Push the number into the native project.
+  4. Push the number AND the name into the native project.
 
   app.json is not what gets built. `ios/` is generated and gitignored, and its
   Info.plist carries its own CFBundleVersion, which Expo syncs from app.json on
@@ -121,12 +122,13 @@ const building = app.expo.ios.buildNumber;
   App Store Connect rejected it for reusing a number. Ten minutes of build to
   find out, and the number is already committed by then.
 
-  Writing it here makes the archive match app.json regardless of when Expo's own
-  sync decides to run. The check after the export is what actually holds the
-  guarantee.
+  CFBundleDisplayName lags identically, and more quietly: build 32 archived with
+  the name Elucra everywhere in the app and "Clairity" on the home screen, which
+  nothing would have caught before someone installed it.
 */
 run("plutil", ["-replace", "CFBundleVersion", "-string", building, infoPlist]);
-step(`Set CFBundleVersion to ${building} in the native project`);
+run("plutil", ["-replace", "CFBundleDisplayName", "-string", displayName, infoPlist]);
+step(`Set build ${building} and name "${displayName}" in the native project`);
 
 // 5. Archive. Stale output would otherwise be exported and look like a success.
 rmSync(archivePath, { recursive: true, force: true });
@@ -197,6 +199,24 @@ try {
   ).trim();
 } catch {
   shippedVersion = null;
+}
+
+let shippedName = null;
+try {
+  shippedName = execSync(
+    `unzip -p "${exportPath}/Clairity.ipa" "Payload/Clairity.app/Info.plist" | plutil -extract CFBundleDisplayName raw -`,
+    { cwd: projectDir, encoding: "utf8" },
+  ).trim();
+} catch {
+  shippedName = null;
+}
+
+if (shippedName !== displayName) {
+  console.error(
+    `\nThe exported .ipa shows the name "${shippedName ?? "unreadable"}", but app.json says "${displayName}".\n\n` +
+      `The app would install with the wrong name under its icon.\n`,
+  );
+  process.exit(1);
 }
 
 if (shippedVersion !== building) {
