@@ -197,6 +197,26 @@ export interface SavedDocument {
    * cross-check an instruction against the text the checks actually passed.
    */
   originalResult?: SimplificationResult;
+  /**
+   * Communication scripts translated on demand, keyed by language code.
+   *
+   * These used to live in component state on the detail screen, which meant
+   * leaving the screen threw them away and reopening the document paid to
+   * translate the same strings again. Translation is the one thing in this app
+   * that costs money per use, so it is the one thing worth remembering.
+   *
+   * Absent on documents saved before this existed, and absent for languages
+   * never asked for — both are normal, and both simply mean "fetch it".
+   */
+  scriptTranslations?: Record<string, ScriptTranslation>;
+}
+
+/** One language's rendering of a document's scripts, in the order they appear. */
+export interface ScriptTranslation {
+  /** The body text of each script. */
+  bodies: string[];
+  /** The heading of each script, in the same order. */
+  purposes: string[];
 }
 
 export interface Medication {

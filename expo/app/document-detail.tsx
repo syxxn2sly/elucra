@@ -49,7 +49,7 @@ export default function DocumentDetailScreen() {
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { documents, toggleChecklistItem, removeDocument, profile, addAppointment, appointments } = useClairity();
+  const { documents, toggleChecklistItem, removeDocument, profile, addAppointment, appointments, saveScriptTranslation } = useClairity();
   /** Index of the open script, as a string. "0" opens the first one by default. */
   const [expandedScript, setExpandedScript] = useState<string | null>("0");
   const [showImage, setShowImage] = useState(false);
@@ -69,28 +69,36 @@ export default function DocumentDetailScreen() {
   const [showEnglish, setShowEnglish] = useState(false);
 
   /*
-    Script translations, keyed by language code and cached for the life of the
-    screen. The English is the source every time — translating a translation
-    compounds drift, and the safety checks ran on the English.
+    The English is the source every time — translating a translation compounds
+    drift, and the safety checks ran on the English.
   */
   const [scriptLang, setScriptLang] = useState("en");
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [flagsOpen, setFlagsOpen] = useState(false);
-  const [translatedScripts, setTranslatedScripts] = useState<Record<string, string[]>>({});
-  const [translatedPurposes, setTranslatedPurposes] = useState<Record<string, string[]>>({});
   const [scriptError, setScriptError] = useState("");
   const translated = Boolean(savedDoc?.originalResult);
 
   const englishScripts = savedDoc?.result.scripts ?? [];
+  /*
+    Translations live on the document rather than in this component.
+
+    They used to be useState here, which meant leaving the screen discarded
+    them and reopening the document paid to translate the same strings again.
+    Translation is the only thing in the app that costs money per use, so it is
+    the one thing worth keeping. Read straight from the saved document; the
+    fetch below fills it in the first time a language is asked for.
+  */
+  const saved = savedDoc?.scriptTranslations ?? {};
 
   /**
-   * Fetch the chosen language once, then serve it from the cache.
+   * Fetch a language once, ever, then serve it from the document.
    *
-   * Guarded on the cache so re-selecting a language already fetched costs
-   * nothing, and English never calls out at all — it is the source text.
+   * Guarded on what is already saved, so re-selecting a language costs nothing
+   * on this visit or any later one. English never calls out at all — it is the
+   * source text.
    */
   useEffect(() => {
-    if (scriptLang === "en" || translatedScripts[scriptLang] || englishScripts.length === 0) return;
+    if (scriptLang === "en" || saved[scriptLang] || englishScripts.length === 0 || !savedDoc) return;
     let cancelled = false;
     setScriptError("");
     (async () => {
@@ -107,12 +115,15 @@ export default function DocumentDetailScreen() {
         const purposes = englishScripts.map((script) => script.purpose ?? "");
         const all = await translateTexts([...bodies, ...purposes], scriptLang);
         if (!cancelled) {
-          setTranslatedScripts((prev) => ({ ...prev, [scriptLang]: all.slice(0, bodies.length) }));
-          setTranslatedPurposes((prev) => ({ ...prev, [scriptLang]: all.slice(bodies.length) }));
+          saveScriptTranslation(savedDoc.id, scriptLang, {
+            bodies: all.slice(0, bodies.length),
+            purposes: all.slice(bodies.length),
+          });
         }
       } catch (error) {
         if (cancelled) return;
-        // Fall back to English rather than an empty card, and say why.
+        // Fall back to English rather than an empty card, and say why. Nothing
+        // is saved on failure, so the next attempt genuinely retries.
         setScriptError(
           error instanceof Error
             ? `${error.message} Showing English.`
@@ -125,7 +136,7 @@ export default function DocumentDetailScreen() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scriptLang, englishScripts.length]);
+  }, [scriptLang, englishScripts.length, savedDoc?.id]);
 
   /**
    * The script as it should read right now: cached translation, or the English.
@@ -138,12 +149,12 @@ export default function DocumentDetailScreen() {
   const displayedScript = useCallback(
     (script: CommunicationScript, index: number): CommunicationScript => {
       if (scriptLang === "en") return script;
-      const text = translatedScripts[scriptLang]?.[index];
+      const text = saved[scriptLang]?.bodies[index];
       if (!text) return script;
-      const purpose = translatedPurposes[scriptLang]?.[index] || script.purpose;
+      const purpose = saved[scriptLang]?.purposes[index] || script.purpose;
       return { ...script, text, purpose, language: scriptLang, languageLabel: languageLabel(scriptLang) };
     },
-    [scriptLang, translatedScripts, translatedPurposes],
+    [scriptLang, saved],
   );
   // Memoised because swapping in the English allocates a new object, and `doc`
   // is a dependency of three callbacks below — without this they would be
@@ -604,7 +615,7 @@ export default function DocumentDetailScreen() {
                 <ScriptBlock
                   key={index}
                   script={shown}
-                  loading={scriptLang !== "en" && !translatedScripts[scriptLang]}
+                  loading={scriptLang !== "en" && !saved[scriptLang]}
                   rtl={isRightToLeft(scriptLang)}
                   /*
                     Keyed by position, not by language. Every script is English,

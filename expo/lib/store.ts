@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   HealthProfile,
   SavedDocument,
+  ScriptTranslation,
   VaccineRecord,
   Medication,
   HealthCardData,
@@ -363,6 +364,28 @@ function useClairityState() {
   const removeDocument = useCallback((id: string) => {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   }, []);
+
+  /**
+   * Keep a translation so it is only ever paid for once.
+   *
+   * Merged rather than replaced: a document may be read in several languages,
+   * and each is fetched separately.
+   */
+  const saveScriptTranslation = useCallback(
+    (docId: string, language: string, translation: ScriptTranslation) => {
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === docId
+            ? {
+                ...doc,
+                scriptTranslations: { ...doc.scriptTranslations, [language]: translation },
+              }
+            : doc,
+        ),
+      );
+    },
+    [],
+  );
 
   const toggleChecklistItem = useCallback(
     (docId: string, itemId: string) => {
@@ -737,6 +760,7 @@ function useClairityState() {
     // Documents
     addDocument,
     removeDocument,
+    saveScriptTranslation,
     toggleChecklistItem,
     // Vaccines
     addVaccine,
