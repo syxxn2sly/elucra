@@ -162,7 +162,7 @@ export default function VisitSummaryScreen() {
           <Text style={styles.title}>Show this to your doctor</Text>
         </View>
         <Text style={styles.subtitle}>
-          Built from what CLAIRITY already knows: your profile, medications, recent reports and
+          Built from what ELUCI already knows: your profile, medications, recent reports and
           upcoming appointments.
         </Text>
 
@@ -242,7 +242,7 @@ export default function VisitSummaryScreen() {
             </View>
 
             <Text style={styles.disclaimer}>
-              Built from what you have recorded, and only that. Anything CLAIRITY does not know is
+              Built from what you have recorded, and only that. Anything ELUCI does not know is
               left out rather than guessed at, so read it through before you hand it over. It is a
               starting point for the conversation, not a medical record and not a diagnosis.
             </Text>

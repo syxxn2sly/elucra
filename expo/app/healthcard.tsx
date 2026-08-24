@@ -94,7 +94,7 @@ export default function HealthCardScreen() {
         setUnlocked(true);
       }
     } catch (err) {
-      console.error("[CLAIRITY] Auth error:", err);
+      console.error("[ELUCI] Auth error:", err);
       notify("Authentication failed", "Please try again.");
     } finally {
       setAuthenticating(false);
@@ -278,7 +278,7 @@ export default function HealthCardScreen() {
         <View style={styles.walletNote}>
           <Text style={styles.walletTitle}>About Apple Wallet</Text>
           <Text style={styles.walletText}>
-            Canadian health cards are not Apple Wallet passes. CLAIRITY keeps a copy of your card
+            Canadian health cards are not Apple Wallet passes. ELUCI keeps a copy of your card
             here so you always have it. For official use, always carry your physical card.
           </Text>
         </View>

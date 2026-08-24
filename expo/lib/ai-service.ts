@@ -221,7 +221,7 @@ async function requestCompletion(body: UnknownRecord): Promise<string> {
       throw new DocumentNeedsRetakeError("This photo is too large to process. Please take a new photo that shows just the document.");
     }
     if (response.status === 429) {
-      throw new Error("CLAIRITY is busy right now. Please wait a moment and try again.");
+      throw new Error("ELUCI is busy right now. Please wait a moment and try again.");
     }
     if ([500, 502, 503, 529].includes(response.status)) {
       throw new Error("The document reader is temporarily unavailable. Please try again in a moment.");
@@ -618,7 +618,7 @@ async function communicateFacts(extraction: RawExtraction): Promise<Communicated
     messages: [
       {
         role: "system",
-        content: `You are the communication stage of CLAIRITY. You receive source-linked extracted facts only, never the original image. You may discuss ONLY these facts. Never add medical knowledge, diagnoses, reassurance, recommendations to start/stop/change medication, or missing details.
+        content: `You are the communication stage of ELUCI. You receive source-linked extracted facts only, never the original image. You may discuss ONLY these facts. Never add medical knowledge, diagnoses, reassurance, recommendations to start/stop/change medication, or missing details.
 
 Write at an approximately grade 5-6 reading level. Explain rather than diagnose.
 

@@ -148,7 +148,7 @@ export default function PreventiveCareScreen() {
         <Text style={styles.subtitle}>
           What Canadian screening programmes generally offer at your age, and the routine
           follow-up that comes with any condition you have recorded. Record when you last had
-          one and CLAIRITY will work out roughly when the next is due.
+          one and ELUCI will work out roughly when the next is due.
         </Text>
 
         {!loaded ? null : (
@@ -230,7 +230,7 @@ export default function PreventiveCareScreen() {
               These are the ages and intervals a programme generally uses, read from the sources
               linked on each card, and they assume average risk. Your own history, and anything
               that runs in your family, can change what your doctor recommends and when. What you
-              record here stays on your device. CLAIRITY does not know what you have had unless
+              record here stays on your device. ELUCI does not know what you have had unless
               you tell it, and never assumes a screening happened.
             </Text>
           </>
@@ -306,7 +306,7 @@ function ScreeningCard({
 
       {/*
         Recording is the user's own claim about their own history, which is a
-        different thing from CLAIRITY asserting a population fact — so "due" and
+        different thing from ELUCI asserting a population fact — so "due" and
         "overdue" are fair game here the way they already are for vaccines.
       */}
       <View style={styles.recordRow}>

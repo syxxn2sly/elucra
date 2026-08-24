@@ -143,7 +143,7 @@ export default function AddMedicationScreen() {
           </View>
           <Text style={styles.subtitle}>
             {isEditing
-              ? "Add the dose and how often you take it, so CLAIRITY can remind you and include it in your records."
+              ? "Add the dose and how often you take it, so ELUCI can remind you and include it in your records."
               : "Enter the medication name and dose. You can add details like how often you take it and any notes."}
           </Text>
 
@@ -193,7 +193,7 @@ export default function AddMedicationScreen() {
               <View style={styles.reminderHeader}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.reminderTitle}>Daily medication reminder</Text>
-                  <Text style={styles.reminderHint}>Choose a time you want CLAIRITY to notify you, even when the app is closed.</Text>
+                  <Text style={styles.reminderHint}>Choose a time you want ELUCI to notify you, even when the app is closed.</Text>
                 </View>
                 <Switch value={reminderEnabled} onValueChange={setReminderEnabled} trackColor={{ false: C.border, true: C.primary }} />
               </View>

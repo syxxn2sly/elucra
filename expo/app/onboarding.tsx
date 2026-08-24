@@ -90,7 +90,7 @@ const STEPS: Step[] = [
     key: "province",
     title: "Where do you live?",
     subtitle:
-      "Screening programmes differ by province. This is how CLAIRITY knows which ages apply to you.",
+      "Screening programmes differ by province. This is how ELUCI knows which ages apply to you.",
     icon: <MapPin color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "chipSelect",
     optional: true,
