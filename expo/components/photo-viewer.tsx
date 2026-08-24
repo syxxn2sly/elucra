@@ -169,7 +169,7 @@ function PhotoViewer({
           accessibilityRole="button"
           accessibilityLabel="Close photo"
         >
-          <X color="#FFFFFF" size={24} strokeWidth={2.5} />
+          <X color={C.onDark} size={24} strokeWidth={2.5} />
         </Pressable>
       </View>
     </Modal>
@@ -179,7 +179,7 @@ function PhotoViewer({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(15,11,7,0.96)",
+    backgroundColor: C.scrimHeavy,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     width: HIT_TARGET,
     height: HIT_TARGET,
     borderRadius: Radius.pill,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    backgroundColor: C.onDarkFill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
     left: Space.xl,
     right: Space.xl,
     ...Type.label,
-    color: "#FFFFFF",
+    color: C.onDark,
     textAlign: "center",
   },
   hint: {
     position: "absolute",
     bottom: 40,
     ...Type.caption,
-    color: "rgba(255,255,255,0.55)",
+    color: C.onDarkMuted,
   },
 });

@@ -54,6 +54,21 @@ const light = {
   /** Modal/overlay backdrop. Theme-independent by intent — it dims whatever is behind it. */
   scrim: "rgba(20, 15, 10, 0.45)",
 
+  /*
+    Marks drawn ON a dark surface: the health card, the photo viewer, the
+    primary button. These were a dozen different rgba(255,255,255,…) alphas
+    scattered across five files, which is how a system quietly stops being one.
+    Three weights is enough for every use that existed.
+  */
+  onDark: "#FDF9F1",
+  onDarkMuted: "rgba(253,249,241,0.72)",
+  onDarkFill: "rgba(253,249,241,0.16)",
+  /** Veils over a photo or a live camera, darkest first. */
+  scrimHeavy: "rgba(15,11,7,0.96)",
+  inkVeil: "rgba(42,33,25,0.82)",
+  inkVeilSoft: "rgba(42,33,25,0.62)",
+
+
   // Document categories.
   //
   // Ten keys, four meanings — the keys exist because the lookup in
@@ -109,6 +124,14 @@ const dark: typeof light = {
   shadow: "rgba(0, 0, 0, 0.5)",
   shadowDeep: "rgba(0, 0, 0, 0.75)",
   scrim: "rgba(0, 0, 0, 0.6)",
+
+  onDark: "#FDF9F1",
+  onDarkMuted: "rgba(253,249,241,0.72)",
+  onDarkFill: "rgba(253,249,241,0.16)",
+  scrimHeavy: "rgba(15,11,7,0.96)",
+  inkVeil: "rgba(42,33,25,0.82)",
+  inkVeilSoft: "rgba(42,33,25,0.62)",
+
 
   docBloodWork: "#E88C72",
   docPathology: "#E88C72",

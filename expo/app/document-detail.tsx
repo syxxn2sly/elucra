@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
   langTriggerValue: { flexDirection: "row", alignItems: "center", gap: Space.xs },
   langTriggerText: { ...Type.label, color: C.primary },
   langError: { ...Type.caption, color: C.danger, marginBottom: Space.md },
-  langSheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
+  langSheetOverlay: { flex: 1, backgroundColor: C.scrim, justifyContent: "flex-end" },
   langSheet: {
     backgroundColor: C.surface,
     borderTopLeftRadius: Radius.xl,

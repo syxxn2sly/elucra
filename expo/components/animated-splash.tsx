@@ -21,7 +21,15 @@ import { Font, Space, Type } from "@/constants/theme";
 
 const C = Colors.light;
 
-/** Matches the native splash background exactly, or the handover flickers. */
+/**
+ * Matches the native splash background exactly, or the handover flickers.
+ *
+ * Deliberately a literal rather than a token: it has to stay byte-identical to
+ * `backgroundColor` in the expo-splash-screen plugin config in app.json (and
+ * its Android counterpart), and a token that later drifted from those would
+ * produce a visible flash on every cold start.
+ */
+// eslint-disable-next-line no-restricted-syntax -- see above
 const SPLASH_BACKGROUND = "#FAF6F0";
 
 const MARK_SIZE = 132;

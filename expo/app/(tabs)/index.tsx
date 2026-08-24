@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.md,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: C.onDarkFill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   heroCardSub: {
     ...Type.caption,
-    color: "rgba(255,255,255,0.85)",
+    color: C.onDarkMuted,
     marginTop: Space.xs,
   },
   // Snapshot grid
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: "rgba(239,68,68,0.15)",
+    backgroundColor: C.dangerSoft,
     alignItems: "center",
     justifyContent: "center",
   },

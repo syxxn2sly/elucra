@@ -168,6 +168,22 @@
 
   /* Health snapshot: kept as a grid because it navigates well, but each tile
      now leads with a value that means something rather than a row count. */
+  /* document categories: chips to filter, a coloured spine to scan */
+  .catrow { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+  .cat {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid #D9C8AC; background: #FDF9F1; border-radius: 999px;
+    padding: 9px 13px; font-size: 13.5px; font-weight: 600; color: #6B5A46;
+    min-height: 44px;
+  }
+  .cat.on { background: #2A2119; color: #FDF9F1; border-color: #2A2119; font-weight: 700; }
+  .cat i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .typebar { width: 4px; align-self: stretch; min-height: 46px; border-radius: 99px; flex: none; }
+  .cattag {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: #6B5A46; margin-bottom: 2px;
+  }
+
   .snapgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .snap {
     background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 14px;
@@ -566,28 +582,51 @@
             <p class="t-screen">Documents</p>
             <div class="input ph" style="margin-top:14px">Search your documents</div>
 
-            <p class="t-section" style="margin-top:22px">This month</p>
+            <div class="catrow">
+              <span class="cat on">All 5</span>
+              <span class="cat"><i style="background:#B34530"></i>Blood work 2</span>
+              <span class="cat"><i style="background:#6B5A46"></i>Imaging 1</span>
+              <span class="cat"><i style="background:#56704E"></i>Prescription 1</span>
+              <span class="cat"><i style="background:#8B610C"></i>Discharge 1</span>
+            </div>
+
+            <p class="t-section" style="margin-top:20px">This month</p>
             <div class="rowgroup" style="margin-top:10px">
               <div class="row">
+                <div class="typebar" style="background:#6B5A46"></div>
                 <div class="grow">
+                  <div class="cattag">Imaging</div>
                   <div class="val">Sinus &amp; nasal X-ray</div>
-                  <div class="sub"><span class="dot green" style="display:inline-block"></span> Nothing urgent · Aug 22</div>
+                  <div class="sub"><span class="dot green"></span> Nothing urgent · Aug 22</div>
                 </div><span class="chev">›</span>
               </div>
               <div class="row">
+                <div class="typebar" style="background:#B34530"></div>
                 <div class="grow">
-                  <div class="val">Blood count</div>
-                  <div class="sub"><span class="dot amber" style="display:inline-block"></span> Iron is low · Aug 14</div>
+                  <div class="cattag">Blood work</div>
+                  <div class="val">Complete blood count</div>
+                  <div class="sub"><span class="dot amber"></span> Iron is low · Aug 14</div>
                 </div><span class="chev">›</span>
               </div>
             </div>
 
-            <p class="t-section" style="margin-top:22px">Earlier</p>
+            <p class="t-section" style="margin-top:20px">Earlier</p>
             <div class="rowgroup" style="margin-top:10px">
-              <div class="row"><div class="grow"><div class="val">Discharge summary</div>
-                <div class="sub">Jul 3</div></div><span class="chev">›</span></div>
-              <div class="row"><div class="grow"><div class="val">Prescription — Foquest</div>
-                <div class="sub">Jun 28</div></div><span class="chev">›</span></div>
+              <div class="row">
+                <div class="typebar" style="background:#8B610C"></div>
+                <div class="grow"><div class="cattag">Discharge</div>
+                <div class="val">Discharge summary</div><div class="sub">Jul 3</div></div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="typebar" style="background:#56704E"></div>
+                <div class="grow"><div class="cattag">Prescription</div>
+                <div class="val">Foquest 70 mg</div><div class="sub">Jun 28</div></div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="typebar" style="background:#B34530"></div>
+                <div class="grow"><div class="cattag">Blood work</div>
+                <div class="val">Ferritin panel</div><div class="sub">Jun 2</div></div><span class="chev">›</span>
+              </div>
             </div>
             <div style="height:16px"></div>
           </div>
@@ -600,7 +639,8 @@
           </div>
         </div>
         <div class="notes">
-          <div class="note"><span class="num">11</span><p><b>Each row carries its conclusion</b>, not its file type. "Iron is low" is why you would open it again.</p></div>
+          <div class="note"><span class="num">11</span><p><b>Categories are back</b>, as filter chips and as a coloured spine on each row. The palette already carries <code>docBloodWork</code>, <code>docImaging</code>, <code>docPrescription</code> and seven more — they were defined and then not used to sort anything.</p></div>
+          <div class="note"><span class="num">12</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
         </div>
       </div>
 
@@ -789,30 +829,58 @@
         <div class="phone">
           <div class="status"><span>9:41</span><span>▮▮▮ ▾</span></div>
           <div class="sc">
-            <p class="t-screen">Blood pressure</p>
-            <div class="card" style="margin-top:16px">
-              <div style="font-family:var(--head);font-weight:800;font-size:34px;line-height:1.1">118/76</div>
-              <div class="t-sec" style="margin-top:6px;font-size:15px">
-                <span class="dot green" style="display:inline-block"></span>
-                Inside the usual range · 21 Aug
-              </div>
-              <div style="height:54px;margin-top:14px;border-radius:9px;background:linear-gradient(180deg,#E9DDC9,#FDF9F1);display:grid;place-items:center;color:#6B5A46;font-size:13px">
-                6 readings since June
-              </div>
-            </div>
-            <p class="t-sec" style="margin-top:12px">
-              Usually 90/60 to 120/80 at rest. This does not tell you whether a reading is a
-              problem — that is a conversation for your clinician.
+            <p class="t-screen">Readings</p>
+            <p class="t-sec" style="margin-top:6px;font-size:15px">
+              What you have measured, with the usual range beside it.
             </p>
 
-            <p class="t-section" style="margin-top:22px">History</p>
+            <p class="t-section" style="margin-top:20px">Recorded</p>
             <div class="rowgroup" style="margin-top:10px">
-              <div class="row"><div class="grow"><div class="val">118/76</div>
-                <div class="sub">21 Aug · before breakfast</div></div></div>
-              <div class="row"><div class="grow"><div class="val">124/80</div>
-                <div class="sub">14 Aug</div></div></div>
+              <div class="row">
+                <div class="grow">
+                  <div class="cattag">Blood pressure</div>
+                  <div class="val" style="font-size:20px">118/76 <span style="font-size:14px;font-weight:400;color:#6B5A46">mmHg</span></div>
+                  <div class="sub"><span class="dot green"></span>Usual range · 21 Aug · 6 readings</div>
+                </div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="cattag">Oxygen saturation</div>
+                  <div class="val" style="font-size:20px">97 <span style="font-size:14px;font-weight:400;color:#6B5A46">%</span></div>
+                  <div class="sub"><span class="dot green"></span>Usual range · 15 Mar 2024 · 1 reading</div>
+                </div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="cattag">Weight</div>
+                  <div class="val" style="font-size:20px">71.2 <span style="font-size:14px;font-weight:400;color:#6B5A46">kg</span></div>
+                  <div class="sub">18 Aug · 4 readings</div>
+                </div><span class="chev">›</span>
+              </div>
+              <div class="row">
+                <div class="grow">
+                  <div class="cattag">Heart rate</div>
+                  <div class="val" style="font-size:20px">68 <span style="font-size:14px;font-weight:400;color:#6B5A46">bpm</span></div>
+                  <div class="sub"><span class="dot green"></span>Usual range · 21 Aug · 3 readings</div>
+                </div><span class="chev">›</span>
+              </div>
             </div>
-            <div style="height:18px"></div>
+
+            <p class="t-section" style="margin-top:20px">Not recorded yet</p>
+            <div class="rowgroup" style="margin-top:10px">
+              <div class="row"><div class="grow"><div class="val" style="font-size:17px">Blood glucose</div>
+                <div class="sub">Usually 4.0 to 7.0 mmol/L fasting</div></div>
+                <button class="track">+ Add</button></div>
+              <div class="row"><div class="grow"><div class="val" style="font-size:17px">Temperature</div>
+                <div class="sub">Usually 36.1 to 37.2 °C</div></div>
+                <button class="track">+ Add</button></div>
+            </div>
+
+            <p class="t-sec" style="margin-top:14px;margin-bottom:18px">
+              These show what you measured next to the reference figures. They do not tell you
+              whether a reading is a problem — that depends on how it was taken and your
+              history, which is a conversation for your clinician.
+            </p>
           </div>
         </div>
         <div class="notes">

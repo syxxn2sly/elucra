@@ -254,10 +254,10 @@ export default function HealthCardScreen() {
             </Text>
             <View style={styles.numberActions}>
               <Pressable onPress={() => setShowNumber(!showNumber)} hitSlop={12} style={styles.iconBtn}>
-                {showNumber ? <EyeOff color="rgba(255,255,255,0.7)" size={20} strokeWidth={2.5} /> : <Eye color="rgba(255,255,255,0.7)" size={20} strokeWidth={2.5} />}
+                {showNumber ? <EyeOff color={C.onDarkMuted} size={20} strokeWidth={2.5} /> : <Eye color={C.onDarkMuted} size={20} strokeWidth={2.5} />}
               </Pressable>
               <Pressable onPress={handleCopy} hitSlop={12} style={styles.iconBtn}>
-                {copied ? <Check color={C.textInverse} size={20} strokeWidth={2.5} /> : <Copy color="rgba(255,255,255,0.7)" size={20} strokeWidth={2.5} />}
+                {copied ? <Check color={C.textInverse} size={20} strokeWidth={2.5} /> : <Copy color={C.onDarkMuted} size={20} strokeWidth={2.5} />}
               </Pressable>
             </View>
           </Pressable>
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: "rgba(13,148,136,0.12)",
+    backgroundColor: C.successSoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: Radius.sm,
-    backgroundColor: "rgba(13,148,136,0.12)",
+    backgroundColor: C.successSoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   numberLabel: {
     ...Type.caption,
     fontFamily: Font.bodySemi,
-    color: "rgba(255,255,255,0.7)",
+    color: C.onDarkMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -478,12 +478,12 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: C.onDarkFill,
     borderRadius: Radius.md,
   },
   tapHint: {
     ...Type.caption,
-    color: "rgba(255,255,255,0.6)",
+    color: C.onDarkMuted,
     marginTop: Space.md,
   },
   // Details

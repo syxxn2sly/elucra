@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   disclaimer: { ...Type.caption, color: C.textMuted, marginTop: Space.lg, lineHeight: 19 },
   pressed: { opacity: 0.85 },
 
-  sheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
+  sheetOverlay: { flex: 1, backgroundColor: C.scrim, justifyContent: "flex-end" },
   sheet: {
     backgroundColor: C.surface,
     borderTopLeftRadius: Radius.xl,
