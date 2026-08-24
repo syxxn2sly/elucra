@@ -15,7 +15,7 @@ not a looser one.
 **App Name** (30 characters max, must be unique across the App Store)
 
 ```
-Eluci
+Elucra
 ```
 
 **Subtitle** (30 characters max — this is indexed for search, so spend it on
@@ -52,16 +52,16 @@ tapping "more".
 
 ```
 Medical documents are written for clinicians, not for the people they are about.
-Eluci reads yours and explains it in plain English.
+Elucra reads yours and explains it in plain English.
 
 Photograph or upload a lab report, prescription, discharge summary, referral,
-imaging result or vaccination record. Eluci reads the page and tells you what
+imaging result or vaccination record. Elucra reads the page and tells you what
 it says, in everyday words, at about a grade five reading level.
 
 EVERY SENTENCE IS TRACEABLE
 
 Software reading a page can misread it, and an explanation that sounds confident
-is not the same as one that is correct. So Eluci works in three passes: it
+is not the same as one that is correct. So Elucra works in three passes: it
 transcribes the page into facts, writes the explanation from those facts alone,
 then checks the explanation back against them on your device. Anything it cannot
 trace to the page is removed before you see it. Every fact links to the place it
@@ -93,7 +93,7 @@ No account, no sign-in, no analytics. What you save is written to this device.
 When you ask for a document to be explained, that page is sent to an AI service
 to be read, and nothing else goes with it. Deleting the app deletes everything.
 
-WHAT ELUCI IS NOT
+WHAT ELUCRA IS NOT
 
 It does not diagnose. It will not tell you whether a result is good or bad news,
 and it will not suggest starting, stopping or changing a medication. It is not a
@@ -175,7 +175,7 @@ Paste into **Notes for Review**. A reviewer who has to guess what a health app
 does will assume the worst.
 
 ```
-Eluci explains medical documents that the user already holds. It does not
+Elucra explains medical documents that the user already holds. It does not
 diagnose, does not recommend treatment, and does not change any medication.
 
 HOW TO TEST

@@ -110,7 +110,7 @@ export default function IdentityScreen() {
 
           <View style={styles.note}>
             <ShieldCheck color={C.primary} size={19} strokeWidth={2.5} />
-            <Text style={styles.noteText}>This care-team record stays in your personal ELUCI portfolio on this device.</Text>
+            <Text style={styles.noteText}>This care-team record stays in your personal ELUCRA portfolio on this device.</Text>
           </View>
 
           <PrimaryButton label="Save Care Team" onPress={save} icon={<Check color={C.textInverse} size={21} strokeWidth={2.5} />} style={styles.saveButton} />

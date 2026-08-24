@@ -374,7 +374,7 @@ export default function DocumentDetailScreen() {
             )) : null}
             {flagsOpen ? (
               <Text style={styles.flagsFootnote}>
-                Anything ELUCI could not match to your document is left out rather than
+                Anything ELUCRA could not match to your document is left out rather than
                 shown. Check the original above if a figure matters.
               </Text>
             ) : null}
@@ -408,7 +408,7 @@ export default function DocumentDetailScreen() {
           <Card style={styles.sourceCard}>
             <View style={styles.cardHeaderRow}>
               <MapPin color={C.primary} size={20} strokeWidth={2.5} />
-              <Text style={styles.cardTitle}>What ELUCI Read</Text>
+              <Text style={styles.cardTitle}>What ELUCRA Read</Text>
             </View>
             <Text style={styles.sourceHint}>
               Each item in this report is linked to text below. Use “Show original document” above to compare it with the source image.

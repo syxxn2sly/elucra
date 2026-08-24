@@ -114,7 +114,7 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
           />
         </Animated.View>
         <Animated.View style={{ opacity: wordmarkOpacity }}>
-          <Text style={styles.wordmark}>ELUCI</Text>
+          <Text style={styles.wordmark}>ELUCRA</Text>
           <Text style={styles.tagline}>Your medical documents, made clear</Text>
         </Animated.View>
       </View>

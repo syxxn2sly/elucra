@@ -122,7 +122,7 @@ export default function SimplifyScreen() {
         await processDocument(uri, isPdf ? "application/pdf" : asset.mimeType);
       }
     } catch (err) {
-      console.error("[ELUCI] Document pick error:", err);
+      console.error("[ELUCRA] Document pick error:", err);
       setErrorMsg("Couldn't open that file. Please try a photo instead.");
       setPhase("error");
     }
@@ -163,7 +163,7 @@ export default function SimplifyScreen() {
             // another language and is about to be shown English.
             const reason =
               translationError instanceof Error ? translationError.message : "Translation failed.";
-            console.warn("[ELUCI] Translation failed, keeping English:", reason);
+            console.warn("[ELUCRA] Translation failed, keeping English:", reason);
             notify(
               `Could not translate into ${languageLabel(language)}`,
               `${reason}\n\nYour document has been saved in English.`,
@@ -188,7 +188,7 @@ export default function SimplifyScreen() {
         // hid the real cause. Keep a readable sentence for the user, but never
         // discard what was actually thrown.
         const msg = describeThrown(err);
-        console.error("[ELUCI] Analysis error:", err);
+        console.error("[ELUCRA] Analysis error:", err);
         setErrorMsg(msg);
         setPhase("error");
       }
@@ -277,7 +277,7 @@ export default function SimplifyScreen() {
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: scrollPadding, flexGrow: 1 }}
       >
         <Text style={styles.subtitle}>
-          Photograph, scan, or upload a medical document. ELUCI will read it and explain it in
+          Photograph, scan, or upload a medical document. ELUCRA will read it and explain it in
           plain language: what it means, what to do, and when to worry.
         </Text>
 

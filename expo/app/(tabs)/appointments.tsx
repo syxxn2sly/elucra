@@ -60,7 +60,7 @@ export default function AppointmentsScreen() {
       <Pressable onPress={() => router.push("/add-appointment")} style={styles.addButton}><Plus color={C.textInverse} size={24} strokeWidth={2.5} /></Pressable>
     </View>
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]} showsVerticalScrollIndicator={false}>
-      <View style={styles.reminderNote}><Clock3 color={C.primary} size={19} strokeWidth={2.5} /><Text style={styles.reminderNoteText}>ELUCI sends a reminder 24 hours before each confirmed appointment.</Text></View>
+      <View style={styles.reminderNote}><Clock3 color={C.primary} size={19} strokeWidth={2.5} /><Text style={styles.reminderNoteText}>ELUCRA sends a reminder 24 hours before each confirmed appointment.</Text></View>
       {upcoming.length === 0 && past.length === 0 ? <EmptyState icon={<CalendarDays color={C.primary} size={42} strokeWidth={2.3} />} title="No appointments yet" message="Add a visit, test, or follow-up so you know where to go and what to bring." actionLabel="Add an appointment" onAction={() => router.push("/add-appointment")} /> : null}
 
       {upcoming.length > 0 ? <View style={styles.list}>{upcoming.map((appointment) => <AppointmentCard key={appointment.id} appointment={appointment} onRemove={() => remove(appointment)} />)}</View> : null}

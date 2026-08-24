@@ -158,7 +158,7 @@ function useClairityState() {
         }
         if (preferredLanguageStr) setPreferredLanguage(preferredLanguageStr);
       } catch (error) {
-        console.error("[ELUCI] Failed to load state:", error);
+        console.error("[ELUCRA] Failed to load state:", error);
       } finally {
         setLoaded(true);
       }

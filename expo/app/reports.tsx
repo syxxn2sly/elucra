@@ -51,7 +51,7 @@ export default function ReportsScreen() {
             <EmptyState
               icon={<FileText color={C.primary} size={40} strokeWidth={2.5} />}
               title="No reports yet"
-              message="Photograph a lab result, prescription or discharge letter and ELUCI will explain it in plain English."
+              message="Photograph a lab result, prescription or discharge letter and ELUCRA will explain it in plain English."
               actionLabel="Simplify a document"
               onAction={() => router.push("/simplify")}
             />

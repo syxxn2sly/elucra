@@ -60,7 +60,7 @@ export default function HomeScreen() {
 
   /*
     How many programmes cover this age, which is not the same as how many are
-    due. ELUCI has no record of past screening, so the tile counts coverage
+    due. ELUCRA has no record of past screening, so the tile counts coverage
     and the screen says so in words.
   */
   /*
@@ -112,7 +112,7 @@ export default function HomeScreen() {
             <View style={styles.welcomeIconWrap}>
               <FileHeart color={C.textInverse} size={44} strokeWidth={2.5} />
             </View>
-            <Text style={styles.welcomeTitle}>Welcome to ELUCI</Text>
+            <Text style={styles.welcomeTitle}>Welcome to ELUCRA</Text>
             <Text style={styles.welcomeMessage}>
               Your medical documents, made clear. Let's set up your health profile to get
               personalized help understanding reports, tracking vaccines, and managing your care.

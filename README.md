@@ -1,4 +1,4 @@
-# Eluci
+# Elucra
 
 An iOS app that reads a medical document you already hold — a lab report, a
 prescription, a discharge summary, a referral — and explains it in plain English,

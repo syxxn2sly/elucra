@@ -197,7 +197,7 @@ export default function VitalsScreen() {
         )}
 
         <Text style={styles.disclaimer}>
-          ELUCI records what you measured and shows the reference figures alongside it. It does
+          ELUCRA records what you measured and shows the reference figures alongside it. It does
           not tell you whether a reading is a problem. That depends on how it was taken, what else
           is going on, and your history, which is a conversation for your clinician.
         </Text>
