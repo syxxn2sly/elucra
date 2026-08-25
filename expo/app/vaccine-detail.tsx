@@ -383,7 +383,7 @@ export default function VaccineDetailScreen() {
         {/* Travel context */}
         {vac.isTravel && vac.travelDestination ? (
           <Card style={[styles.travelCard, { marginTop: 16 }]}>
-            <Text style={styles.travelLabel}>✈️ Travel vaccine</Text>
+            <Text style={styles.travelLabel}>Travel vaccine</Text>
             <Text style={styles.travelText}>
               Added for travel to {vac.travelDestination}
             </Text>

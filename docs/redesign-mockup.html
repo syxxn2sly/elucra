@@ -114,7 +114,7 @@
   .primary-action .pa-s { font-size: 14.5px; color: rgba(253,249,241,.86); margin-top: 3px; line-height: 1.45; }
   .glyph {
     width: 46px; height: 46px; border-radius: 13px; flex: none;
-    display: grid; place-items: center; font-size: 21px;
+    display: grid; place-items: center;
   }
   .glyph.on-dark { background: rgba(253,249,241,.17); }
   .glyph.on-light { background: #E9DDC9; }
@@ -190,11 +190,10 @@
     display: flex; margin-top: 18px; border-top: 1px solid #E6D9C4;
     background: #FDF9F1; padding: 9px 4px 16px;
   }
-  .tab { flex: 1; text-align: center; font-size: 11.5px; font-weight: 700; color: #6B5A46; }
-  .tab .ti { font-size: 19px; display: block; margin-bottom: 3px; }
+  .tab { flex: 1; text-align: center; font-size: 12.5px; font-weight: 700; color: #6B5A46; }
+  .tab { padding-block: 4px; }
   .tab.on { color: #2A2119; }
-  .tab.on .ti { position: relative; }
-  .tab.on::after {
+    .tab.on::after {
     content: ""; display: block; width: 22px; height: 3px; border-radius: 999px;
     background: #2A2119; margin: 5px auto 0;
   }
@@ -317,16 +316,6 @@
   .seg div { flex: 1; text-align: center; padding: 9px; border-radius: 9px; font-weight: 700; font-size: 15px; color: #6B5A46; min-height: 44px; display: grid; place-items: center; }
   .seg div.on { background: #FDF9F1; color: #2A2119; }
 
-  /* annotation notes beside each screen */
-  .notes { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .note { display: flex; gap: 11px; align-items: flex-start; }
-  .num {
-    flex: none; width: 23px; height: 23px; border-radius: 999px; background: var(--ink);
-    color: var(--page-2); font-size: 12px; font-weight: 700; display: grid; place-items: center;
-    font-family: var(--mono); margin-top: 2px;
-  }
-  .note p { font-size: 14.5px; color: var(--ink-2); }
-  .note b { color: var(--ink); font-weight: 700; }
 
   /* before / after */
   .ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 22px; margin-top: 28px; }
@@ -437,11 +426,9 @@
 
 <section>
   <div class="wrap">
-    <h2>Three screens</h2>
+    <h2>The screens</h2>
     <p>
-      Home, because it sets what the product thinks matters. The report, because it is the
-      flagship and the review called it the weakest. Vaccines, because it is where card
-      fatigue is worst.
+      Fourteen screens, rebuilt around what the reader needs first.
     </p>
 
     <div class="screens">
@@ -458,7 +445,7 @@
             <p class="t-sec" style="margin-top:6px;font-size:16px">What would you like to understand today?</p>
 
             <div class="primary-action" style="margin-top:20px">
-              <div class="glyph on-dark">▤</div>
+              <div class="glyph on-dark"></div>
               <div class="grow">
                 <div class="pa-t">Understand a document</div>
                 <div class="pa-s">Scan or upload a report and read it in plain English</div>
@@ -466,7 +453,7 @@
             </div>
 
             <div class="secondary-action">
-              <div class="glyph on-light">✎</div>
+              <div class="glyph on-light"></div>
               <div class="grow">
                 <div class="t-title">Summary for your doctor</div>
                 <div class="t-sec" style="margin-top:2px">A one-page handout: your medicines, recent results and questions</div>
@@ -508,21 +495,14 @@
           </div>
 
           <div class="tabbar">
-            <div class="tab on"><span class="ti">⌂</span>Home</div>
-            <div class="tab"><span class="ti">▤</span>Documents</div>
-            <div class="tab"><span class="ti">♡</span>Health</div>
-            <div class="tab"><span class="ti">▦</span>Calendar</div>
-            <div class="tab"><span class="ti">☰</span>More</div>
+            <div class="tab on">Home</div>
+            <div class="tab">Documents</div>
+            <div class="tab">Health</div>
+            <div class="tab">Calendar</div>
+            <div class="tab">More</div>
           </div>
         </div>
 
-        <div class="notes">
-          <div class="note"><span class="num">1</span><p><b>"Understand a document"</b> replaces "Simplify". One primary action, visually dominant, not one of six equal rectangles.</p></div>
-          <div class="note"><span class="num">2</span><p><b>The vitals tile names the section and cycles through the readings.</b> Its neighbours all name a section, so promoting blood pressure alone made it the odd one out and picked a favourite among six measures. Cycling previews the real numbers without choosing. It freezes on the newest reading under <code>prefers-reduced-motion</code>, because the motion is decoration and goes first.</p></div>
-          <div class="note"><span class="num">3</span><p><b>Health snapshot stays — the grid navigates well.</b> What changes is the tiles: "11 vitals readings" was a row count, "118/76, usual range" is the thing you opened the app to learn. A count survives where the count <em>is</em> the meaning, like "3 need dates".</p></div>
-          <div class="note"><span class="num">4</span><p><b>Documents enters the tab bar</b>, Vaccines moves under Health. The core proposition now has a permanent home.</p></div>
-          <div class="note"><span class="num">5</span><p><b>Two grouped lists, not eight cards.</b> Severity is a bar plus words, never colour alone.</p></div>
-        </div>
       </div>
 
       <!-- ================= REPORT ================= -->
@@ -537,7 +517,7 @@
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:7px">
               <p class="t-screen" style="flex:1">Your report, explained</p>
               <!-- Reachable in one tap, but below the finding in reading order -->
-              <button class="lang">🌐 English ▾</button>
+              <button class="lang">English ▾</button>
             </div>
 
             <div class="sev sev-green" style="margin-top:18px">
@@ -624,14 +604,6 @@
           </div>
         </div>
 
-        <div class="notes">
-          <div class="note"><span class="num">6</span><p><b>The four questions answered in order:</b> what was found, what it means, what to do, when to worry. Everything else is a row you can open.</p></div>
-          <div class="note"><span class="num">7</span><p><b>Questions to ask is open by default.</b> It is the thing you are meant to carry into the appointment, and a collapsed row is a row that never gets opened. It still collapses for anyone who has read it.</p></div>
-          <div class="note"><span class="num">8</span><p><b>The language control was missing from my first pass</b>, which was a real omission — sixteen languages is a headline feature and it is in the App Store description. It sits in the header: one tap, but after the finding in reading order, so it never outranks the medicine.</p></div>
-          <div class="note"><span class="num">9</span><p><b>Warnings keep the English underneath</b> when you are reading in another language. A dropped negation reads perfectly fluently in any language, so the text that actually passed the checks stays visible for a pharmacist or a family member.</p></div>
-          <div class="note"><span class="num">10</span><p><b>Confidence collapses to one line.</b> Six beige boxes announcing "95%" made a good result feel like an alarm. Now: 8 clear, 2 worth checking, tap to review only those.</p></div>
-          <div class="note"><span class="num">11</span><p><b>Green is used once</b>, and only because the finding is genuinely reassuring. Red appears once, on the only thing that is urgent.</p></div>
-        </div>
       </div>
 
       <!-- ================= VACCINES ================= -->
@@ -697,11 +669,6 @@
           </div>
         </div>
 
-        <div class="notes">
-          <div class="note"><span class="num">12</span><p><b>One container holding six rows</b>, rather than six containers. The review asked for 30–40% fewer cards; this screen drops about 80%.</p></div>
-          <div class="note"><span class="num">13</span><p><b>"Recommended for you" now says by what</b> — age and province — and admits what it does not know. If it cannot say, it should not imply.</p></div>
-          <div class="note"><span class="num">14</span><p><b>"+ Track this vaccine" → "+ Track."</b> Still a 44pt target; a third of the width.</p></div>
-        </div>
       </div>
 
       <!-- ================= DOCUMENTS ================= -->
@@ -765,17 +732,12 @@
             <div style="height:16px"></div>
           </div>
           <div class="tabbar">
-            <div class="tab"><span class="ti">⌂</span>Home</div>
-            <div class="tab on"><span class="ti">▤</span>Documents</div>
-            <div class="tab"><span class="ti">♡</span>Health</div>
-            <div class="tab"><span class="ti">▦</span>Calendar</div>
-            <div class="tab"><span class="ti">☰</span>More</div>
+            <div class="tab">Home</div>
+            <div class="tab on">Documents</div>
+            <div class="tab">Health</div>
+            <div class="tab">Calendar</div>
+            <div class="tab">More</div>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">15</span><p><b>Categories are back</b>, as filter chips and as a coloured spine on each row. The palette already carries <code>docBloodWork</code>, <code>docImaging</code>, <code>docPrescription</code> and seven more — they were defined and then not used to sort anything.</p></div>
-          <div class="note"><span class="num">16</span><p><b>One scrolling line, not a wrapping grid.</b> Wrapping gave a 2-2-1 rag that looked accidental, and with ten possible categories it would rag differently for every user. A strip has the same shape whether you have three types or ten, and the fade at the edge says there is more.</p></div>
-          <div class="note"><span class="num">17</span><p><b>Type and conclusion, both.</b> The category tells you what kind of page it is; "Iron is low" tells you why you would open it again. The first pass dropped the category and lost half the answer.</p></div>
         </div>
       </div>
 
@@ -793,12 +755,12 @@
             </p>
 
             <div class="primary-action" style="margin-top:22px">
-              <div class="glyph on-dark">◎</div>
+              <div class="glyph on-dark"></div>
               <div class="grow"><div class="pa-t">Take a photo</div>
               <div class="pa-s">Works on creased, dim or handwritten pages</div></div>
             </div>
             <div class="secondary-action">
-              <div class="glyph on-light">↑</div>
+              <div class="glyph on-light"></div>
               <div class="grow"><div class="t-title">Choose a file</div>
               <div class="t-sec" style="margin-top:2px">PDF or image</div></div>
             </div>
@@ -814,10 +776,6 @@
               your phone is sent with it.
             </p>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">18</span><p><b>"Simplify" → "Understand".</b> The review flagged it as abstract; this names the outcome.</p></div>
-          <div class="note"><span class="num">19</span><p><b>Privacy stated at the moment of the decision</b>, not buried in Settings.</p></div>
         </div>
       </div>
 
@@ -851,9 +809,6 @@
             </p>
           </div>
         </div>
-        <div class="notes">
-          <div class="note"><span class="num">20</span><p><b>Answers "what is this?" up front</b> — a one-page handout, and here is exactly what goes on it. No inference required.</p></div>
-        </div>
       </div>
 
       <!-- ================= MEDICATIONS ================= -->
@@ -875,14 +830,11 @@
               </div>
             </div>
             <div class="secondary-action" style="margin-top:14px">
-              <div class="glyph on-light">+</div>
+              <div class="glyph on-light"></div>
               <div class="grow"><div class="t-title">Add a medicine</div></div>
             </div>
             <div style="height:18px"></div>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">21</span><p><b>Dose and schedule on one line.</b> Two rows replace two tall cards.</p></div>
         </div>
       </div>
 
@@ -909,7 +861,7 @@
               <div class="chips">
                 <span class="chip on">Morning</span><span class="chip">Midday</span>
                 <span class="chip">Evening</span><span class="chip">Bedtime</span>
-                <span class="chip">🕘 Set a time</span>
+                <span class="chip">Set a time</span>
               </div>
               <p class="t-sec" style="margin-top:7px">
                 "Morning" is enough for most people. Set a clock time when it has to be exact,
@@ -930,11 +882,6 @@
             <div class="btn-primary">Save</div>
             <div style="height:18px"></div>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">22</span><p><b>"Set a time" alongside the named parts of day.</b> Structured options only help if they cover the real cases, and some doses genuinely are "every 8 hours" or "07:30". The chips stay the fast path; the clock is there when precision matters.</p></div>
-          <div class="note"><span class="num">23</span><p><b>Notes, because the important detail is usually the one nobody anticipated</b> — take with food, makes me drowsy, something the pharmacist said. It flows into the doctor summary, so writing it once puts it where it gets used.</p></div>
-          <div class="note"><span class="num">24</span><p><b>Structured frequency.</b> The review flagged free text as risky: "once a day", "1x/day" and "daily" are the same instruction stored three ways, and reminders cannot read any of them reliably. "Other…" still allows free text.</p></div>
         </div>
       </div>
 
@@ -971,9 +918,6 @@
             <div class="btn-primary">Save</div>
             <div style="height:18px"></div>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">25</span><p><b>Exact / roughly / don't remember</b>, as the review suggested. Forcing false precision into a health record is worse than recording the uncertainty.</p></div>
         </div>
       </div>
 
@@ -1038,9 +982,6 @@
             </p>
           </div>
         </div>
-        <div class="notes">
-          <div class="note"><span class="num">26</span><p><b>The number is the screen.</b> Reference range in words underneath, and the disclaimer kept — it is the honest part.</p></div>
-        </div>
       </div>
 
       <!-- ================= VITAL DETAIL ================= -->
@@ -1092,10 +1033,6 @@
             <div style="height:18px"></div>
           </div>
         </div>
-        <div class="notes">
-          <div class="note"><span class="num">27</span><p><b>Yes — the chart already exists.</b> <code>vital-trend.tsx</code> draws it with react-native-svg today, two lines for blood pressure because systolic and diastolic move independently. What changes is that it gets the top of its own screen rather than sitting inside a stack of grouped cards.</p></div>
-          <div class="note"><span class="num">28</span><p><b>"Down 2.6 kg since June", never "improving."</b> That restraint is already written into the component, and it is the right call for home readings taken at different times on an unvalidated scale.</p></div>
-        </div>
       </div>
 
       <!-- ================= APPOINTMENTS ================= -->
@@ -1145,17 +1082,12 @@
             <div style="height:16px"></div>
           </div>
           <div class="tabbar">
-            <div class="tab"><span class="ti">⌂</span>Home</div>
-            <div class="tab"><span class="ti">▤</span>Documents</div>
-            <div class="tab"><span class="ti">♡</span>Health</div>
-            <div class="tab on"><span class="ti">▦</span>Calendar</div>
-            <div class="tab"><span class="ti">☰</span>More</div>
+            <div class="tab">Home</div>
+            <div class="tab">Documents</div>
+            <div class="tab">Health</div>
+            <div class="tab on">Calendar</div>
+            <div class="tab">More</div>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">29</span><p><b>"Bring" is a checklist, not chips.</b> Chips filter things; a checkbox is something you do, and ticking items off while you pack is the actual job. It also reuses the checklist pattern the report screen already has, instead of inventing a fourth pill variant.</p></div>
-          <div class="note"><span class="num">30</span><p><b>The items are suggested, not typed.</b> The app knows your health card, your medicines by name, and which report prompted the referral — so each line says what it is.</p></div>
-          <div class="note"><span class="num">31</span><p><b>Past appointments keep their paperwork</b>, which is the link the data model already supports.</p></div>
         </div>
       </div>
 
@@ -1195,9 +1127,6 @@
             </p>
           </div>
         </div>
-        <div class="notes">
-          <div class="note"><span class="num">32</span><p><b>Bar plus words, never colour alone</b> — the review's point about status chips that fail for colour-blind users.</p></div>
-        </div>
       </div>
 
       <!-- ================= HEALTH CARD ================= -->
@@ -1226,10 +1155,6 @@
               Kept encrypted on this phone and opened with Face ID. Never sent anywhere.
             </p>
           </div>
-        </div>
-        <div class="notes">
-          <div class="note"><span class="num">33</span><p><b>Monospace, tabular figures, large.</b> This is read aloud at a desk while someone waits.</p></div>
-          <div class="note"><span class="num">34</span><p><b>"Front only"</b> — the front/back toggle appears only when there are two sides, which is also the bug fixed in build 31.</p></div>
         </div>
       </div>
 
@@ -1297,39 +1222,6 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-<hr class="rule">
-
-<section>
-  <div class="wrap">
-    <h2>What this pass deliberately did not do</h2>
-    <p>
-      The review's closing instruction was to spend the next pass on hierarchy, accessibility
-      and report UX rather than decoration, so:
-    </p>
-    <div class="rowgroup" style="margin-top:20px; background:transparent; border-color:var(--rule)">
-      <div class="row" style="border-color:var(--rule)">
-        <div class="grow"><div class="val" style="font-family:var(--head)">No new palette</div>
-        <div class="sub" style="color:var(--ink-2)">The warm neutrals stay. Only the muted values move, and only far enough to pass.</div></div>
-      </div>
-      <div class="row" style="border-color:var(--rule)">
-        <div class="grow"><div class="val" style="font-family:var(--head)">No new typefaces</div>
-        <div class="sub" style="color:var(--ink-2)">Same Nunito pairing. The scale changes, not the voice.</div></div>
-      </div>
-      <div class="row" style="border-color:var(--rule)">
-        <div class="grow"><div class="val" style="font-family:var(--head)">No shadows, radii or ornament touched</div>
-        <div class="sub" style="color:var(--ink-2)">Density now comes from grouping rather than from shrinking the text.</div></div>
-      </div>
-    </div>
-
-    <p style="margin-top:26px">
-      Two items from the review are product decisions rather than design ones, and are left
-      open: whether vaccine recommendations should genuinely personalise on medical history,
-      and whether medication frequency becomes a structured field. Both change what the app
-      stores, not how it looks.
-    </p>
   </div>
 </section>
 

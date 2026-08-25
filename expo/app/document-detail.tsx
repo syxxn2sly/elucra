@@ -537,7 +537,7 @@ export default function DocumentDetailScreen() {
             </View>
             {emergencyWarnings.length > 0 ? (
               <View style={styles.emergencyBlock}>
-                <Text style={styles.emergencyHeader}>🚨 Go to Emergency if:</Text>
+                <Text style={styles.emergencyHeader}>Go to Emergency if:</Text>
                 {emergencyWarnings.map((w) => (
                   <View key={w.id} style={styles.warningItem}>
                     <Text style={styles.warningSymptomEmergency}>{w.symptom}</Text>

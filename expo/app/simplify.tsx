@@ -2,7 +2,7 @@
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { FileText, Camera, Image as ImageIcon, Sparkles, AlertCircle, X, RefreshCw } from "lucide-react-native";
+import { FileText, Camera, Image as ImageIcon, Sparkles, AlertCircle, ShieldCheck, X, RefreshCw } from "lucide-react-native";
 import React, { useState, useCallback, useRef } from "react";
 import {
   StyleSheet,
@@ -369,7 +369,7 @@ export default function SimplifyScreen() {
 
         {/* Privacy note */}
         <View style={styles.privacyNote}>
-          <Text style={styles.privacyIcon}>🔒</Text>
+          <ShieldCheck color={C.textMuted} size={18} strokeWidth={2.5} />
           <Text style={styles.privacyText}>
             Your document is sent securely to our AI for analysis. It is not stored on any server.
           </Text>
@@ -598,9 +598,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Space.md,
-  },
-  privacyIcon: {
-    fontSize: 20,
   },
   privacyText: {
     flex: 1,
