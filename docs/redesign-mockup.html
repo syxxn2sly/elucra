@@ -251,21 +251,36 @@
   }
 
   .snapgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  /*
+    Every tile is the same three rows in the same places: label, value,
+    status. The value gets the height of two lines whether it needs them or
+    not, so "3 need dates" wrapping cannot push its status line lower than the
+    tile beside it. Without that the grid reads as four unrelated boxes that
+    happen to sit together.
+  */
   .snap {
     background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 14px;
-    padding: 13px 14px; min-height: 92px;
+    padding: 13px 14px; min-height: 116px;
+    display: flex; flex-direction: column;
   }
-  .snap.attn { border-color: #8B610C; border-width: 1.5px; }
+  .snap.attn { border-color: #8B610C; box-shadow: inset 0 0 0 1px #8B610C; }
   .snap .sl { font-size: 13.5px; font-weight: 700; color: #6B5A46; }
-  .snap .sv { font-family: var(--head); font-weight: 800; font-size: 20px; margin-top: 4px; line-height: 1.2; }
-  .snap .ss { font-size: 13px; color: #6B5A46; margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+  .snap .sv {
+    font-family: var(--head); font-weight: 800; font-size: 20px;
+    margin-top: 4px; line-height: 1.2; min-height: 48px;
+  }
+  /* Pinned to the bottom so the status sits on one line across all four. */
+  .snap .ss {
+    font-size: 13px; color: #6B5A46; margin-top: 5px;
+    display: flex; align-items: flex-start; gap: 6px;
+  }
 
   /*
     The vitals tile previews each measure in turn rather than promoting one.
     Four readings, twelve seconds, so it reads as ambient rather than as
     something demanding attention — this is a dashboard tile, not an alert.
   */
-  .cycle { position: relative; height: 46px; margin-top: 4px; }
+  .cycle { position: relative; height: 48px; margin-top: 4px; }
   .cy {
     position: absolute; inset: 0; opacity: 0;
     animation: cyc 12s infinite;
@@ -288,7 +303,8 @@
     .cy { animation: none; opacity: 0; }
     .cy:first-child { opacity: 1; }
   }
-  .dot { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+  /* Aligned to the first line of text, not centred on a wrapped block. */
+  .dot { width: 7px; height: 7px; border-radius: 999px; flex: none; margin-top: 5px; }
   .dot.green { background: #56704E; }
   .dot.amber { background: #8B610C; }
   .dot.red { background: #B34530; }
@@ -483,16 +499,16 @@
                   <div class="cy" style="animation-delay:6s"><b>71.2 kg</b><span>Weight</span></div>
                   <div class="cy" style="animation-delay:9s"><b>68 bpm</b><span>Heart rate</span></div>
                 </div>
-                <div class="ss"><span class="dot green"></span>4 recorded · all usual</div>
+                <div class="ss"><span class="dot green"></span>All in range</div>
               </div>
               <div class="snap">
                 <div class="sl">Medicines</div>
-                <div class="sv">2</div>
-                <div class="ss"><span class="dot green"></span>Both have a schedule</div>
+                <div class="sv">2 logged</div>
+                <div class="ss"><span class="dot green"></span>Both scheduled</div>
               </div>
               <div class="snap">
                 <div class="sl">Documents</div>
-                <div class="sv">5</div>
+                <div class="sv">5 saved</div>
                 <div class="ss">Latest Aug 22</div>
               </div>
             </div>
