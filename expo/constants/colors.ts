@@ -24,15 +24,15 @@ const light = {
   primary: "#2A2119",
   primaryDark: "#1B1510",
   primarySoft: "#E9DDC9",
-  accent: "#7C6B57",
+  accent: "#6B5A46",
   accentSoft: "#EFE6D6",
 
   // Clinical status
-  danger: "#BF4A34",
+  danger: "#B34530",
   dangerSoft: "#F8E3DB",
   success: "#56704E",
   successSoft: "#E4EBDE",
-  warning: "#A8760F",
+  warning: "#8B610C",
   warningSoft: "#F9ECD3",
 
   // Warm neutral ramp
@@ -40,7 +40,7 @@ const light = {
   surface: "#FDF9F1",
   surfaceAlt: "#E9DDC9",
   text: "#2A2119",
-  textMuted: "#7C6B57",
+  textMuted: "#6B5A46",
   textInverse: "#FDF9F1",
   border: "#E6D9C4",
   borderStrong: "#D9C8AC",

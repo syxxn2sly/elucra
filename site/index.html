@@ -19,7 +19,7 @@
     --surface: #FDF9F1;
     --surface-alt: #E9DDC9;
     --ink: #2A2119;
-    --muted: #7C6B57;
+    --muted: #6B5A46;
     --rule: #E6D9C4;
     --rule-strong: #D9C8AC;
     --inverse: #FDF9F1;
@@ -27,11 +27,11 @@
     /* Clinical only. The palette reserves colour for meaning, so these
        appear where something is low, safe, or worth checking, and
        nowhere else. */
-    --danger: #BF4A34;
+    --danger: #B34530;
     --danger-soft: #F8E3DB;
     --success: #56704E;
     --success-soft: #E4EBDE;
-    --warning: #A8760F;
+    --warning: #8B610C;
     --warning-soft: #F9ECD3;
 
     --highlight: #E9DDC9;
@@ -206,7 +206,7 @@
     justify-content: space-between;
     gap: 16px;
   }
-  .accepts dd span:last-child { color: var(--muted); font-size: 13.5px; text-align: right; }
+  .accepts dd span:last-child { color: var(--muted); font-size: 14.5px; text-align: right; }
 
   .hero h1 {
     font-size: clamp(38px, 6.2vw, 66px);
@@ -272,8 +272,8 @@
 
   .doc {
     font-family: var(--mono);
-    font-size: 13.5px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.5;
     font-variant-numeric: tabular-nums;
     display: flex;
     flex-direction: column;
@@ -356,7 +356,7 @@
     background: var(--surface);
     border-top: 1px solid var(--rule);
     padding: 14px clamp(20px, 3vw, 30px);
-    font-size: 13.5px;
+    font-size: 14.5px;
     color: var(--muted);
   }
 
@@ -461,7 +461,7 @@
   footer h4 { font-family: var(--head); font-size: 13px; font-weight: 600; color: var(--ink); margin: 0 0 10px; letter-spacing: 0.06em; text-transform: uppercase; }
   footer a { color: var(--muted); }
   footer a:hover { color: var(--ink); }
-  .colophon { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 13px; }
+  .colophon { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 14px; }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }

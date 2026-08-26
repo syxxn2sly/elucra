@@ -68,7 +68,16 @@ export const Type = {
   heading: { fontFamily: Font.headSemi, fontSize: 17, lineHeight: 22 },
   body: { fontFamily: Font.bodyRegular, fontSize: 16, lineHeight: 24 },
   label: { fontFamily: Font.bodySemi, fontSize: 15, lineHeight: 20 },
-  caption: { fontFamily: Font.bodySemi, fontSize: 13, lineHeight: 18 },
+  /**
+   * 14, not 13.
+   *
+   * This carries dates, reference ranges, source citations and the disclaimers
+   * — the quiet half of a health app, and the half an older reader most often
+   * has to squint at. It is used in about 130 places, so a point here is worth
+   * more than a redesign of any single screen. 14 is the floor for secondary
+   * text; anything smaller should be a deliberate exception with a reason.
+   */
+  caption: { fontFamily: Font.bodySemi, fontSize: 14, lineHeight: 19 },
   mono: { fontFamily: Font.mono, fontSize: 14, lineHeight: 20 },
 } as const;
 

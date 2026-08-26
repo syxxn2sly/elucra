@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   recordDue: { ...Type.caption, color: C.primary, marginTop: 2 },
   recordActions: { flexDirection: "row", alignItems: "center", gap: Space.md },
   sourceRow: { flexDirection: "row", alignItems: "center", gap: Space.xs, marginTop: Space.md },
-  sourceText: { ...Type.caption, color: C.textMuted, flex: 1, fontSize: 11 },
+  sourceText: { ...Type.caption, color: C.textMuted, flex: 1 },
   pressed: { opacity: 0.85 },
   disclaimer: { ...Type.caption, color: C.textMuted, marginTop: Space.sm, lineHeight: 19 },
   hiddenNote: { ...Type.caption, color: C.textMuted, marginBottom: Space.lg, lineHeight: 19 },
