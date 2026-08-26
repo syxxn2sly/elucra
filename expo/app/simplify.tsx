@@ -240,7 +240,7 @@ export default function SimplifyScreen() {
   if (phase === "error") {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <ScreenHeader title="Simplify a Document" />
+        <ScreenHeader title="Understand a document" />
         <View style={styles.centerContent}>
           <View style={styles.errorCard}>
             <View style={styles.errorIconWrap}>
@@ -270,7 +270,7 @@ export default function SimplifyScreen() {
   // --- Capture phase ---
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <ScreenHeader title="Simplify a Document" />
+      <ScreenHeader title="Understand a document" />
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -364,7 +364,7 @@ export default function SimplifyScreen() {
           <ExpectItem text="An action checklist, in priority order" />
           <ExpectItem text="A recovery timeline" />
           <ExpectItem text="Warning signs that need immediate care" />
-          <ExpectItem text="Communication scripts in English, Punjabi, Hindi & Urdu" />
+          <ExpectItem text="Things to say, in sixteen languages" />
         </View>
 
         {/* Privacy note */}

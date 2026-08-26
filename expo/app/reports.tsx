@@ -52,7 +52,7 @@ export default function ReportsScreen() {
               icon={<FileText color={C.primary} size={40} strokeWidth={2.5} />}
               title="No reports yet"
               message="Photograph a lab result, prescription or discharge letter and ELUCRA will explain it in plain English."
-              actionLabel="Simplify a document"
+              actionLabel="Understand a document"
               onAction={() => router.push("/simplify")}
             />
           </View>
@@ -102,7 +102,7 @@ export default function ReportsScreen() {
             ))}
 
             <PrimaryButton
-              label="Simplify another document"
+              label="Understand another document"
               onPress={() => router.push("/simplify")}
               icon={<Plus color={C.textInverse} size={22} strokeWidth={2.5} />}
               style={{ marginTop: Space.xl }}

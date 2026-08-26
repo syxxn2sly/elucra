@@ -150,7 +150,7 @@ export default function HomeScreen() {
                 <ScanLine color={C.textInverse} size={28} strokeWidth={2.5} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.heroCardTitle}>Simplify a Document</Text>
+                <Text style={styles.heroCardTitle}>Understand a document</Text>
                 <Text style={styles.heroCardSub}>
                   Scan or upload a report and get plain English in seconds
                 </Text>
@@ -354,8 +354,8 @@ export default function HomeScreen() {
             <EmptyState
               icon={<FileHeart color={C.primary} size={40} strokeWidth={2.5} />}
               title="No reports yet"
-              message="Simplify your first medical document to see it here."
-              actionLabel="Simplify a document"
+              message="Understand your first document to see it here."
+              actionLabel="Understand a document"
               onAction={handleSimplify}
             />
           </View>

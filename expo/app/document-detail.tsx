@@ -170,7 +170,7 @@ export default function DocumentDetailScreen() {
   const handleDelete = useCallback(() => {
     confirmDestructive(
       "Delete this report?",
-      "This will permanently remove the simplified interpretation from your library.",
+      "This deletes the report and the explanation. It cannot be undone.",
       "Delete",
       () => {
         removeDocument(id);
