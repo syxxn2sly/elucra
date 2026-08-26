@@ -167,7 +167,13 @@
   .opened { background: #FDF9F1; border: 1px solid #E6D9C4; border-radius: 14px; overflow: hidden; }
   .opened-head {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 15px 16px; min-height: 56px; border-bottom: 1px solid #EFE6D6;
+    padding: 14px 16px; min-height: 52px; border-bottom: 1px solid #EFE6D6;
+  }
+  /* A quiet secondary control. It was competing with the heading at 15px in
+     the chevron colour, and the subtitle underneath pushed it onto two lines. */
+  .collapse {
+    flex: none; font-size: 14px; font-weight: 600; color: #6B5A46;
+    padding: 6px 2px; white-space: nowrap;
   }
   .qlist { padding: 4px 16px 6px; }
   .q {
@@ -445,7 +451,6 @@
             <p class="t-sec" style="margin-top:6px;font-size:16px">What would you like to understand today?</p>
 
             <div class="primary-action" style="margin-top:20px">
-              <div class="glyph on-dark"></div>
               <div class="grow">
                 <div class="pa-t">Understand a document</div>
                 <div class="pa-s">Scan or upload a report and read it in plain English</div>
@@ -453,7 +458,6 @@
             </div>
 
             <div class="secondary-action">
-              <div class="glyph on-light"></div>
               <div class="grow">
                 <div class="t-title">Summary for your doctor</div>
                 <div class="t-sec" style="margin-top:2px">A one-page handout: your medicines, recent results and questions</div>
@@ -483,12 +487,12 @@
               </div>
               <div class="snap">
                 <div class="sl">Medicines</div>
-                <div class="sv">2 current</div>
+                <div class="sv">2</div>
                 <div class="ss"><span class="dot green"></span>Both have a schedule</div>
               </div>
               <div class="snap">
                 <div class="sl">Documents</div>
-                <div class="sv">5 saved</div>
+                <div class="sv">5</div>
                 <div class="ss">Latest Aug 22</div>
               </div>
             </div>
@@ -569,11 +573,8 @@
             -->
             <div class="opened" style="margin-top:22px">
               <div class="opened-head">
-                <div>
-                  <div class="dt">Questions to ask</div>
-                  <div class="ds">Suggested by what this report says</div>
-                </div>
-                <span class="chev" style="font-size:15px">Hide ⌃</span>
+                <div class="dt">Questions to ask</div>
+                <span class="collapse">Hide</span>
               </div>
               <div class="qlist">
                 <div class="q">The scan was normal, so what else could be causing the blocked feeling?</div>
@@ -755,12 +756,10 @@
             </p>
 
             <div class="primary-action" style="margin-top:22px">
-              <div class="glyph on-dark"></div>
               <div class="grow"><div class="pa-t">Take a photo</div>
               <div class="pa-s">Works on creased, dim or handwritten pages</div></div>
             </div>
             <div class="secondary-action">
-              <div class="glyph on-light"></div>
               <div class="grow"><div class="t-title">Choose a file</div>
               <div class="t-sec" style="margin-top:2px">PDF or image</div></div>
             </div>
@@ -830,7 +829,6 @@
               </div>
             </div>
             <div class="secondary-action" style="margin-top:14px">
-              <div class="glyph on-light"></div>
               <div class="grow"><div class="t-title">Add a medicine</div></div>
             </div>
             <div style="height:18px"></div>
