@@ -119,10 +119,17 @@
   .glyph.on-dark { background: rgba(253,249,241,.17); }
   .glyph.on-light { background: #E9DDC9; }
 
+  /*
+    The second half of the loop, and it kept receding. Filled surface, a
+    stronger rule and the same icon chip as the hero make the pair read as two
+    actions rather than one action and a list row — lifted with weight rather
+    than a hue, since the palette keeps colour for clinical meaning.
+  */
   .secondary-action {
-    margin-top: 12px; background: #E9DDC9; border: 1px solid #D9C8AC;
-    border-radius: 18px; padding: 17px 16px; display: flex; align-items: center; gap: 14px;
+    margin-top: 12px; background: #E9DDC9; border: 1.5px solid #C4B393;
+    border-radius: 18px; padding: 18px 16px; display: flex; align-items: center; gap: 14px;
   }
+  .secondary-action .t-title { font-size: 18px; font-weight: 800; }
 
   /* semantic, contrast-checked */
   .sev { border-left: 3px solid; padding: 13px 15px; border-radius: 0 12px 12px 0; }
@@ -197,7 +204,8 @@
     background: #FDF9F1; padding: 9px 4px 16px;
   }
   .tab { flex: 1; text-align: center; font-size: 12.5px; font-weight: 700; color: #6B5A46; }
-  .tab { padding-block: 4px; }
+  .tab .ti { display: block; margin: 0 auto 4px; width: 21px; height: 21px; }
+  .tab { padding-block: 2px; }
   .tab.on { color: #2A2119; }
     .tab.on::after {
     content: ""; display: block; width: 22px; height: 3px; border-radius: 999px;
@@ -467,6 +475,7 @@
             <p class="t-sec" style="margin-top:6px;font-size:16px">What would you like to understand today?</p>
 
             <div class="primary-action" style="margin-top:20px">
+              <div class="glyph on-dark"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/></svg></div>
               <div class="grow">
                 <div class="pa-t">Understand a document</div>
                 <div class="pa-s">Scan or upload a report and read it in plain English</div>
@@ -474,6 +483,7 @@
             </div>
 
             <div class="secondary-action">
+              <div class="glyph on-light"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3.5-2.5L12 21l-3.5-2.5L5 21V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6"/></svg></div>
               <div class="grow">
                 <div class="t-title">Summary for your doctor</div>
                 <div class="t-sec" style="margin-top:2px">A one-page handout: your medicines, recent results and questions</div>
@@ -515,11 +525,11 @@
           </div>
 
           <div class="tabbar">
-            <div class="tab on">Home</div>
-            <div class="tab">Documents</div>
-            <div class="tab">Health</div>
-            <div class="tab">Calendar</div>
-            <div class="tab">More</div>
+            <div class="tab on"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6.5H10V21H4a1 1 0 0 1-1-1z"/></svg></span>Home</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8.5 12h7M8.5 16h7"/></svg></span>Documents</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.4a4.7 4.7 0 0 1 8.5 2.8c0 5.8-8.5 11.3-8.5 11.3z"/></svg></span>Health</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span>Calendar</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>More</div>
           </div>
         </div>
 
@@ -749,11 +759,11 @@
             <div style="height:16px"></div>
           </div>
           <div class="tabbar">
-            <div class="tab">Home</div>
-            <div class="tab on">Documents</div>
-            <div class="tab">Health</div>
-            <div class="tab">Calendar</div>
-            <div class="tab">More</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6.5H10V21H4a1 1 0 0 1-1-1z"/></svg></span>Home</div>
+            <div class="tab on"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8.5 12h7M8.5 16h7"/></svg></span>Documents</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.4a4.7 4.7 0 0 1 8.5 2.8c0 5.8-8.5 11.3-8.5 11.3z"/></svg></span>Health</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span>Calendar</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>More</div>
           </div>
         </div>
       </div>
@@ -772,10 +782,12 @@
             </p>
 
             <div class="primary-action" style="margin-top:22px">
+              <div class="glyph on-dark"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/></svg></div>
               <div class="grow"><div class="pa-t">Take a photo</div>
               <div class="pa-s">Works on creased, dim or handwritten pages</div></div>
             </div>
             <div class="secondary-action">
+              <div class="glyph on-light"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3.5-2.5L12 21l-3.5-2.5L5 21V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6"/></svg></div>
               <div class="grow"><div class="t-title">Choose a file</div>
               <div class="t-sec" style="margin-top:2px">PDF or image</div></div>
             </div>
@@ -1096,11 +1108,11 @@
             <div style="height:16px"></div>
           </div>
           <div class="tabbar">
-            <div class="tab">Home</div>
-            <div class="tab">Documents</div>
-            <div class="tab">Health</div>
-            <div class="tab on">Calendar</div>
-            <div class="tab">More</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6.5H10V21H4a1 1 0 0 1-1-1z"/></svg></span>Home</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8.5 12h7M8.5 16h7"/></svg></span>Documents</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.4a4.7 4.7 0 0 1 8.5 2.8c0 5.8-8.5 11.3-8.5 11.3z"/></svg></span>Health</div>
+            <div class="tab on"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span>Calendar</div>
+            <div class="tab"><span class="ti"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>More</div>
           </div>
         </div>
       </div>
