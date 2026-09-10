@@ -35,6 +35,23 @@ const ANTHROPIC_VERSION = "2023-06-01";
 /** The app resizes to 3 MB before encoding; this leaves room for the JSON around it. */
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 
+/*
+  The proxy used to forward the request body to Anthropic untouched. That left
+  the two most expensive fields — `model` and `max_tokens` — under the caller's
+  control, and the client token that authorises the call ships inside the app
+  where it can be extracted. So a token holder could ask this endpoint for any
+  model at any length: sixty Opus calls at 64k output is roughly three hundred
+  dollars an hour, from one IP, inside the rate limit.
+
+  The app only ever asks for one model and never more than 8000 tokens, so
+  pinning both costs nothing and turns "any Claude request you like" back into
+  "the requests this app makes".
+*/
+const ALLOWED_MODELS = new Set(["claude-sonnet-5"]);
+const MAX_OUTPUT_TOKENS = 8192;
+/** The extract call sends one document image plus prompts; nothing legitimate is longer. */
+const MAX_MESSAGES = 8;
+
 /** Per-IP ceiling. A real user scans a handful of documents a day, not sixty. */
 const RATE_LIMIT_REQUESTS = 60;
 const RATE_LIMIT_WINDOW_SECONDS = 3600;
@@ -94,6 +111,51 @@ async function underRateLimit(ip: string, env: Env): Promise<boolean> {
   return true;
 }
 
+/**
+ * Narrow the forwarded body to the shape the app actually sends.
+ *
+ * Returns an error string to reject with, or null to allow. This is a
+ * containment check, not a schema validator: Anthropic will reject genuinely
+ * malformed bodies itself, and duplicating its schema here would mean keeping
+ * two copies of it correct. What this stops is a *well-formed* request that
+ * costs far more than any request the app makes.
+ */
+function rejectionReason(body: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return "Malformed request.";
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return "Malformed request.";
+  }
+  const obj = parsed as Record<string, unknown>;
+
+  if (typeof obj.model !== "string" || !ALLOWED_MODELS.has(obj.model)) {
+    return "Unsupported model.";
+  }
+  const maxTokens = obj.max_tokens;
+  if (typeof maxTokens !== "number" || !Number.isFinite(maxTokens) || maxTokens < 1) {
+    return "Invalid max_tokens.";
+  }
+  if (maxTokens > MAX_OUTPUT_TOKENS) {
+    return "Requested response is too long.";
+  }
+  if (!Array.isArray(obj.messages) || obj.messages.length === 0) {
+    return "Malformed request.";
+  }
+  if (obj.messages.length > MAX_MESSAGES) {
+    return "Too many messages in one request.";
+  }
+  // `stream` is never used by the app, and streaming responses would bypass the
+  // pass-through below in ways not worth supporting for an endpoint this narrow.
+  if (obj.stream === true) {
+    return "Streaming is not supported.";
+  }
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // The preflight carries no token: browsers send it before the real request,
@@ -132,6 +194,11 @@ export default {
     const body = await request.text();
     if (body.length > MAX_BODY_BYTES) {
       return json({ error: { message: "That document is too large to process." } }, 413, request);
+    }
+
+    const rejection = rejectionReason(body);
+    if (rejection) {
+      return json({ error: { message: rejection } }, 400, request);
     }
 
     const upstream = await fetch(UPSTREAM, {

@@ -1,0 +1,22 @@
+# Cloudflare Pages reads this file and applies these to every response.
+#
+# The site is two static pages with no scripts of its own, no forms, and no
+# third-party embeds. That makes a strict policy cheap to adopt and worth
+# adopting: the whole point of the privacy page is that people can trust what
+# it says, and a page that can be framed or injected into undermines that.
+
+/*
+  # Same-origin only, plus Google Fonts, which both pages load. The one
+  # script is an external file so script-src can stay 'self' rather than
+  # needing 'unsafe-inline' or a hash that breaks silently when edited.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
+  # Two years, subdomains included, preload-eligible.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  # frame-ancestors above covers modern browsers; this covers the rest.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  # The site needs none of these; deny them rather than leave them default.
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
