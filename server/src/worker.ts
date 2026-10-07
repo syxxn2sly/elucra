@@ -164,16 +164,18 @@ function reject(
   body: unknown,
   status: number,
 ): Response {
-  console.log(
-    JSON.stringify({
-      event,
-      status,
-      ip: request.headers.get("cf-connecting-ip") ?? "unknown",
-      country: request.headers.get("cf-ipcountry") ?? "??",
-      agent: (request.headers.get("user-agent") ?? "").slice(0, 80),
-      at: new Date().toISOString(),
-    }),
-  );
+  /*
+    Logged as an object, not a JSON string. Workers Logs extracts and indexes
+    the fields of an object; a string arrives as one opaque `message` that can
+    only be substring-matched, which makes it useless to alert on.
+  */
+  console.log({
+    event,
+    status,
+    ip: request.headers.get("cf-connecting-ip") ?? "unknown",
+    country: request.headers.get("cf-ipcountry") ?? "??",
+    agent: (request.headers.get("user-agent") ?? "").slice(0, 80),
+  });
   return json(body, status, request);
 }
 

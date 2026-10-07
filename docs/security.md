@@ -92,8 +92,10 @@ understood, not overlooked. It buys containment: it rotates with one
 
 ### Logging and alerting
 
-Every rejection emits one JSON line — event, status, IP, country, truncated user
-agent, timestamp. Deliberately **metadata only**: never the request body, never
+Every rejection logs a structured object — `event`, `status`, `ip`, `country`,
+`agent`. Logged as an object rather than a JSON string on purpose: Workers Logs
+indexes an object's fields, while a string arrives as one opaque `message` that
+can only be substring-matched, which makes it useless to alert on. Deliberately **metadata only**: never the request body, never
 the token, never any part of a document. This proxy carries medical records, and
 a log holding them would be a worse liability than the attacks it catches.
 
