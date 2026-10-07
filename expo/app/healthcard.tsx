@@ -66,35 +66,39 @@ export default function HealthCardScreen() {
   const handleUnlock = useCallback(async () => {
     setAuthenticating(true);
     try {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      /*
+        getEnrolledLevelAsync, not isEnrolledAsync: the latter reports only
+        biometrics, so a phone with a passcode but no Face ID read as "nothing
+        to authenticate with". That branch then opened the card without asking
+        anything, which is the opposite of what the lock is for.
 
-      if (hasHardware && isEnrolled) {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "Unlock your health card",
-          fallbackLabel: "Use passcode",
-          cancelLabel: "Cancel",
-        });
-        if (result.success) {
-          // Load card from SecureStore
-          const encrypted = await SecureStore.getItemAsync(CARD_KEY);
-          if (encrypted) {
-            const json = deobfuscate(encrypted, OBFUSCATE_KEY);
-            const parsed = JSON.parse(json) as HealthCardData;
-            setCardData(parsed);
-          }
-          setUnlocked(true);
-        }
-      } else {
-        // No biometrics available — use device passcode as fallback
-        const encrypted = await SecureStore.getItemAsync(CARD_KEY);
-        if (encrypted) {
-          const json = deobfuscate(encrypted, OBFUSCATE_KEY);
-          const parsed = JSON.parse(json) as HealthCardData;
-          setCardData(parsed);
-        }
-        setUnlocked(true);
+        authenticateAsync falls back to the passcode on its own, so SECRET and
+        BIOMETRIC both go through the same prompt.
+      */
+      const level = await LocalAuthentication.getEnrolledLevelAsync();
+
+      if (level === LocalAuthentication.SecurityLevel.NONE) {
+        notify(
+          "This device has no lock",
+          "Your health card holds a government ID number. Set a passcode or Face ID in device settings to open it here.",
+        );
+        return;
       }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Unlock your health card",
+        fallbackLabel: "Use passcode",
+        cancelLabel: "Cancel",
+      });
+      if (!result.success) return;
+
+      const encrypted = await SecureStore.getItemAsync(CARD_KEY);
+      if (encrypted) {
+        const json = deobfuscate(encrypted, OBFUSCATE_KEY);
+        const parsed = JSON.parse(json) as HealthCardData;
+        setCardData(parsed);
+      }
+      setUnlocked(true);
     } catch (err) {
       console.error("[ELUCRA] Auth error:", err);
       notify("Authentication failed", "Please try again.");
