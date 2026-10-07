@@ -10,10 +10,9 @@ import {
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { usePalette } from "@/lib/theme";
 import { Font, Space } from "@/constants/theme";
 
-const C = Colors.light;
 
 /** Bar height above the home indicator. The indicator's inset is added on top. */
 // Icon + label + the padding above them. 56 was sized against the system font;
@@ -22,6 +21,7 @@ const C = Colors.light;
 const TAB_BAR_CONTENT_HEIGHT = 62;
 
 export default function TabLayout() {
+  const C = usePalette();
   const insets = useSafeAreaInsets();
   // On devices with a home indicator this is the inset (~34pt). On web and
   // older devices the inset is 0, so we keep a minimum gap to avoid clipping

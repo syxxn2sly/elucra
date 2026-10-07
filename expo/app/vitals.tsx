@@ -17,7 +17,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -27,7 +28,6 @@ import { Card, EmptyState, PrimaryButton, ScreenHeader } from "@/components/ui";
 import { VitalTrend } from "@/components/vital-trend";
 import type { VitalKind, VitalReading } from "@/lib/types";
 
-const C = Colors.light;
 
 /** Matches the ScrollView contentContainerStyle below. */
 const SCREEN_PADDING = 20;
@@ -62,6 +62,7 @@ function toDateInput(value: Date): string {
 }
 
 export default function VitalsScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { vitals, addVital, removeVital } = useClairity();
@@ -226,6 +227,7 @@ function AddReadingSheet({
   onClose: () => void;
   onSave: (reading: Omit<VitalReading, "id" | "createdAt">) => void;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const definition = vitalDefinition(kind);
   const [first, setFirst] = useState("");
   const [second, setSecond] = useState("");
@@ -438,7 +440,7 @@ function AddReadingSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   intro: { ...Type.body, color: C.textMuted, marginBottom: Space.xl },
   sectionLabel: { ...Type.label, color: C.text, marginBottom: Space.sm },

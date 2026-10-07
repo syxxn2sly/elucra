@@ -13,12 +13,12 @@ import { Crosshair, MapPin, Star } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useClairity } from "@/lib/store";
 import { searchPlaces, MIN_QUERY_LENGTH, type Coords, type PlaceResult } from "@/lib/geocode";
 
-const C = Colors.light;
 
 export function PlaceField({
   label,
@@ -38,6 +38,7 @@ export function PlaceField({
   onPickPlace?: (place: PlaceResult) => void;
   placeholder: string;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const { favouriteLocations, addFavouriteLocation, removeFavouriteLocation } = useClairity();
   const [matches, setMatches] = useState<PlaceResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -173,7 +174,7 @@ export function PlaceField({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   // marginTop, not marginBottom: the screens that use this space their own
   // fields with marginTop, and mixing the two doubled the gap wherever a
   // PlaceField sat next to a plain one.

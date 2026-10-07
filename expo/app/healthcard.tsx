@@ -19,7 +19,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import { ZoomablePhoto } from "@/components/photo-viewer";
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -27,12 +28,12 @@ import { Card, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
 import { confirmDestructive, deobfuscate, notify, obfuscate } from "@/lib/utils";
 import type { HealthCardData } from "@/lib/types";
 
-const C = Colors.light;
 // old name on purpose: renaming either key makes a stored card unreadable.
 const CARD_KEY = "clairity_healthcard_secure";
 const OBFUSCATE_KEY = "clairity_v1_2025";
 
 export default function HealthCardScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { healthCard, saveHealthCard, removeHealthCard } = useClairity();
@@ -319,6 +320,7 @@ export default function HealthCardScreen() {
 }
 
 function DetailRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={[styles.detailRow, !last && styles.detailRowBorder]}>
       <Text style={styles.detailLabel}>{label}</Text>
@@ -327,7 +329,7 @@ function DetailRow({ label, value, last }: { label: string; value: string; last?
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

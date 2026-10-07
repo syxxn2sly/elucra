@@ -15,13 +15,13 @@ import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Polyline } from "react-native-svg";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, Space, Type } from "@/constants/theme";
 import { formatDateDisplay } from "@/lib/utils";
 import { vitalDefinition } from "@/lib/vitals-data";
 import type { VitalReading } from "@/lib/types";
 
-const C = Colors.light;
 
 const CHART_HEIGHT = 96;
 const PADDING_Y = 10;
@@ -69,6 +69,7 @@ export function VitalTrend({
   readings: VitalReading[];
   width: number;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const definition = vitalDefinition(readings[0]?.kind ?? "weight");
 
   const { series, min, max, oldest, newest, changes } = useMemo(() => {
@@ -136,7 +137,9 @@ export function VitalTrend({
       newest: ordered[ordered.length - 1],
       changes,
     };
-  }, [readings, definition]);
+    // C is a dependency because the series carry their colour: without it the
+    // lines keep the previous theme's ink after a light/dark switch.
+  }, [readings, definition, C]);
 
   if (readings.length < MIN_POINTS_FOR_TREND) return null;
 
@@ -228,7 +231,7 @@ export function VitalTrend({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   wrap: { marginTop: Space.md },
   axis: { flexDirection: "row", justifyContent: "space-between", marginTop: Space.xs },
   axisSingle: { alignItems: "center", marginTop: Space.xs },

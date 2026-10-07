@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -19,9 +20,9 @@ import { confirmDestructive } from "@/lib/utils";
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
 import type { Medication } from "@/lib/types";
 
-const C = Colors.light;
 
 export default function MedicationsScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
   const { medications, removeMedication, profile } = useClairity();
@@ -161,7 +162,7 @@ export default function MedicationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

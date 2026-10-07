@@ -19,7 +19,6 @@ import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import Colors from "@/constants/colors";
 import { Font, Space, Type } from "@/constants/theme";
 
-const C = Colors.light;
 
 /**
  * Matches the native splash background exactly, or the handover flickers.
@@ -28,6 +27,12 @@ const C = Colors.light;
  * `backgroundColor` in the expo-splash-screen plugin config in app.json (and
  * its Android counterpart), and a token that later drifted from those would
  * produce a visible flash on every cold start.
+ *
+ * The splash stays light in both themes. splash-icon.png has this cream baked
+ * into the image rather than being transparent, so a dark native splash would
+ * show a cream tile on a dark ground. Going dark here needs a dark artwork
+ * variant first; until then the text below is pinned to the light palette so it
+ * stays readable against this.
  */
 // eslint-disable-next-line no-restricted-syntax -- see above
 const SPLASH_BACKGROUND = "#FAF6F0";
@@ -143,14 +148,14 @@ const styles = StyleSheet.create({
   wordmark: {
     ...Type.display,
     fontFamily: Font.headBold,
-    color: C.text,
+    color: Colors.light.text,
     letterSpacing: 3,
     textAlign: "center",
     marginTop: Space.xl,
   },
   tagline: {
     ...Type.caption,
-    color: C.textMuted,
+    color: Colors.light.textMuted,
     textAlign: "center",
     marginTop: Space.xs,
   },

@@ -5,7 +5,8 @@ import React, { useMemo } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -22,7 +23,6 @@ import type { ScreeningRecord } from "@/lib/types";
 import { Card, ScreenHeader } from "@/components/ui";
 import { MonthYearWheel } from "@/components/smart-inputs";
 
-const C = Colors.light;
 
 /** The profile stores the province by name; the table is keyed by code. */
 function provinceCode(name: string): ProvinceCode | null {
@@ -75,6 +75,7 @@ function cervicalActivityNote(sexuallyActive: string, age: number | null, rule: 
 }
 
 export default function PreventiveCareScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { profile, screenings, recordScreening, removeScreening, loaded } = useClairity();
@@ -261,6 +262,7 @@ function ScreeningCard({
   /** Sexual-activity refinement, cervical screening only. */
   activityNote?: string | null;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const standing = standingFor(age, rule);
   const nextDue = record ? computeNextDue(record.monthDone, record.yearDone, rule.intervalMonths) : null;
 
@@ -348,7 +350,7 @@ function ScreeningCard({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   titleWrap: { flexDirection: "row", alignItems: "center", gap: Space.md, marginBottom: Space.sm },
   titleIcon: {

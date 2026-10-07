@@ -32,7 +32,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import { ZoomablePhoto } from "@/components/photo-viewer";
-import Colors from "@/constants/colors";
+import Colors, { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -43,9 +44,9 @@ import { Card, Tag, EmptyState, ScreenHeader } from "@/components/ui";
 import { generateDoctorSummary } from "@/lib/ai-service";
 import type { CommunicationScript } from "@/lib/types";
 
-const C = Colors.light;
 
 export default function DocumentDetailScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -745,6 +746,7 @@ function ChecklistRow({
   required: boolean;
   onToggle: () => void;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onToggle}
@@ -773,6 +775,7 @@ function ScriptBlock({
   loading?: boolean;
   rtl?: boolean;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <View style={styles.scriptBlock}>
       <Pressable onPress={onToggle} style={styles.scriptHeader}>
@@ -796,7 +799,7 @@ function ScriptBlock({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

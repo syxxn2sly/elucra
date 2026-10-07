@@ -25,7 +25,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/ui";
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useClairity } from "@/lib/store";
@@ -36,13 +37,13 @@ import {
   type TravelDestinationOption,
 } from "@/lib/travel-destinations";
 
-const C = Colors.light;
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 export default function TravelScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { vaccines, addTravelVaccine } = useClairity();
@@ -154,6 +155,7 @@ function DestinationRow({
   trackedIds: string[];
   onTrack: (vaccineId: string) => void;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const localVaccines = expanded ? localTravelVaccines(destination) : [];
 
   const openCDC = useCallback(async () => {
@@ -246,7 +248,7 @@ function DestinationRow({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

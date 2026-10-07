@@ -6,7 +6,8 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton, canGoBackSafe } from "@/components/ui";
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -14,7 +15,6 @@ import * as Location from "expo-location";
 import { searchPlaces, MIN_QUERY_LENGTH, type Coords } from "@/lib/geocode";
 import { TimeWheel } from "@/components/smart-inputs";
 
-const C = Colors.light;
 type PickerMode = "date" | "time" | null;
 
 function defaultAppointmentDate(): Date {
@@ -46,6 +46,7 @@ function formatTimeInput(value: Date): string {
 }
 
 export default function AddAppointmentScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { addAppointment, appointments, familyDoctor, favouriteLocations, addFavouriteLocation, removeFavouriteLocation } = useClairity();
@@ -363,14 +364,16 @@ export default function AddAppointmentScreen() {
 }
 
 function PickerButton({ icon, label, value, onPress }: { icon: React.ReactNode; label: string; value: string; onPress: () => void }) {
+  const { C, styles } = useTheme(makeStyles);
   return <Pressable accessibilityRole="button" accessibilityLabel={`Choose appointment ${label.toLowerCase()}`} onPress={onPress} style={styles.pickerButton}><View style={styles.pickerIcon}>{icon}</View><View style={styles.pickerCopy}><Text style={styles.pickerLabel}>{label}</Text><Text style={styles.pickerValue}>{value}</Text></View><ChevronDown color={C.textMuted} size={18} strokeWidth={2.5}/></Pressable>;
 }
 
 function TextField({ label, value, onChangeText, placeholder, multiline }: { label: string; value: string; onChangeText: (value: string) => void; placeholder: string; multiline?: boolean }) {
+  const { C, styles } = useTheme(makeStyles);
   return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput style={[styles.input, multiline && styles.multi]} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.textMuted} multiline={multiline} autoCapitalize="sentences" /></View>;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   flex: { flex: 1 },
   content: { padding: Space.lg },

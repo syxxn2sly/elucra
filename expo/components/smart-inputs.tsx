@@ -19,10 +19,10 @@ import {
 } from "react-native";
 import { ChevronDown, Check, X, Plus } from "lucide-react-native";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
-const C = Colors.light;
 
 /**
  * Age wheel geometry. The highlight band sits one item-height tall, centred in
@@ -55,6 +55,7 @@ export function AutocompleteInput({
   label?: string;
   required?: boolean;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const [focused, setFocused] = useState(false);
 
   const filtered = useMemo(() => {
@@ -131,6 +132,7 @@ export function ChipSelect({
   label?: string;
   required?: boolean;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={styles.wrapper}>
       {label ? (
@@ -184,6 +186,7 @@ export function MultiChipInput({
   /** max selections. unlimited when omitted. */
   maxItems?: number;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   /*
     At the cap, unselected options stop responding but stay visible and
     deselecting still works — hiding them would make it look like the list had
@@ -321,6 +324,7 @@ export function AgeWheel({
   label?: string;
   required?: boolean;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const [modalVisible, setModalVisible] = useState(false);
   const [draftAge, setDraftAge] = useState(50);
   const ages = useMemo(() => {
@@ -477,7 +481,7 @@ export function AgeWheel({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   wrapper: {
     marginBottom: Space.xs,
   },
@@ -787,6 +791,7 @@ function WheelColumn<T extends string | number>({
   width: number;
   format?: (item: T) => string;
 }) {
+  const { styles } = useTheme(makeStyles);
   const listRef = useRef<FlatList<T>>(null);
   const settled = useRef(value);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -878,6 +883,7 @@ const PERIODS = ["AM", "PM"] as const;
  * the minute, and 60 rows to scroll would be its own problem.
  */
 export function TimeWheel({ value, onChange }: { value: Date; onChange: (next: Date) => void }) {
+  const { C, styles } = useTheme(makeStyles);
   const [open, setOpen] = useState(false);
 
   const hour24 = value.getHours();
@@ -968,6 +974,7 @@ export function MonthYearWheel({
   label?: string;
   triggerLabel: string;
 }) {
+  const { styles } = useTheme(makeStyles);
   const [open, setOpen] = useState(false);
   const thisYear = new Date().getFullYear();
   const years = useMemo(

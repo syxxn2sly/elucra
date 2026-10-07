@@ -3,13 +3,14 @@ import { Compass } from "lucide-react-native";
 import React from "react";
 import { View, StyleSheet } from "react-native";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { EmptyState, PrimaryButton } from "@/components/ui";
 import { Space } from "@/constants/theme";
 
-const C = Colors.light;
 
 export default function NotFoundScreen() {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <>
       <Stack.Screen options={{ title: "Not found" }} />
@@ -25,7 +26,7 @@ export default function NotFoundScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

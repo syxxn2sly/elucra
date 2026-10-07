@@ -23,7 +23,8 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 
 import { ZoomablePhoto } from "@/components/photo-viewer";
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -32,7 +33,6 @@ import { confirmDestructive, formatDateDisplay, formatDueCountdown, formatMonthY
 import { Card, Tag, PrimaryButton, EmptyState, ScreenHeader } from "@/components/ui";
 import { MonthYearWheel } from "@/components/smart-inputs";
 
-const C = Colors.light;
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -40,6 +40,7 @@ const MONTHS = [
 ];
 
 export default function VaccineDetailScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -393,7 +394,7 @@ export default function VaccineDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

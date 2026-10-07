@@ -19,7 +19,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -29,11 +30,11 @@ import { Card, Tag, SectionHeader, EmptyState } from "@/components/ui";
 import { MonthYearWheel } from "@/components/smart-inputs";
 import type { VaccineInfo, VaccineRecord } from "@/lib/types";
 
-const C = Colors.light;
 
 type Tab = "suggested" | "popular" | "other" | "tracked";
 
 export default function VaccinesScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
   const { vaccines, addVaccine, updateVaccineDate } = useClairity();
@@ -298,6 +299,7 @@ function VaccineCatalogCard({
   onTrack: () => void;
   onView: () => void;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <Card style={styles.catalogCard}>
       <View style={styles.catalogHeader}>
@@ -337,6 +339,7 @@ function VaccineCatalogCard({
 }
 
 function CategoryTab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -348,6 +351,7 @@ function CategoryTab({ label, active, onPress }: { label: string; active: boolea
 }
 
 function MainTab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -358,7 +362,7 @@ function MainTab({ label, active, onPress }: { label: string; active: boolean; o
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

@@ -26,7 +26,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { PROVINCES, SCREENINGS, ruleFor, isConditionLinked, screeningAppliesToConditions } from "@/lib/screening-data";
 import { useTabScrollPadding } from "@/lib/layout";
@@ -39,9 +40,9 @@ import {
 } from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader, Tag, EmptyState } from "@/components/ui";
 
-const C = Colors.light;
 
 export default function HomeScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
   const {
@@ -381,6 +382,7 @@ function QuickCard({
   actionNeeded?: boolean;
   onPress: () => void;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -403,7 +405,7 @@ function QuickCard({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

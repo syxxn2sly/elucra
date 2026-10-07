@@ -28,7 +28,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -38,7 +39,6 @@ import { extractHealthCard } from "@/lib/ai-service";
 import { resizeForUpload } from "@/lib/resize-for-upload";
 import type { HealthCardData } from "@/lib/types";
 
-const C = Colors.light;
 // old name on purpose: renaming either key makes a stored card unreadable.
 const CARD_KEY = "clairity_healthcard_secure";
 const OBFUSCATE_KEY = "clairity_v1_2025";
@@ -46,6 +46,7 @@ const OBFUSCATE_KEY = "clairity_v1_2025";
 type AutofillPhase = "idle" | "scanning" | "done" | "error";
 
 export default function HealthCardSetupScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { saveHealthCard } = useClairity();
@@ -295,6 +296,7 @@ export default function HealthCardSetupScreen() {
 }
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Text style={styles.fieldLabel}>
       {label}
@@ -330,6 +332,7 @@ function CardCaptureSlot({
   onGallery: () => void;
   busy?: boolean;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <View style={styles.slotWrap}>
       <View style={styles.slotHeader}>
@@ -386,7 +389,7 @@ function CardCaptureSlot({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

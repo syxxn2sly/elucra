@@ -15,16 +15,17 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { normalizeMedicationWithRxNorm, searchMedicationAutocomplete } from "@/lib/ai-service";
 import { PrimaryButton, ScreenHeader } from "@/components/ui";
 
-const C = Colors.light;
 
 export default function AddMedicationScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { addMedication, updateMedication, medications } = useClairity();
@@ -239,6 +240,7 @@ export default function AddMedicationScreen() {
 }
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Text style={styles.fieldLabel}>
       {label}
@@ -247,7 +249,7 @@ function FieldLabel({ label, required }: { label: string; required?: boolean }) 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

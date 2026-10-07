@@ -5,14 +5,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
 import { confirmDestructive } from "@/lib/utils";
 import type { Appointment } from "@/lib/types";
 
-const C = Colors.light;
 
 function displayDate(dateTime: string): string {
   const date = new Date(dateTime);
@@ -20,6 +20,7 @@ function displayDate(dateTime: string): string {
 }
 
 export default function AppointmentsScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
   const { appointments, removeAppointment } = useClairity();
@@ -77,6 +78,7 @@ export default function AppointmentsScreen() {
 }
 
 function AppointmentCard({ appointment, onRemove, isPast }: { appointment: Appointment; onRemove: () => void; isPast?: boolean }) {
+  const { C, styles } = useTheme(makeStyles);
   return <Card style={styles.card}><View style={styles.cardHeader}><View style={styles.calendarIcon}><CalendarDays color={C.primary} size={21} strokeWidth={2.5} /></View><View style={styles.cardHeaderText}><Text style={styles.appointmentTitle}>{appointment.title}</Text><Text style={styles.dateText}>{displayDate(appointment.dateTime)}</Text></View><Pressable onPress={onRemove} hitSlop={12} style={styles.delete}><Trash2 color={C.danger} size={19} strokeWidth={2.5} /></Pressable></View>
     {appointment.location ? <Detail icon={<MapPin color={C.textMuted} size={17} />} label="Where" value={appointment.location} /> : null}
     {appointment.whatToBring ? <Detail icon={<PackageCheck color={C.textMuted} size={17} />} label="Bring" value={appointment.whatToBring} /> : null}
@@ -89,8 +91,9 @@ function AppointmentCard({ appointment, onRemove, isPast }: { appointment: Appoi
     {isPast ? null : <View style={styles.reminderPill}><Clock3 color={C.success} size={15} strokeWidth={2.5} /><Text style={styles.reminderPillText}>{appointment.notificationId ? "Reminder scheduled" : "Reminder needs permission"}</Text></View>}
   </Card>;
 }
-function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <View style={styles.detail}>{icon}<Text style={styles.detailText}><Text style={styles.detailLabel}>{label}: </Text>{value}</Text></View>; }
-const styles = StyleSheet.create({
+function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  const { styles } = useTheme(makeStyles); return <View style={styles.detail}>{icon}<Text style={styles.detailText}><Text style={styles.detailLabel}>{label}: </Text>{value}</Text></View>; }
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   header: {
     paddingHorizontal: Space.lg,

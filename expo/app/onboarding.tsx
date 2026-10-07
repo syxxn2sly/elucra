@@ -1,7 +1,7 @@
 // onboarding flow (smart multi-step health profile intake)
 import { router } from "expo-router";
 import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, MapPin, Info, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -34,7 +35,6 @@ import {
 import { PROVINCES } from "@/lib/screening-data";
 import type { HealthProfile } from "@/lib/types";
 
-const C = Colors.light;
 
 type InputType = "text" | "multiline" | "ageWheel" | "chipSelect" | "multiChip" | "autocomplete";
 
@@ -59,7 +59,7 @@ interface Step {
   showIf?: (data: Partial<HealthProfile>) => boolean;
 }
 
-const STEPS: Step[] = [
+const makeSteps = (C: Palette): Step[] => [
   {
     key: "name",
     title: "What's your name?",
@@ -195,6 +195,8 @@ const STEPS: Step[] = [
 ];
 
 export default function OnboardingScreen() {
+  const { C, styles } = useTheme(makeStyles);
+  const STEPS = useMemo(() => makeSteps(C), [C]);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { completeOnboarding } = useClairity();
@@ -397,7 +399,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

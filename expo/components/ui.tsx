@@ -16,10 +16,10 @@ import {
 } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
-const C = Colors.light;
 
 /**
  * `router.canGoBack()` is an imperative method that throws on the web/DOM
@@ -50,6 +50,7 @@ export function PrimaryButton({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -85,6 +86,7 @@ export function SecondaryButton({
   icon?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -106,6 +108,7 @@ export function Card({
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useTheme(makeStyles);
   if (onPress) {
     return (
       <Pressable
@@ -133,6 +136,7 @@ export function NavRow({
   icon?: ReactNode;
   badge?: string;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -159,6 +163,7 @@ export function SectionHeader({
   action?: string;
   onAction?: () => void;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -181,6 +186,7 @@ export function Tag({
   color?: string;
   bg?: string;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={[styles.tag, bg ? { backgroundColor: bg } : null]}>
       <Text style={[styles.tagText, color ? { color } : null]}>{text}</Text>
@@ -202,6 +208,7 @@ export function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={styles.empty}>
       {icon && <View style={styles.emptyIcon}>{icon}</View>}
@@ -233,6 +240,7 @@ export function ScreenHeader({
   onBack?: () => void;
   actions?: ReactNode;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const handleBack = () => {
     if (onBack) return onBack();
     if (canGoBackSafe()) return router.back();
@@ -271,10 +279,11 @@ export function Screen({
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useTheme(makeStyles);
   return <View style={[styles.screen, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

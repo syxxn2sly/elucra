@@ -14,10 +14,10 @@ import React, { useCallback, useRef, useState } from "react";
 import { Animated, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
-const C = Colors.light;
 
 const MAX_SCALE = 5;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -65,6 +65,7 @@ function PhotoViewer({
   caption?: string;
   onClose: () => void;
 }) {
+  const { C, styles } = useTheme(makeStyles);
   const { width, height } = useWindowDimensions();
 
   /*
@@ -176,7 +177,7 @@ function PhotoViewer({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: C.scrimHeavy,

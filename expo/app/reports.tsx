@@ -5,7 +5,8 @@ import React, { useCallback, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -13,9 +14,9 @@ import { confirmDestructive, formatDateDisplay } from "@/lib/utils";
 import { Card, EmptyState, PrimaryButton, ScreenHeader, Tag } from "@/components/ui";
 import type { SavedDocument } from "@/lib/types";
 
-const C = Colors.light;
 
 export default function ReportsScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { documents, removeDocument } = useClairity();
@@ -114,7 +115,7 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   count: { ...Type.caption, color: C.textMuted, marginBottom: Space.md },
   card: { marginBottom: Space.md },

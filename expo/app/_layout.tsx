@@ -4,11 +4,13 @@ import { NunitoSans_400Regular, NunitoSans_600SemiBold } from "@expo-google-font
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { ClairityProvider } from "@/lib/store";
+import { usePalette } from "@/lib/theme";
 import { AnimatedSplash } from "@/components/animated-splash";
 
 SplashScreen.preventAutoHideAsync();
@@ -16,14 +18,18 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const C = usePalette();
   return (
     /*
       Every screen draws its own <ScreenHeader/>, so the native stack header is
       off everywhere. Previously it was on for six screens that ALSO rendered a
       custom header, which stacked two back buttons and doubled the safe-area
       inset. Screen titles now live in the screen itself.
+
+      contentStyle carries the palette background: without it the navigator
+      draws its own white underneath, which flashes between screens in dark mode.
     */
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.background } }}>
       <Stack.Screen name="(tabs)" />
       {/*
         The swipe-back gesture stays enabled on onboarding: the screen is
@@ -76,6 +82,8 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ClairityProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
+          {/* "auto" flips the clock and battery to light text on the dark theme. */}
+          <StatusBar style="auto" />
           <RootLayoutNav />
           {/*
             Over the app rather than before it, so the app is fully laid out by

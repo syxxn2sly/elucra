@@ -32,7 +32,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, Radius, Space, Type } from "@/constants/theme";
 import { PROVINCES } from "@/lib/screening-data";
 import { useTabScrollPadding } from "@/lib/layout";
@@ -53,7 +54,6 @@ import {
 } from "@/lib/suggestion-data";
 import type { HealthProfile } from "@/lib/types";
 
-const C = Colors.light;
 
 interface EditableField {
   key: keyof HealthProfile;
@@ -66,7 +66,7 @@ interface EditableField {
   showIf?: (profile: HealthProfile) => boolean;
 }
 
-const FIELDS: EditableField[] = [
+const makeFields = (C: Palette): EditableField[] => [
   { key: "name", label: "Name", icon: <User color={C.primary} size={18} strokeWidth={2.5} />, type: "text" },
   { key: "age", label: "Age", icon: <Cake color={C.primary} size={18} strokeWidth={2.5} />, type: "ageWheel" },
   { key: "gender", label: "Gender", icon: <VenusAndMars color={C.primary} size={18} strokeWidth={2.5} />, type: "chipSelect", options: ["Male", "Female", "Other", "Prefer not to say"] },
@@ -94,6 +94,8 @@ const FIELDS: EditableField[] = [
 ];
 
 export default function SettingsScreen() {
+  const { C, styles } = useTheme(makeStyles);
+  const FIELDS = useMemo(() => makeFields(C), [C]);
   const insets = useSafeAreaInsets();
   const scrollPadding = useTabScrollPadding();
   const { profile, updateProfile, resetProfile, documents, vaccines, medications, appointments, vitals, healthCard, familyDoctor } = useClairity();
@@ -376,6 +378,7 @@ export default function SettingsScreen() {
 }
 
 function ProfileStat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={styles.profileStat}>
       {icon}
@@ -386,6 +389,7 @@ function ProfileStat({ label, value, icon }: { label: string; value: number; ico
 }
 
 function QuickLink({ icon, label, sub, onPress }: { icon: React.ReactNode; label: string; sub: string; onPress: () => void }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -400,7 +404,7 @@ function QuickLink({ icon, label, sub, onPress }: { icon: React.ReactNode; label
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -24,12 +25,12 @@ import { formatDateDisplay, formatMonthYear } from "@/lib/utils";
 import { VITAL_DEFINITIONS, formatVital } from "@/lib/vitals-data";
 import { Card, PrimaryButton, ScreenHeader } from "@/components/ui";
 
-const C = Colors.light;
 
 /** Enough context to be useful, few enough to stay under a page. */
 const RECENT_DOCUMENT_LIMIT = 5;
 
 export default function VisitSummaryScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { profile, medications, documents, appointments, vaccines, vitals, loaded } = useClairity();
@@ -253,7 +254,7 @@ export default function VisitSummaryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   titleWrap: { flexDirection: "row", alignItems: "center", gap: Space.md, marginBottom: Space.sm },
   titleIcon: {

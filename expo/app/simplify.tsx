@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Elevation, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -30,7 +31,6 @@ import {
 import { PrimaryButton, SecondaryButton, Card, ScreenHeader } from "@/components/ui";
 import type { SavedDocument, SimplificationResult } from "@/lib/types";
 
-const C = Colors.light;
 
 type Phase = "capture" | "analyzing" | "error";
 
@@ -66,6 +66,7 @@ function describeThrown(err: unknown): string {
 }
 
 export default function SimplifyScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { profile, addDocument, preferredLanguage, savePreferredLanguage } = useClairity();
@@ -392,6 +393,7 @@ function CaptureOption({
   sub: string;
   onPress: () => void;
 }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -407,6 +409,7 @@ function CaptureOption({
 }
 
 function ExpectItem({ text }: { text: string }) {
+  const { styles } = useTheme(makeStyles);
   return (
     <View style={styles.expectItem}>
       <View style={styles.expectDot} />
@@ -415,7 +418,7 @@ function ExpectItem({ text }: { text: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.background,

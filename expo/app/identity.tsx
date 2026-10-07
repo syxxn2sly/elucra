@@ -5,7 +5,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from "@/constants/colors";
+import { type Palette } from "@/constants/colors";
+import { useTheme } from "@/lib/theme";
 import { Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { PrimaryButton, ScreenHeader } from "@/components/ui";
@@ -13,7 +14,6 @@ import { PlaceField } from "@/components/place-field";
 import { useClairity } from "@/lib/store";
 import type { FamilyDoctor } from "@/lib/types";
 
-const C = Colors.light;
 
 const EMPTY_DOCTOR: FamilyDoctor = {
   doctorName: "",
@@ -25,6 +25,7 @@ const EMPTY_DOCTOR: FamilyDoctor = {
 };
 
 export default function IdentityScreen() {
+  const { C, styles } = useTheme(makeStyles);
   const insets = useSafeAreaInsets();
   const scrollPadding = useStackScrollPadding();
   const { familyDoctor, updateFamilyDoctor, loaded } = useClairity();
@@ -121,6 +122,7 @@ export default function IdentityScreen() {
 }
 
 function Field({ label, value, onChangeText, placeholder, multiline, keyboardType }: { label: string; value: string; onChangeText: (value: string) => void; placeholder: string; multiline?: boolean; keyboardType?: "default" | "phone-pad" }) {
+  const { C, styles } = useTheme(makeStyles);
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -138,7 +140,7 @@ function Field({ label, value, onChangeText, placeholder, multiline, keyboardTyp
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.background },
   flex: { flex: 1 },
   content: { paddingHorizontal: Space.lg },

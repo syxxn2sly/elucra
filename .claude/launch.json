@@ -2,42 +2,26 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "clairity-web",
+      "name": "site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8099",
+        "--directory",
+        "site"
+      ],
+      "port": 8099
+    },
+    {
+      "name": "expo-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
-        "start-web",
-        "--",
-        "--port",
-        "8082"
+        "start-web"
       ],
-      "cwd": "expo",
-      "port": 8082,
-      "autoPort": false
-    },
-    {
-      "name": "clairity-site",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "4173"
-      ],
-      "cwd": "site",
-      "port": 4173,
-      "autoPort": false
-    },
-    {
-      "name": "elucra-docs",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "4175"
-      ],
-      "cwd": "docs",
-      "port": 4175,
-      "autoPort": false
+      "port": 8081,
+      "cwd": "expo"
     }
   ]
 }
