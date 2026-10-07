@@ -1,0 +1,50 @@
+# Dependency alerts and update PRs.
+#
+# Two ecosystems, watched differently on purpose.
+#
+# server/ is the only code exposed to the internet, so it is checked weekly and
+# nothing is ignored there.
+#
+# expo/ is mostly build tooling that never reaches a release build — Metro, the
+# Expo CLI, react-devtools. Patch bumps on those are noise, so only minor and
+# major are raised, and the Expo SDK packages are grouped: they are released as
+# a set and bumping one on its own tends to break the build.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /server
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ""          # repo convention: lowercase, no type prefix
+    labels:
+      - dependencies
+
+  - package-ecosystem: npm
+    directory: /expo
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ""
+    labels:
+      - dependencies
+    groups:
+      expo-sdk:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+      react-native:
+        patterns:
+          - "react-native"
+          - "@react-native/*"
+          - "@react-native-community/*"
+    ignore:
+      # Build-time only. Security alerts still fire regardless of this —
+      # `ignore` suppresses version-update PRs, not vulnerability alerts.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-patch

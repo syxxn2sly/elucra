@@ -12,3 +12,9 @@ id = "bac8b6bd2d504578b4388bb463fd4806"
 # Secrets are NOT set here — wrangler.toml is committed. Set them with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
 #   npx wrangler secret put CLIENT_TOKEN
+
+# Workers Logs. Without this the console.log lines in worker.ts are visible
+# only in a live `wrangler tail`, which means nothing is retained to alert on.
+[observability]
+enabled = true
+head_sampling_rate = 1

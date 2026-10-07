@@ -148,6 +148,35 @@ function rejectionReason(body: string): string | null {
   return null;
 }
 
+/*
+  One line per rejected request, so there is something to alert on.
+
+  Deliberately metadata only: never the body, never the token, never any part
+  of a document. This proxy carries medical records, and a log that captured
+  them would be a worse liability than the attack it was meant to catch.
+
+  Shows up in `wrangler tail` live, and in Workers Logs for querying, which is
+  what the dashboard notification policies read.
+*/
+function reject(
+  event: string,
+  request: Request,
+  body: unknown,
+  status: number,
+): Response {
+  console.log(
+    JSON.stringify({
+      event,
+      status,
+      ip: request.headers.get("cf-connecting-ip") ?? "unknown",
+      country: request.headers.get("cf-ipcountry") ?? "??",
+      agent: (request.headers.get("user-agent") ?? "").slice(0, 80),
+      at: new Date().toISOString(),
+    }),
+  );
+  return json(body, status, request);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // The preflight carries no token: browsers send it before the real request,
@@ -156,10 +185,10 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(request) });
     }
     if (request.method !== "POST") {
-      return json({ error: { message: "Only POST is supported." } }, 405, request);
+      return reject("bad_method", request, { error: { message: "Only POST is supported." } }, 405);
     }
     if (new URL(request.url).pathname !== "/v1/messages") {
-      return json({ error: { message: "Unknown endpoint." } }, 404, request);
+      return reject("bad_path", request, { error: { message: "Unknown endpoint." } }, 404);
     }
 
     // Constant-time-ish comparison is overkill for a shared token, but an early
@@ -167,31 +196,32 @@ export default {
     // header name is part of the deployed contract; the shipped app sends this.
     const token = request.headers.get("x-clairity-token") ?? "";
     if (token.length !== env.CLIENT_TOKEN.length || token !== env.CLIENT_TOKEN) {
-      return json({ error: { message: "Not authorised." } }, 401, request);
+      return reject("bad_token", request, { error: { message: "Not authorised." } }, 401);
     }
 
     const declared = Number(request.headers.get("content-length") ?? "0");
     if (declared > MAX_BODY_BYTES) {
-      return json({ error: { message: "That document is too large to process." } }, 413, request);
+      return reject("too_large", request, { error: { message: "That document is too large to process." } }, 413);
     }
 
     const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
     if (!(await underRateLimit(ip, env))) {
-      return json(
+      return reject(
+        "rate_limited",
+        request,
         { error: { message: "Too many requests. Please try again later." } },
         429,
-        request,
       );
     }
 
     const body = await request.text();
     if (body.length > MAX_BODY_BYTES) {
-      return json({ error: { message: "That document is too large to process." } }, 413, request);
+      return reject("too_large", request, { error: { message: "That document is too large to process." } }, 413);
     }
 
     const rejection = rejectionReason(body);
     if (rejection) {
-      return json({ error: { message: rejection } }, 400, request);
+      return reject("body_rejected", request, { error: { message: rejection } }, 400);
     }
 
     const upstream = await fetch(UPSTREAM, {
