@@ -1,3 +1,18 @@
+/**
+ * What the user picks to say "I have none of these", as opposed to leaving a
+ * step blank — which means "I'll fill this in later".
+ *
+ * It is stored in the profile so the answer survives, and so the document
+ * pipeline can tell the model "no known allergies" rather than sending nothing.
+ * Anywhere that turns a profile field into a list of real entries has to filter
+ * it out, or it becomes a medication called None.
+ */
+export const NONE_ANSWER = "None";
+
+export function isNoneAnswer(value: string): boolean {
+  return value.trim().toLowerCase() === NONE_ANSWER.toLowerCase();
+}
+
 import { Alert, Platform } from "react-native";
 
 export function generateId(): string {

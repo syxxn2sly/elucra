@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { type Palette } from "@/constants/colors";
 import { useTheme } from "@/lib/theme";
+import { NONE_ANSWER, isNoneAnswer } from "@/lib/utils";
 import { Radius, Space, Type } from "@/constants/theme";
 import { useStackScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
@@ -46,6 +47,8 @@ interface Step {
   inputType: InputType;
   placeholder?: string;
   optional: boolean;
+  /** Offer "None" as an answer. Only meaningful for multiChip steps. */
+  allowNone?: boolean;
   options?: string[];
   suggestions?: string[];
   /** Cap on multiChip selections. Unlimited when omitted. */
@@ -116,6 +119,7 @@ const makeSteps = (C: Palette): Step[] => [
     subtitle: "Tap all that apply, or add your own. This gives context when interpreting your reports.",
     icon: <HeartPulse color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "multiChip",
+    allowNone: true,
     optional: true,
     suggestions: COMMON_CONDITIONS,
   },
@@ -125,6 +129,7 @@ const makeSteps = (C: Palette): Step[] => [
     subtitle: "Tap all that apply, or add your own.",
     icon: <Scissors color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "multiChip",
+    allowNone: true,
     optional: true,
     suggestions: COMMON_SURGERIES,
   },
@@ -134,6 +139,7 @@ const makeSteps = (C: Palette): Step[] => [
     subtitle: "Tap all that apply, or add your own. Current prescriptions and over-the-counter.",
     icon: <Pill color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "multiChip",
+    allowNone: true,
     optional: true,
     suggestions: COMMON_MEDICATIONS,
   },
@@ -143,6 +149,7 @@ const makeSteps = (C: Palette): Step[] => [
     subtitle: "Medication, food, or environmental allergies. This is important for your safety.",
     icon: <AlertCircle color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "multiChip",
+    allowNone: true,
     optional: true,
     suggestions: COMMON_ALLERGIES,
   },
@@ -152,6 +159,7 @@ const makeSteps = (C: Palette): Step[] => [
     subtitle: "Conditions that run in your family. Tap all that apply.",
     icon: <Users color={C.primary} size={22} strokeWidth={2.5} />,
     inputType: "multiChip",
+    allowNone: true,
     optional: true,
     suggestions: COMMON_FAMILY_HISTORY,
   },
@@ -217,6 +225,15 @@ export default function OnboardingScreen() {
   const currentValue = (data[step.key] as string) ?? "";
   const currentChipList = chipLists[step.key] ?? [];
 
+  /*
+    Whether this step has an answer. Continue is the "I have answered" action and
+    Skip is the "I will come back to this" one; without this gate they did the
+    same thing, so there was no way to say a step was done.
+  */
+  const answered = step.inputType === "multiChip"
+    ? currentChipList.length > 0
+    : currentValue.trim().length > 0;
+
   const handleNext = useCallback(() => {
     if (stepIndex < steps.length - 1) {
       setStepIndex(stepIndex + 1);
@@ -243,9 +260,15 @@ export default function OnboardingScreen() {
     }
   }, [stepIndex, steps.length, data, completeOnboarding]);
 
+  /*
+    Skip means "ask me later", so it clears anything half-entered rather than
+    committing it. "None" is the way to say there is nothing to report.
+  */
   const handleSkip = useCallback(() => {
+    setChipLists((prev) => ({ ...prev, [step.key]: [] }));
+    setData((prev) => ({ ...prev, [step.key]: "" }));
     handleNext();
-  }, [handleNext]);
+  }, [handleNext, step.key]);
 
   // Onboarding is reached two ways: pushed from Home (there is history to pop)
   // and via `replace` after a data reset (there is not). Only offer the back
@@ -264,9 +287,15 @@ export default function OnboardingScreen() {
   const toggleChip = useCallback((item: string) => {
     setChipLists((prev) => {
       const current = prev[step.key] ?? [];
-      const updated = current.includes(item)
-        ? current.filter((c) => c !== item)
-        : [...current, item];
+      /*
+        "None" and a real answer cannot both be true, so picking one clears the
+        other. Without this you could report no allergies and penicillin.
+      */
+      const updated = isNoneAnswer(item)
+        ? (current.some(isNoneAnswer) ? [] : [NONE_ANSWER])
+        : current.includes(item)
+          ? current.filter((c) => c !== item)
+          : [...current.filter((c) => !isNoneAnswer(c)), item];
       setData((prevData) => ({
         ...prevData,
         [step.key]: updated.join(", "),
@@ -279,7 +308,7 @@ export default function OnboardingScreen() {
     setChipLists((prev) => {
       const current = prev[step.key] ?? [];
       if (current.includes(item)) return prev;
-      const updated = [...current, item];
+      const updated = [...current.filter((c) => !isNoneAnswer(c)), item];
       setData((prevData) => ({
         ...prevData,
         [step.key]: updated.join(", "),
@@ -375,6 +404,7 @@ export default function OnboardingScreen() {
               onAddCustom={addCustomChip}
               suggestions={step.suggestions}
               maxItems={step.maxItems}
+              allowNone={step.allowNone}
             />
           ) : null}
 
@@ -383,12 +413,13 @@ export default function OnboardingScreen() {
           <View style={styles.actions}>
             {step.optional && (
               <Pressable onPress={handleSkip} hitSlop={12}>
-                <Text style={styles.skipText}>Skip this step</Text>
+                <Text style={styles.skipText}>I&apos;ll add this later</Text>
               </Pressable>
             )}
             <PrimaryButton
               label={stepIndex === steps.length - 1 ? "Finish" : "Continue"}
               onPress={handleNext}
+              disabled={!answered}
               icon={stepIndex === steps.length - 1 ? <Check color={C.textInverse} size={22} strokeWidth={2.5} /> : undefined}
               style={{ width: "100%" }}
             />

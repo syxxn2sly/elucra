@@ -37,6 +37,7 @@ import {
   formatDueCountdown,
   incompleteMedications,
   sortByDueDate,
+  isNoneAnswer,
 } from "@/lib/utils";
 import { PrimaryButton, Card, SectionHeader, Tag, EmptyState } from "@/components/ui";
 
@@ -238,8 +239,8 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Allergies alert */}
-        {profile.allergies ? (
+        {/* Allergies alert. "None" is an answer, not something to warn about. */}
+        {profile.allergies && !isNoneAnswer(profile.allergies) ? (
           <View style={styles.alertRow}>
             <View style={styles.alertIconWrap}>
               <AlertCircle color={C.danger} size={20} strokeWidth={2.5} />

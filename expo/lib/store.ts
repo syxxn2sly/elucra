@@ -17,7 +17,7 @@ import type {
   VitalReading,
   ScreeningRecord,
 } from "./types";
-import { generateId, computeNextDue } from "./utils";
+import { generateId, computeNextDue, isNoneAnswer } from "./utils";
 import { VACCINE_CATALOG } from "./vaccine-data";
 import { cancelReminder, scheduleAppointmentReminder, scheduleMedicationReminder } from "./reminders";
 
@@ -69,7 +69,10 @@ const DEFAULT_PROFILE: HealthProfile = {
 
 /** Split one of the profile's comma-separated free-text lists. */
 function profileList(value: string): string[] {
-  return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry && !isNoneAnswer(entry));
 }
 
 function useClairityState() {

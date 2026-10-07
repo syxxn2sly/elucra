@@ -21,6 +21,7 @@ import { ChevronDown, Check, X, Plus } from "lucide-react-native";
 
 import { type Palette } from "@/constants/colors";
 import { useTheme } from "@/lib/theme";
+import { NONE_ANSWER, isNoneAnswer } from "@/lib/utils";
 import { Elevation, Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 
 
@@ -175,6 +176,7 @@ export function MultiChipInput({
   label,
   required,
   maxItems,
+  allowNone,
 }: {
   selectedItems: string[];
   onToggle: (item: string) => void;
@@ -185,6 +187,13 @@ export function MultiChipInput({
   required?: boolean;
   /** max selections. unlimited when omitted. */
   maxItems?: number;
+  /**
+   * Offer "None" as an answer. Without it, having nothing to report and not
+   * having answered yet look identical — both are an empty list.
+   *
+   * Mutual exclusion is the caller's job: it owns the list.
+   */
+  allowNone?: boolean;
 }) {
   const { C, styles } = useTheme(makeStyles);
   /*
@@ -192,6 +201,7 @@ export function MultiChipInput({
     deselecting still works — hiding them would make it look like the list had
     changed, and disabling everything would strip out the way back.
   */
+  const noneSelected = selectedItems.some(isNoneAnswer);
   const atCap = maxItems !== undefined && selectedItems.length >= maxItems;
   const [showAll, setShowAll] = useState(false);
   const [customText, setCustomText] = useState("");
@@ -237,6 +247,23 @@ export function MultiChipInput({
 
       {/* Suggestion chips */}
       <View style={styles.chipRow}>
+        {allowNone ? (
+          <Pressable
+            onPress={() => onToggle(NONE_ANSWER)}
+            style={({ pressed }) => [
+              styles.chip,
+              noneSelected && styles.chipSelected,
+              pressed && styles.chipPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: noneSelected }}
+          >
+            {noneSelected ? <Check color={C.textInverse} size={14} strokeWidth={2.5} /> : null}
+            <Text style={[styles.chipText, noneSelected && styles.chipTextSelected]}>
+              {NONE_ANSWER}
+            </Text>
+          </Pressable>
+        ) : null}
         {visibleSuggestions.map((opt) => {
           const selected = selectedItems.includes(opt);
           const blocked = atCap && !selected;

@@ -16,7 +16,7 @@ import { useTheme } from "@/lib/theme";
 import { Font, HIT_TARGET, Radius, Space, Type } from "@/constants/theme";
 import { useTabScrollPadding } from "@/lib/layout";
 import { useClairity } from "@/lib/store";
-import { confirmDestructive } from "@/lib/utils";
+import { confirmDestructive, isNoneAnswer } from "@/lib/utils";
 import { Card, EmptyState, PrimaryButton } from "@/components/ui";
 import type { Medication } from "@/lib/types";
 
@@ -57,7 +57,7 @@ export default function MedicationsScreen() {
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: scrollPadding, flexGrow: 1 }}
       >
         {/* Profile meds note */}
-        {profile.medications && !medications.length ? (
+        {profile.medications && !isNoneAnswer(profile.medications) && !medications.length ? (
           <View style={styles.profileNote}>
             <FileText color={C.textMuted} size={18} strokeWidth={2.5} />
             <Text style={styles.profileNoteText}>
