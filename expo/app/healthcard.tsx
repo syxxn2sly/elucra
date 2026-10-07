@@ -256,10 +256,10 @@ export default function HealthCardScreen() {
             </Text>
             <View style={styles.numberActions}>
               <Pressable onPress={() => setShowNumber(!showNumber)} hitSlop={12} style={styles.iconBtn}>
-                {showNumber ? <EyeOff color={C.onDarkMuted} size={20} strokeWidth={2.5} /> : <Eye color={C.onDarkMuted} size={20} strokeWidth={2.5} />}
+                {showNumber ? <EyeOff color={C.onPrimaryMuted} size={20} strokeWidth={2.5} /> : <Eye color={C.onPrimaryMuted} size={20} strokeWidth={2.5} />}
               </Pressable>
               <Pressable onPress={handleCopy} hitSlop={12} style={styles.iconBtn}>
-                {copied ? <Check color={C.textInverse} size={20} strokeWidth={2.5} /> : <Copy color={C.onDarkMuted} size={20} strokeWidth={2.5} />}
+                {copied ? <Check color={C.textInverse} size={20} strokeWidth={2.5} /> : <Copy color={C.onPrimaryMuted} size={20} strokeWidth={2.5} />}
               </Pressable>
             </View>
           </Pressable>
@@ -452,7 +452,7 @@ const makeStyles = (C: Palette) => StyleSheet.create({
   numberLabel: {
     ...Type.caption,
     fontFamily: Font.bodySemi,
-    color: C.onDarkMuted,
+    color: C.onPrimaryMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -481,12 +481,12 @@ const makeStyles = (C: Palette) => StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: C.onDarkFill,
+    backgroundColor: C.onPrimaryFill,
     borderRadius: Radius.md,
   },
   tapHint: {
     ...Type.caption,
-    color: C.onDarkMuted,
+    color: C.onPrimaryMuted,
     marginTop: Space.md,
   },
   // Details

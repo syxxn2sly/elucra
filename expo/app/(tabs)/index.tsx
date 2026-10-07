@@ -470,7 +470,7 @@ const makeStyles = (C: Palette) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.md,
-    backgroundColor: C.onDarkFill,
+    backgroundColor: C.onPrimaryFill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -480,7 +480,7 @@ const makeStyles = (C: Palette) => StyleSheet.create({
   },
   heroCardSub: {
     ...Type.caption,
-    color: C.onDarkMuted,
+    color: C.onPrimaryMuted,
     marginTop: Space.xs,
   },
   // Snapshot grid

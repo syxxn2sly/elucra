@@ -52,6 +52,17 @@ const light = {
   scrim: "rgba(20, 15, 10, 0.45)",
 
   /*
+    Marks drawn ON a `primary` surface — the hero card, the health card number
+    block. Distinct from the onDark set below: `primary` is the ink, so it is
+    dark in the light theme and light in the dark theme, and anything sitting on
+    it has to invert with it. Using onDark* here put cream text on a cream card
+    in the dark theme.
+  */
+  onPrimary: "#FDF9F1",
+  onPrimaryMuted: "rgba(253,249,241,0.72)",
+  onPrimaryFill: "rgba(253,249,241,0.16)",
+
+  /*
     Marks drawn ON a dark surface: the health card, the photo viewer, the
     primary button. These were a dozen different rgba(255,255,255,…) alphas
     scattered across five files, which is how a system quietly stops being one.
@@ -122,6 +133,13 @@ const dark: typeof light = {
   shadowDeep: "rgba(0, 0, 0, 0.75)",
   scrim: "rgba(0, 0, 0, 0.6)",
 
+  // primary is light sand in this theme, so what sits on it has to go dark.
+  onPrimary: "#1B1510",
+  onPrimaryMuted: "rgba(27,21,16,0.72)",
+  onPrimaryFill: "rgba(27,21,16,0.12)",
+
+  // the onDark set keeps its light values: these sit on surfaces that are dark
+  // in BOTH themes — a photo, a camera preview, a scrim.
   onDark: "#FDF9F1",
   onDarkMuted: "rgba(253,249,241,0.72)",
   onDarkFill: "rgba(253,249,241,0.16)",
