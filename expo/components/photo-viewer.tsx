@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — tap any attached photo to open it full screen and zoom in.
+ * tap any attached photo to open it full screen and zoom in.
  *
  * A health card number, a handwritten dose, a lab value in small print: the
  * thumbnail is never enough to check the thing you actually care about, and the

@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — Autocomplete suggestion data.
+ * autocomplete suggestion data.
  * Common medical conditions, medications, allergies, surgeries, and
  * occupations that users can tap instead of typing. Reduces user error
  * and makes onboarding seamless.

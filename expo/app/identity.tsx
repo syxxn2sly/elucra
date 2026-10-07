@@ -1,4 +1,4 @@
-// CLAIRITY — Personal medical portfolio: family doctor and care-team record
+// personal medical portfolio: family doctor and care-team record
 import { router } from "expo-router";
 import { Stethoscope, Check, ShieldCheck } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";

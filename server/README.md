@@ -1,4 +1,4 @@
-# CLAIRITY API proxy
+# Elucra API proxy
 
 Holds the Anthropic key server-side so it stops shipping inside the app binary.
 

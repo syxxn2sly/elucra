@@ -1,4 +1,4 @@
-# CLAIRITY roadmap
+# Elucra roadmap
 
 Ordered by value to what the app is for, divided by cost given what already
 exists. Each chunk is independently shippable and testable in one build.
@@ -44,7 +44,7 @@ exists. Each chunk is independently shippable and testable in one build.
 
 ## Risk
 
-**Triage is the line.** Everything Clairity does today explains a document the user
+**Triage is the line.** Everything Elucra does today explains a document the user
 already has, with every fact traceable to the page. A symptom checker that says when
 to see a doctor has the app forming its own clinical judgement — a regulated activity
 in many jurisdictions and the one feature here that can cause direct harm by being

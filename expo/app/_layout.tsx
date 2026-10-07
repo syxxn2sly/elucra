@@ -1,4 +1,4 @@
-// CLAIRITY root layout — wraps app in QueryClient + ClairityProvider
+// Elucra root layout — wraps app in QueryClient + ClairityProvider
 import { Nunito_600SemiBold, Nunito_700Bold } from "@expo-google-fonts/nunito";
 import { NunitoSans_400Regular, NunitoSans_600SemiBold } from "@expo-google-fonts/nunito-sans";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

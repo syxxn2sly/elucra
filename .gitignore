@@ -1,3 +1,7 @@
 node_modules
 .env
 .expo
+
+# local-only, not published
+AGENTS.md
+CONTRIBUTING.md

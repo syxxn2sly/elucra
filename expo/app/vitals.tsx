@@ -1,4 +1,4 @@
-// CLAIRITY — log a reading and see what you have recorded
+// log a reading and see what you have recorded
 import { router } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Activity, CalendarDays, Plus, Trash2, X } from "lucide-react-native";

@@ -1,4 +1,4 @@
-// CLAIRITY — Travel health: worldwide destination directory + CDC guidance
+// travel health: worldwide destination directory + CDC guidance
 import { useQuery } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import {

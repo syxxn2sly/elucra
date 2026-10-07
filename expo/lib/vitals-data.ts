@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — what each vital is, and how it is written down.
+ * what each vital is, and how it is written down.
  *
  * Units are Canadian throughout: mmol/L for glucose, °C for temperature, kg for
  * weight. This is not cosmetic — a glucose of 5.5 is unremarkable in mmol/L and
@@ -7,7 +7,7 @@
  * meaningless to whoever reads it.
  *
  * The reference ranges below are shown as *reference*, never as a verdict.
- * CLAIRITY records what you measured; deciding whether a number is a problem is
+ * Elucra records what you measured; deciding whether a number is a problem is
  * a clinician's job, and an app that colours a reading red is making a call it
  * has no business making from a single measurement taken who-knows-how.
  */

@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — Shared UI components.
+ * shared UI primitives.
  * Deliberate clinical interface primitives: clear hierarchy, quiet surfaces,
  * consistent typography, and large high-contrast touch targets.
  */
@@ -34,7 +34,7 @@ export function canGoBackSafe(): boolean {
   }
 }
 
-/** Primary action button — a single, high-emphasis action. */
+/** one high-emphasis action per screen. */
 export function PrimaryButton({
   label,
   onPress,
@@ -73,7 +73,7 @@ export function PrimaryButton({
   );
 }
 
-/** Secondary action button — quiet outline treatment. */
+/** quiet outline alternative to PrimaryButton. */
 export function SecondaryButton({
   label,
   onPress,
@@ -96,7 +96,7 @@ export function SecondaryButton({
   );
 }
 
-/** A content surface with optional navigation affordance. */
+/** content surface. pass onPress to make it tappable. */
 export function Card({
   children,
   onPress,
@@ -119,7 +119,7 @@ export function Card({
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-/** A row with a label and chevron for navigation. */
+
 export function NavRow({
   label,
   sublabel,
@@ -149,7 +149,7 @@ export function NavRow({
   );
 }
 
-/** Section header with optional action. */
+
 export function SectionHeader({
   title,
   action,
@@ -171,7 +171,7 @@ export function SectionHeader({
   );
 }
 
-/** Tag/chip for status indicators — pill shape. */
+/** pill-shaped status chip. */
 export function Tag({
   text,
   color,
@@ -188,7 +188,7 @@ export function Tag({
   );
 }
 
-/** Empty state placeholder — friendly and encouraging. */
+
 export function EmptyState({
   icon,
   title,
@@ -263,7 +263,7 @@ export function ScreenHeader({
   );
 }
 
-/** Screen wrapper with safe scroll. */
+/** screen wrapper that handles safe-area scroll padding. */
 export function Screen({
   children,
   style,

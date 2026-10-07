@@ -1,4 +1,4 @@
-// CLAIRITY — Document Simplification flow (capture → AI analysis → result)
+// document Simplification flow (capture → AI analysis → result)
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";

@@ -1,26 +1,21 @@
 /**
- * CLAIRITY — translation of an already-simplified document.
+ * translates an already-simplified document.
  *
- * The pipeline is: document → Claude (extract facts, then explain them) →
- * this module (translate the explanation) → the user's language.
+ * order is: document -> Claude (extract, then explain) -> here -> user's
+ * language. translating after simplification is deliberate: translating the raw
+ * report first would hand the model a mistranslated source, and every safety
+ * check downstream would be validating the wrong text.
  *
- * Translating *after* simplification is deliberate. Machine-translating the raw
- * report first would hand the model a mistranslated source and every downstream
- * safety check would be validating the wrong text.
+ * the problem this file has is that Claude's output is verified and then an MT
+ * engine rewrites it, unverified. two failure modes matter in medical text:
  *
- * The safety problem this module has to solve is that Claude's output is
- * verified — numbers checked against the source, red flags checked for
- * completeness — and then a general-purpose translation engine rewrites it,
- * unverified. Two failure modes matter in medical text:
+ *   - a dropped negation ("do not take with food" -> "take with food"), which
+ *     reads fluently and is dangerous
+ *   - a mangled dose
  *
- *   - a dropped negation ("do not take with food" → "take with food") reads
- *     perfectly fluent and is dangerous;
- *   - a mangled dosage.
- *
- * We cannot prevent the first with an MT engine, which is why the UI keeps the
- * English alongside the translation for instructions and red flags. We can
- * prevent the second: every number and dose is marked no-translate so it passes
- * through byte-identical.
+ * we can't catch the first with an MT engine, which is why the UI keeps the
+ * English next to the translation. we can catch the second: numbers and doses
+ * are marked no-translate so they pass through unchanged.
  */
 
 import { translateStrings as translateWithClaude } from "./ai-service";
@@ -31,30 +26,26 @@ const REGION = process.env.EXPO_PUBLIC_AZURE_TRANSLATOR_REGION;
 const ENDPOINT = "https://api.cognitive.microsofttranslator.com/translate";
 const API_VERSION = "3.0";
 
-/** Azure caps a request at 1000 elements and 50,000 characters. Stay well under. */
+/** Azure caps a request at 1000 elements / 50,000 chars. stay well under. */
 const MAX_ITEMS_PER_REQUEST = 100;
 const MAX_CHARS_PER_REQUEST = 40000;
 
 export interface TranslationLanguage {
   code: string;
-  /** Shown in the picker, in the language itself — someone looking for their own language reads it there. */
+  /** shown in the picker, in the language itself. */
   label: string;
   english: string;
 }
 
 /**
- * Offered languages.
+ * ordered by speakers at home in Canada after English and French, then the rest
+ * we were asked to cover. `en` is first and means "leave as written".
  *
- * Ordered by speakers at home in Canada after English and French, then the
- * others we were asked to cover. `en` is first and means "leave it as written".
+ * `english` is the name handed to Claude as the target language, so it has to
+ * be the ordinary English name, not a label.
  *
- * `english` is not decoration — it is the name handed to Claude as the
- * translation target, so it has to be the language's ordinary English name.
- *
- * Chinese is listed by the dialect people actually name when asked what they
- * speak, rather than by script. The script still differs underneath — Mandarin
- * renders Simplified, Cantonese Traditional — which is what `english` carries
- * to the model.
+ * Chinese is listed by dialect rather than script, since that's what people say
+ * when asked. the script difference rides along in `english`.
  */
 export const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
   { code: "en", label: "English", english: "English" },
@@ -75,7 +66,7 @@ export const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
   { code: "ru", label: "Русский", english: "Russian" },
 ];
 
-/** Which engine will actually run. Claude is the default; Azure takes over once configured. */
+/** which engine runs. Claude by default; Azure takes over once configured. */
 export type TranslationProvider = "claude" | "azure" | "none";
 
 export function translationProvider(): TranslationProvider {
@@ -99,7 +90,7 @@ export function languageLabel(code: string): string {
   return TRANSLATION_LANGUAGES.find((l) => l.code === code)?.label ?? code;
 }
 
-/** Right-to-left scripts need `writingDirection` on the rendered text. */
+/** RTL scripts need writingDirection set on the rendered text. */
 export function isRightToLeft(code: string): boolean {
   return ["ar", "ur", "fa", "he"].includes(code);
 }
@@ -130,12 +121,9 @@ function unescapeHtml(text: string): string {
     .replace(/&quot;/g, '"');
 }
 
-/**
- * Numbers, doses, times and ranges. Anything matched here is wrapped so Azure
- * leaves it exactly as-is — "500 mg twice daily" must never come back as a
- * different number, and localised digits would make a dose harder to read
- * against the pill bottle, not easier.
- */
+// numbers, doses, times, ranges. anything matched gets wrapped so Azure leaves
+// it alone. "500 mg twice daily" must not come back as a different number, and
+// localised digits make a dose harder to check against the bottle, not easier.
 const NUMERIC =
   /\d+(?:[.,:/-]\d+)*\s?(?:mg|mcg|µg|g|kg|ml|mL|L|IU|units?|tablets?|capsules?|puffs?|drops?|%|°C|°F)?/gi;
 
@@ -180,9 +168,8 @@ async function translateBatch(texts: string[], to: string): Promise<string[]> {
 }
 
 /**
- * Translate a list of strings, preserving order and index. Empty entries are
- * passed straight through so the caller can map results back positionally
- * without worrying about Azure collapsing blanks.
+ * translate a list of strings, keeping order and index. empty entries pass
+ * through so callers can map results back positionally — Azure collapses blanks.
  */
 export async function translateTexts(texts: string[], to: string): Promise<string[]> {
   if (to === "en" || texts.length === 0) return texts;
@@ -243,14 +230,14 @@ export async function translateTexts(texts: string[], to: string): Promise<strin
 /* ------------------------------------------------------- document translation */
 
 /**
- * Translate the human-readable parts of an analysis.
+ * translate the human-readable parts of an analysis.
  *
- * Deliberately NOT translated:
- *   - `facts` — the verified extraction the app reasons over. It has to stay
- *     comparable to the source document, and nothing renders it as prose.
- *   - `scripts` — communication scripts are already generated per language and
- *     carry their own `language` tag. Running a Punjabi script through an
- *     English-source translation would produce nonsense.
+ * not translated, on purpose:
+ *   - `facts` — the verified extraction. has to stay comparable to the source,
+ *     and nothing renders it as prose anyway.
+ *   - `scripts` — already generated per language and tagged with their own
+ *     `language`. running a Punjabi script through an English-source
+ *     translation gives nonsense.
  */
 export async function translateSimplification(
   result: SimplificationResult,

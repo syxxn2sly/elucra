@@ -1,4 +1,4 @@
-// CLAIRITY — a summary to show your doctor at the start of an appointment
+// a summary to show your doctor at the start of an appointment
 import { router } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Check, ClipboardCheck, Copy, RefreshCw, Share as ShareIcon, Stethoscope } from "lucide-react-native";

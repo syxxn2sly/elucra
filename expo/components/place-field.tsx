@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — a text field that looks up real places as you type.
+ * a text field that looks up real places as you type.
  *
  * Anywhere the app asks for a clinic, lab or hospital, it should offer the same
  * help rather than leaving the user to type an address from memory. This is the

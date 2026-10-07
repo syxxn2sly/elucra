@@ -1,15 +1,10 @@
-/**
- * CLAIRITY design tokens.
- *
- * Every spacing, radius, and type value in the app comes from this file.
- * If a screen needs a number that isn't here, the answer is almost always to
- * use the nearest token rather than to add a new one — the whole point is that
- * the set stays small enough to hold in your head.
- */
+// design tokens. every spacing, radius and type value comes from here.
+// if a screen needs a number that isn't here, use the nearest token rather
+// than adding one — the set is meant to stay small.
 
 import { Platform } from "react-native";
 
-/** 8px grid. `xs` and `sm` are the only sub-grid steps, for tight inline gaps. */
+/** 8px grid. xs and sm are the only sub-grid steps, for tight inline gaps. */
 export const Space = {
   xs: 4,
   sm: 8,
@@ -20,14 +15,9 @@ export const Space = {
   xxxl: 48,
 } as const;
 
-/**
- * Radii by role rather than by size: `sm` for inline chips and tags, `md` for
- * every card, row, button and input, `lg` for the blocks that carry a whole
- * section, `xl` for sheets, `pill` for anything genuinely circular.
- *
- * `md` covers roughly three quarters of all uses, so it is the value that
- * actually sets how soft the app feels.
- */
+// radii by role, not size: sm for chips and tags, md for cards, rows,
+// buttons and inputs, lg for section blocks, xl for sheets, pill for circles.
+// md covers most uses, so it's the value that sets how soft the app looks.
 export const Radius = {
   sm: 10,
   md: 14,
@@ -36,32 +26,24 @@ export const Radius = {
   pill: 999,
 } as const;
 
-/**
- * Typefaces.
- *
- * Nunito for anything structural and NunitoSans for reading: rounded terminals
- * on headings carry the warmth, while the companion sans keeps body copy calm
- * at small sizes. Both are bundled — see `useFonts` in app/_layout.tsx.
- *
- * IMPORTANT: with a custom font, React Native picks the face by family name,
- * and `fontWeight` is ignored. Weight therefore lives in the family here, and
- * there is deliberately no `Weight` export any more: a leftover
- * `fontWeight: Weight.semibold` would silently render regular.
- */
+// Nunito for headings, NunitoSans for body. both bundled — see useFonts in
+// app/_layout.tsx.
+//
+// gotcha: with a custom font React Native picks the face by family name and
+// ignores fontWeight. weight lives in the family name here, and there is no
+// Weight export on purpose — a leftover fontWeight would silently render
+// regular.
 export const Font = {
   headSemi: "Nunito_600SemiBold",
   headBold: "Nunito_700Bold",
   bodyRegular: "NunitoSans_400Regular",
   bodySemi: "NunitoSans_600SemiBold",
-  /** Doses, card numbers and record IDs — anything read against a printed source. */
+  /** doses, card numbers, record IDs — anything read against a printed source. */
   mono: Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }) as string,
 } as const;
 
-/**
- * Four type levels plus a caption. Hierarchy comes from size and family
- * together — body copy is regular, structural text is semibold, and only page
- * titles are bold.
- */
+// four levels plus a caption. hierarchy comes from size and family together:
+// body is regular, structural text semibold, only page titles bold.
 export const Type = {
   display: { fontFamily: Font.headBold, fontSize: 28, lineHeight: 34 },
   title: { fontFamily: Font.headBold, fontSize: 20, lineHeight: 26 },
@@ -69,23 +51,16 @@ export const Type = {
   body: { fontFamily: Font.bodyRegular, fontSize: 16, lineHeight: 24 },
   label: { fontFamily: Font.bodySemi, fontSize: 15, lineHeight: 20 },
   /**
-   * 14, not 13.
-   *
-   * This carries dates, reference ranges, source citations and the disclaimers
-   * — the quiet half of a health app, and the half an older reader most often
-   * has to squint at. It is used in about 130 places, so a point here is worth
-   * more than a redesign of any single screen. 14 is the floor for secondary
-   * text; anything smaller should be a deliberate exception with a reason.
+   * 14, not 13. carries dates, reference ranges, citations and disclaimers —
+   * the text an older reader is most likely to squint at, used in ~130 places.
+   * 14 is the floor for secondary text; smaller needs a stated reason.
    */
   caption: { fontFamily: Font.bodySemi, fontSize: 14, lineHeight: 19 },
   mono: { fontFamily: Font.mono, fontSize: 14, lineHeight: 20 },
 } as const;
 
-/**
- * A single elevation step. Cards are separated by a hairline border, not by
- * shadow — the shadow here is reserved for surfaces that genuinely float
- * above the page (sheets, the tab bar).
- */
+// one elevation step. cards are separated by a hairline border, not shadow.
+// this is only for surfaces that actually float: sheets and the tab bar.
 export const Elevation = {
   raised: {
     shadowColor: "#2A2119",
@@ -96,5 +71,5 @@ export const Elevation = {
   },
 } as const;
 
-/** Minimum touch target. Below this, a control fails accessibility review. */
+/** minimum touch target. below this a control fails accessibility review. */
 export const HIT_TARGET = 48;

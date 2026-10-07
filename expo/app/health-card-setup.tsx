@@ -1,4 +1,4 @@
-// CLAIRITY — Health Card setup (photo autofill + manual entry)
+// health Card setup (photo autofill + manual entry)
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as ImagePicker from "expo-image-picker";
@@ -39,6 +39,7 @@ import { resizeForUpload } from "@/lib/resize-for-upload";
 import type { HealthCardData } from "@/lib/types";
 
 const C = Colors.light;
+// old name on purpose: renaming either key makes a stored card unreadable.
 const CARD_KEY = "clairity_healthcard_secure";
 const OBFUSCATE_KEY = "clairity_v1_2025";
 

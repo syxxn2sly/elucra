@@ -1,33 +1,30 @@
 /**
- * CLAIRITY palette — "warm clinical".
+ * palette. two rules:
  *
- * Two ideas hold this system together:
+ * 1. the interface is warm neutrals only — no decorative brand hue. `primary`
+ *    is the ink rather than a colour, which is what lets a primary button
+ *    (background `primary`, label `textInverse`) invert between themes without
+ *    a second token.
  *
- * 1. The interface is warm neutrals only. Sand and cocoa, no decorative brand
- *    hue. `primary` is deliberately the *ink* rather than a colour, which is
- *    what lets a primary button (background `primary`, label `textInverse`)
- *    invert correctly between the two themes instead of needing a second token.
+ * 2. colour means clinical status only: danger / warning / success, i.e.
+ *    overdue, due soon, up to date. nothing is tinted for decoration, so a
+ *    screen with colour on it is one that needs the user. for emphasis alone,
+ *    use weight or spacing.
  *
- * 2. Colour is reserved for clinical meaning — danger / warning / success, i.e.
- *    overdue, due soon, up to date. Nothing is tinted for decoration, so a
- *    screen with colour on it is a screen that needs the user. Keep it that way:
- *    if you reach for a hue here for emphasis alone, use weight or spacing
- *    instead.
- *
- * `light` and `dark` MUST keep identical key sets — document-detail.tsx builds
- * a palette key at runtime (`doc${PascalCase(type)}`) and indexes into this, so
- * a key missing from one theme fails silently at the `?? docGeneral` fallback.
+ * `light` and `dark` must keep identical key sets. document-detail.tsx builds a
+ * palette key at runtime (`doc${PascalCase(type)}`) and indexes into this, so a
+ * key missing from one theme fails silently at the `?? docGeneral` fallback.
  */
 
 const light = {
-  // Ink — the primary action colour, not a hue
+  // ink — the primary action colour, not a hue
   primary: "#2A2119",
   primaryDark: "#1B1510",
   primarySoft: "#E9DDC9",
   accent: "#6B5A46",
   accentSoft: "#EFE6D6",
 
-  // Clinical status
+  // clinical status
   danger: "#B34530",
   dangerSoft: "#F8E3DB",
   success: "#56704E",
@@ -51,7 +48,7 @@ const light = {
 
   shadow: "rgba(42, 33, 25, 0.07)",
   shadowDeep: "rgba(42, 33, 25, 0.16)",
-  /** Modal/overlay backdrop. Theme-independent by intent — it dims whatever is behind it. */
+  /** modal backdrop. theme-independent on purpose — it dims whatever is behind it. */
   scrim: "rgba(20, 15, 10, 0.45)",
 
   /*
@@ -63,7 +60,7 @@ const light = {
   onDark: "#FDF9F1",
   onDarkMuted: "rgba(253,249,241,0.72)",
   onDarkFill: "rgba(253,249,241,0.16)",
-  /** Veils over a photo or a live camera, darkest first. */
+  /** veils over a photo or live camera, darkest first. */
   scrimHeavy: "rgba(15,11,7,0.96)",
   inkVeil: "rgba(42,33,25,0.82)",
   inkVeilSoft: "rgba(42,33,25,0.62)",
@@ -145,7 +142,7 @@ const dark: typeof light = {
   docVaccination: "#A0C094",
 };
 
-/** The shape every screen styles against. */
+/** the shape every screen styles against. */
 export type Palette = typeof light;
 
 export default { light, dark };

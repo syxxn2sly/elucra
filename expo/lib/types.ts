@@ -1,4 +1,4 @@
-/** CLAIRITY — Core domain types. */
+// domain types shared across screens and the store.
 
 export type DocumentType =
   | "blood_work"
@@ -213,9 +213,9 @@ export interface SavedDocument {
 
 /** One language's rendering of a document's scripts, in the order they appear. */
 export interface ScriptTranslation {
-  /** The body text of each script. */
+  
   bodies: string[];
-  /** The heading of each script, in the same order. */
+  /** headings, same order as `bodies`. */
   purposes: string[];
 }
 
@@ -250,7 +250,6 @@ export interface Appointment {
   createdAt: string;
 }
 
-/** One dose in a multi-dose series. */
 /**
  * What can be logged. Kept as a closed set rather than free text so a reading
  * always knows its own units and reference range, and so trends can group.

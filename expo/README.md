@@ -1,8 +1,8 @@
-# CLAIRITY Expo app
+# Elucra Expo app
 
 ## Project info
 
-This is the local Expo + React Native app for CLAIRITY.
+This is the local Expo + React Native app for Elucra.
 
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native

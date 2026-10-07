@@ -1,4 +1,4 @@
-// CLAIRITY — every simplified report, newest first
+// every simplified report, newest first
 import { router } from "expo-router";
 import { FileText, Plus, Trash2 } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";

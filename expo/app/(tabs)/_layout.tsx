@@ -1,4 +1,4 @@
-// CLAIRITY — Tab navigation
+// tab navigation
 import { Tabs } from "expo-router";
 import {
   FileHeart,

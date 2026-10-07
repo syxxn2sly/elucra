@@ -1,4 +1,4 @@
-// CLAIRITY — Home / Health Snapshot dashboard
+// home / Health Snapshot dashboard
 import { router } from "expo-router";
 import {
   FileHeart,

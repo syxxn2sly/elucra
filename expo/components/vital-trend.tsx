@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — the shape of a measure over time.
+ * the shape of a measure over time.
  *
  * Deliberately descriptive, never evaluative. It says "down 6 since March", not
  * "improving"; it draws the line and leaves the reading of it to the person who

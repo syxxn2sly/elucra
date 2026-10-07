@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — Image resize utility for AI upload.
+ * image resize utility for AI upload.
  *
  * Walks a compression ladder to keep image bytes under the request-body limit,
  * using expo-image-manipulator. Estimates base64 byte length without the Buffer

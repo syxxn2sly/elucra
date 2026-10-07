@@ -90,8 +90,8 @@ expo/          the app
   lib/         ai-service.ts, translate.ts, store.ts, types.ts
   scripts/     ship.mjs (EAS), ship-local.mjs (local archive)
 server/        the Cloudflare Worker holding the Anthropic key
-site/          the marketing and support site
-docs/          release runbook, roadmap, privacy policy
+site/          the marketing and support site, including privacy.html
+docs/          release runbook, roadmap, store listing
 testing/       a sample lab report for reviewers and manual testing
 ```
 

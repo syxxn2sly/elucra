@@ -1,58 +1,50 @@
 /**
- * CLAIRITY API proxy.
+ * API proxy. holds the Anthropic key server-side.
  *
- * The app used to call api.anthropic.com directly with an EXPO_PUBLIC_ key,
- * which ships inside the binary and can be extracted from it by anyone who
- * installs the app. This holds the key server-side instead.
+ * the app used to call api.anthropic.com directly with an EXPO_PUBLIC_ key,
+ * which ships in the binary and can be pulled out of it.
  *
- * A plain forwarder would not actually fix anything — it would just move the
- * open endpoint from Anthropic to here, still spending the same money, only now
- * without even a per-key dashboard to notice it. So this also:
+ * a plain forwarder wouldn't fix that — it would just move the open endpoint
+ * here, spending the same money with less visibility. so this also requires a
+ * client token, rate-limits per IP, allows only the one upstream path the app
+ * uses, and caps the body size.
  *
- *   - requires a client token, so the endpoint is not usable by a bare curl
- *   - rate-limits per client IP, so one caller cannot drain the budget
- *   - allows only the one upstream path the app actually uses
- *   - caps the request body, since the app already resizes below this
- *
- * None of that makes abuse impossible: the client token ships in the app too,
- * and a determined person will find it. What it buys is containment — a token
- * you can rotate without an App Store release, a ceiling on spend per IP, and
- * somewhere to see it happening.
+ * this doesn't make abuse impossible; the client token ships in the app too.
+ * it buys containment: a token you can rotate without an App Store release, a
+ * spend ceiling per IP, and somewhere to see it happening.
  */
 
 interface Env {
-  /** The real Anthropic key. `wrangler secret put ANTHROPIC_API_KEY` — never in wrangler.toml. */
+  /** the real key. set with `wrangler secret put` — never in wrangler.toml. */
   ANTHROPIC_API_KEY: string;
-  /** Shared token the app sends. Rotate this to cut off a leaked build. */
+  /** shared token the app sends. rotate to cut off a leaked build. */
   CLIENT_TOKEN: string;
-  /** Durable rate-limit counters, keyed by IP. */
+  /** rate-limit counters, keyed by IP. */
   RATE_LIMIT: KVNamespace;
 }
 
 const UPSTREAM = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 
-/** The app resizes to 3 MB before encoding; this leaves room for the JSON around it. */
+/** the app resizes to 3 MB before encoding; this leaves room for the JSON. */
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 
 /*
-  The proxy used to forward the request body to Anthropic untouched. That left
-  the two most expensive fields — `model` and `max_tokens` — under the caller's
-  control, and the client token that authorises the call ships inside the app
-  where it can be extracted. So a token holder could ask this endpoint for any
-  model at any length: sixty Opus calls at 64k output is roughly three hundred
-  dollars an hour, from one IP, inside the rate limit.
+  this used to forward the body untouched, which left `model` and `max_tokens`
+  under the caller's control. since the client token ships in the app, anyone
+  who extracted it could ask for any model at any length — well into the
+  hundreds of dollars an hour from a single IP, all inside the rate limit.
 
-  The app only ever asks for one model and never more than 8000 tokens, so
-  pinning both costs nothing and turns "any Claude request you like" back into
-  "the requests this app makes".
+  the app only asks for one model and never more than 8000 tokens, so pinning
+  both costs nothing and turns "any Claude request" back into "the requests this
+  app makes".
 */
 const ALLOWED_MODELS = new Set(["claude-sonnet-5"]);
 const MAX_OUTPUT_TOKENS = 8192;
-/** The extract call sends one document image plus prompts; nothing legitimate is longer. */
+/** extract sends one image plus prompts; nothing legitimate is longer. */
 const MAX_MESSAGES = 8;
 
-/** Per-IP ceiling. A real user scans a handful of documents a day, not sixty. */
+/** per-IP ceiling. a real user scans a few documents a day, not sixty. */
 const RATE_LIMIT_REQUESTS = 60;
 const RATE_LIMIT_WINDOW_SECONDS = 3600;
 
@@ -172,6 +164,7 @@ export default {
 
     // Constant-time-ish comparison is overkill for a shared token, but an early
     // length check avoids leaking its length through timing on a long guess.
+    // header name is part of the deployed contract; the shipped app sends this.
     const token = request.headers.get("x-clairity-token") ?? "";
     if (token.length !== env.CLIENT_TOKEN.length || token !== env.CLIENT_TOKEN) {
       return json({ error: { message: "Not authorised." } }, 401, request);

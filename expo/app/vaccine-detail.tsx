@@ -1,4 +1,4 @@
-// CLAIRITY — Vaccine detail (dating, proof, reminders)
+// vaccine detail (dating, proof, reminders)
 import { router, useLocalSearchParams } from "expo-router";
 import {
   Shield,
@@ -47,7 +47,6 @@ export default function VaccineDetailScreen() {
 
   const vac = vaccines.find((v) => v.id === id);
   const [editingDate, setEditingDate] = useState(!vac?.hasDate);
-  /** Which dose the editor is open for, or null. Dose 1 is edited above. */
   /** Which dose the proof section is showing. Ignored for a single-shot vaccine. */
   const [proofDose, setProofDose] = useState(1);
   const [month, setMonth] = useState<number | null>(vac?.monthReceived ?? null);

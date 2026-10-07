@@ -1,17 +1,9 @@
 import { Alert, Platform } from "react-native";
 
-/** CLAIRITY — Utility helpers. */
-
-/**
- * Generate a unique ID.
- */
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/**
- * Format a month/year pair into a human-readable string.
- */
 export function formatMonthYear(month: number | null, year: number | null): string {
   if (!month || !year) return "Date not recorded";
   const months = [
@@ -22,9 +14,6 @@ export function formatMonthYear(month: number | null, year: number | null): stri
   return `${monthName} ${year}`;
 }
 
-/**
- * Compute the next-due date from a received date and a cadence in months.
- */
 export function computeNextDue(
   monthReceived: number | null,
   yearReceived: number | null,
@@ -36,9 +25,6 @@ export function computeNextDue(
   return date.toISOString();
 }
 
-/**
- * Format a next-due ISO date into a friendly countdown string.
- */
 export function formatDueCountdown(dueDate: string | null): string {
   if (!dueDate) return "";
   const due = new Date(dueDate);
@@ -114,9 +100,6 @@ export function deobfuscate(encoded: string, key: string): string {
   }
 }
 
-/**
- * Format a date string for display.
- */
 export function formatDateDisplay(isoString: string): string {
   const date = new Date(isoString);
   return date.toLocaleDateString("en-US", {

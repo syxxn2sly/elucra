@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — the launch animation.
+ * the launch animation.
  *
  * The native splash is a still image and cannot animate, so it is configured to
  * show the mark small and centred on the same cream this screen uses. This

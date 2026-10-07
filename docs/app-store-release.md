@@ -1,4 +1,4 @@
-# Shipping CLAIRITY to the App Store
+# Shipping Elucra to the App Store
 
 Written 2026-08-17, against build 26. TestFlight is already working, so the
 mechanics of building and submitting are proven. What follows is what changes

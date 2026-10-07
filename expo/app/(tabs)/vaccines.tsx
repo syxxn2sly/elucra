@@ -1,4 +1,4 @@
-// CLAIRITY — Vaccines tab
+// vaccines tab
 import { router } from "expo-router";
 import {
   Shield,

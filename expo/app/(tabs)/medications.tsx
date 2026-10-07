@@ -1,4 +1,4 @@
-// CLAIRITY — Medications tab
+// medications tab
 import { router } from "expo-router";
 import { Pill, Plus, Trash2, Clock, FileText, Pencil, AlertCircle } from "lucide-react-native";
 import React, { useCallback } from "react";

@@ -1,4 +1,4 @@
-// CLAIRITY — Health Card viewer (biometric-locked secure storage).
+// health Card viewer (biometric-locked secure storage).
 // Reached from Settings › Health Card once a card is saved; it is a pushed
 // stack screen, not a tab, so it draws its own ScreenHeader for the way back.
 import { router } from "expo-router";
@@ -28,6 +28,7 @@ import { confirmDestructive, deobfuscate, notify, obfuscate } from "@/lib/utils"
 import type { HealthCardData } from "@/lib/types";
 
 const C = Colors.light;
+// old name on purpose: renaming either key makes a stored card unreadable.
 const CARD_KEY = "clairity_healthcard_secure";
 const OBFUSCATE_KEY = "clairity_v1_2025";
 

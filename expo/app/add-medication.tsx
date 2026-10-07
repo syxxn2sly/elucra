@@ -1,4 +1,4 @@
-// CLAIRITY — Add / edit medication modal
+// add / edit medication modal
 import { router, useLocalSearchParams } from "expo-router";
 import { Check, Pill } from "lucide-react-native";
 import React, { useState, useCallback, useEffect, useRef } from "react";

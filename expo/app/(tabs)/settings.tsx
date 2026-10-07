@@ -1,4 +1,4 @@
-// CLAIRITY — Settings screen (edit profile, view app info)
+// settings screen (edit profile, view app info)
 import { router } from "expo-router";
 import {
   User,

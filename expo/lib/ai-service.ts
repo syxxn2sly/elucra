@@ -1,10 +1,9 @@
-/**
- * CLAIRITY — Safety-first medical document pipeline.
- *
- * Stage 1–3: a vision extractor produces source-located, structured facts only.
- * Stage 4–5: a separate communicator receives those facts, never the image.
- * Stage 6: local verification rejects unsupported numbers, facts, or red flags.
- */
+// document pipeline, in three parts:
+//   extract     — vision pass, returns structured facts tagged with the source
+//                 block they came from. no interpretation.
+//   communicate — writes the explanation from those facts only, never the image.
+//   verify      — local check. drops numbers and claims the extraction doesn't
+//                 support. not a model call, so it can't be argued out of it.
 
 import type {
   CommunicationScript,
@@ -26,21 +25,17 @@ import type {
 } from "./types";
 
 /*
-  Two ways to reach the model, and which one is used depends on configuration
-  rather than on a code change.
+  two ways to reach the model, picked by config rather than by a code change.
 
-  PROXY (set EXPO_PUBLIC_API_BASE): requests go to our own worker, which holds
-  the Anthropic key server-side. The app sends only a client token — which does
-  still ship in the binary, but can be rotated from a dashboard without an App
-  Store release, and is worth far less to whoever extracts it than a billable
-  API key.
+  proxy (EXPO_PUBLIC_API_BASE set): requests go to our worker, which holds the
+  Anthropic key server-side. the app only sends a client token. that token still
+  ships in the binary, but it can be rotated without an App Store release and is
+  worth much less to whoever extracts it than a billable key.
 
-  DIRECT (no EXPO_PUBLIC_API_BASE): the old path, with the key in the bundle.
-  Kept so local development and existing builds keep working, and so deploying
-  the proxy is a config flip rather than a hard cutover. It is not suitable for
-  anything distributed beyond people you trust.
+  direct (no EXPO_PUBLIC_API_BASE): key in the bundle. kept so local dev and
+  older builds keep working. not safe for anything distributed.
 
-  See server/src/worker.ts and its deployment notes.
+  see server/src/worker.ts.
 */
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE;
 const CLIENT_TOKEN = process.env.EXPO_PUBLIC_CLIENT_TOKEN;
@@ -51,18 +46,17 @@ const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const CLASSIFICATION_THRESHOLD = 0.65;
 /**
- * Below this, a read is unreliable enough that a retake genuinely helps.
+ * below this a retake actually helps.
  *
- * It was 0.85, which rejected any photo of a real document — creased, dim,
- * handwritten — even when every character was legible, and asked for a "clearer
- * photo" of a page that was already as clear as it gets. The gate is no longer
- * carrying the safety burden on its own: every fact is source-linked, and
- * anything the explanation cannot tie back to the page is pruned per item. So
- * this only needs to catch reads that are actually untrustworthy.
+ * was 0.85, which rejected creased or dim photos that were perfectly legible
+ * and asked for a "clearer photo" of a page already as clear as it gets. this
+ * gate no longer carries safety on its own — facts are source-linked and
+ * anything untraceable is pruned per item — so it only needs to catch reads
+ * that are genuinely untrustworthy.
  */
 const QUALITY_THRESHOLD = 0.55;
 
-/** Above this a read is clean; between the two it is usable but worth checking. */
+/** above this a read is clean. between the two it's usable but worth checking. */
 const QUALITY_CONFIDENT = 0.8;
 
 type UnknownRecord = Record<string, unknown>;
@@ -104,7 +98,7 @@ export interface MedicationNormalizationResult {
   fhirResource?: Record<string, unknown>;
 }
 
-/** A source image needs a clearer re-photo before CLAIRITY can safely continue. */
+/** the photo needs retaking before we can safely continue. */
 export class DocumentNeedsRetakeError extends Error {
   constructor(message: string) {
     super(message);
@@ -112,7 +106,7 @@ export class DocumentNeedsRetakeError extends Error {
   }
 }
 
-/** The submitted image is readable, but it is not a medical document. */
+/** readable, but not a medical document. */
 export class NonMedicalDocumentError extends Error {
   constructor() {
     super("This does not appear to be a medical document. Please upload a report, prescription, referral, discharge paper, imaging result, or vaccination record.");
@@ -707,7 +701,7 @@ function sourceNumericKeys(text: string): Set<string> {
   return keys;
 }
 
-/** Every number in `text` that does not appear anywhere in the source. */
+/** numbers in `text` that appear nowhere in the source. */
 function unsupportedNumbers(text: string, sourceKeys: Set<string>): string[] {
   return numbers(text)
     .filter((value) => !sourceKeys.has(numericKey(value)))
@@ -747,7 +741,7 @@ function verifyAndPrune(
   let droppedUnlinked = 0;
   let droppedNumeric = 0;
 
-  /** Keep an item only if it is source-linked and every number in it is too. */
+  /** keep an item only if it's source-linked and every number in it checks out. */
   const keep = <T extends { sourceBlockIds: string[] }>(item: T, text: string[]): T | null => {
     const linked = item.sourceBlockIds.filter((id) => blockIds.has(id));
     if (linked.length === 0) {
@@ -840,7 +834,7 @@ function verifyAndPrune(
   };
 }
 
-/** Run the full safety-first document pipeline. */
+
 export async function analyzeDocument(input: AnalysisInput): Promise<SimplificationResult> {
   const extraction = await extractFacts(input);
   const rawCards = await communicateFacts(extraction);

@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — routine screening in Canada.
+ * routine screening in Canada.
  *
  * A curated local dataset, in the spirit of VACCINE_CATALOG, rather than a live
  * feed. There is no Canadian screening API; the guidance lives in CTFPHC
@@ -9,7 +9,7 @@
  * These numbers are the whole feature — a wrong one sends someone for a test
  * their program does not offer, or worse, reassures them out of one it does.
  *
- * Deliberately absent: any notion of being "due". CLAIRITY does not know when
+ * Deliberately absent: any notion of being "due". Elucra does not know when
  * you were last screened, what your family history means, or what your clinician
  * has already decided. It reports what a program generally offers at a given
  * age, and says to ask. That is the line the roadmap's Risk section draws.

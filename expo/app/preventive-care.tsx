@@ -1,4 +1,4 @@
-// CLAIRITY — routine screening: what's offered, what you've had, when the next one lands
+// routine screening: what's offered, what you've had, when the next one lands
 import { router } from "expo-router";
 import { ExternalLink, MapPin, ShieldCheck, Trash2 } from "lucide-react-native";
 import React, { useMemo } from "react";
@@ -33,7 +33,7 @@ function provinceCode(name: string): ProvinceCode | null {
  * Where this age sits relative to the programme's band.
  *
  * Deliberately not "due" or "overdue" — this is population screening and
- * CLAIRITY does not know whether the person has had it. "Due" only appears
+ * Elucra does not know whether the person has had it. "Due" only appears
  * below once a record exists, computed from the date the person entered, the
  * same posture the vaccine tracker already uses.
  */

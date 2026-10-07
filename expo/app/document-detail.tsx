@@ -1,4 +1,4 @@
-// CLAIRITY — Document detail (structured AI analysis output cards)
+// document detail (structured AI analysis output cards)
 import { router, useLocalSearchParams } from "expo-router";
 import {
   Check,

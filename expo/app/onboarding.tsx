@@ -1,4 +1,4 @@
-// CLAIRITY — Onboarding flow (smart multi-step health profile intake)
+// onboarding flow (smart multi-step health profile intake)
 import { router } from "expo-router";
 import { ChevronLeft, Check, Sparkles, User, Cake, VenusAndMars, MapPin, Info, HeartPulse, Scissors, Pill, AlertCircle, Users, Cigarette, Wine, Briefcase, Syringe } from "lucide-react-native";
 import React, { useState, useCallback } from "react";

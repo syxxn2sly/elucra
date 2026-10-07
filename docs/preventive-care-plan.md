@@ -13,7 +13,7 @@ short note on what each test is and roughly how often it is offered.
 
 ## What it is not
 
-It does not say the user is *due* or *overdue*. CLAIRITY does not know when they
+It does not say the user is *due* or *overdue*. Elucra does not know when they
 were last screened, what their family history means, or what their clinician has
 already decided. The framing is "this is what is generally offered at your age;
 ask your doctor what applies to you." Anything stronger is the app forming

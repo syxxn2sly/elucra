@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — place lookup for appointment locations.
+ * place lookup for appointment locations.
  *
  * Uses Photon (photon.komoot.io), an OpenStreetMap-backed geocoder that needs
  * no API key and is explicitly built for type-ahead. Nominatim, the other

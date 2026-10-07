@@ -1,4 +1,4 @@
-/** CLAIRITY — Vaccine catalog and travel destinations. */
+/** vaccine catalog and travel destinations. */
 
 import type { VaccineInfo, TravelDestination } from "./types";
 

@@ -1,5 +1,5 @@
 /**
- * CLAIRITY — Smart input components.
+ * form inputs with suggestions.
  * AutocompleteInput, ChipSelect, MultiChipInput, AgeWheel.
  * Reduces user error with tap-to-select suggestions and pickers.
  */
@@ -37,7 +37,7 @@ const WHEEL_PADDING = (WHEEL_HEIGHT - ITEM_HEIGHT) / 2;
 const MIN_AGE = 1;
 const MAX_AGE = 120;
 
-/** Autocomplete text input with dropdown suggestions. */
+
 export function AutocompleteInput({
   value,
   onChangeText,
@@ -117,7 +117,7 @@ export function AutocompleteInput({
   );
 }
 
-/** Single-select chip picker — tap one option from a row of pills. */
+/** pick one. */
 export function ChipSelect({
   options,
   value,
@@ -163,7 +163,7 @@ export function ChipSelect({
   );
 }
 
-/** Multi-select chip picker — tap multiple options, build a list. */
+/** pick several. */
 export function MultiChipInput({
   selectedItems,
   onToggle,
@@ -181,7 +181,7 @@ export function MultiChipInput({
   placeholder?: string;
   label?: string;
   required?: boolean;
-  /** Cap on selections. Unlimited when omitted. */
+  /** max selections. unlimited when omitted. */
   maxItems?: number;
 }) {
   /*
@@ -309,7 +309,7 @@ export function MultiChipInput({
   );
 }
 
-/** Age selection wheel — modal with scrollable number picker. */
+
 export function AgeWheel({
   value,
   onChange,

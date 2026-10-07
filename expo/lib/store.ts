@@ -1,9 +1,5 @@
-/**
- * CLAIRITY — App-wide context provider using @nkzw/create-context-hook.
- *
- * Consolidates all persistent state: health profile, documents, vaccines,
- * medications, and health card. Uses AsyncStorage for persistence.
- */
+// app-wide state, persisted to AsyncStorage. everything that outlives a screen
+// lives here rather than in a second storage layer.
 
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,6 +21,8 @@ import { generateId, computeNextDue } from "./utils";
 import { VACCINE_CATALOG } from "./vaccine-data";
 import { cancelReminder, scheduleAppointmentReminder, scheduleMedicationReminder } from "./reminders";
 
+// keys keep the old "clairity" prefix on purpose — renaming them orphans the
+// data on every device that already has the app installed.
 const STORAGE_KEYS = {
   profile: "@clairity/profile",
   documents: "@clairity/documents",
