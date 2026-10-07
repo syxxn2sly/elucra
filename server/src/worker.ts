@@ -170,7 +170,10 @@ function reject(
     only be substring-matched, which makes it useless to alert on.
   */
   console.log({
-    event,
+    // named reject_reason, not "event": the query builder's own namespace is
+    // full of $workers.event.*, and a custom key called event is a nuisance to
+    // find among them.
+    reject_reason: event,
     status,
     ip: request.headers.get("cf-connecting-ip") ?? "unknown",
     country: request.headers.get("cf-ipcountry") ?? "??",
