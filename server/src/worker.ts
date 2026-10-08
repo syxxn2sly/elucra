@@ -19,8 +19,25 @@ interface Env {
   ANTHROPIC_API_KEY: string;
   /** shared token the app sends. rotate to cut off a leaked build. */
   CLIENT_TOKEN: string;
-  /** rate-limit counters, keyed by IP. */
+  /**
+   * Hourly spend budget, keyed by IP.
+   *
+   * KV reads are eventually consistent, so a burst of read-modify-write loses
+   * updates — 25 rapid requests measured as 7. It is kept because an approximate
+   * hourly ceiling is still worth having, but it undercounts, which means it errs
+   * toward letting traffic through. The two limiters below are the precise ones.
+   */
   RATE_LIMIT: KVNamespace;
+  /** Exact per-ip rejection counter. One Durable Object per ip. */
+  PROBE_COUNTER: DurableObjectNamespace;
+  /** Accepted requests per IP per minute, to cap a burst. */
+  BURST_LIMITER: RateLimit;
+  /**
+   * Where to post an incident. Optional — set it with
+   * `wrangler secret put ALERT_WEBHOOK` when there is somewhere to send.
+   * Without it incidents are still detected, logged and recorded in KV.
+   */
+  ALERT_WEBHOOK?: string;
 }
 
 const UPSTREAM = "https://api.anthropic.com/v1/messages";
@@ -47,6 +64,26 @@ const MAX_MESSAGES = 8;
 /** per-IP ceiling. a real user scans a few documents a day, not sixty. */
 const RATE_LIMIT_REQUESTS = 60;
 const RATE_LIMIT_WINDOW_SECONDS = 3600;
+
+/*
+  Token probing. A handful of 401s is ordinary — a stale build, a half-filled
+  local .env. Twenty from ONE ip inside fifteen minutes is somebody working
+  through guesses against a token they pulled out of the app.
+
+  Counted per ip rather than globally for that reason: a global count of 401s is
+  dominated by harmless noise and would either never fire or fire constantly.
+*/
+/** Rejections from one ip within the window before an incident is raised. */
+const PROBE_THRESHOLD = 20;
+/** How long one incident suppresses repeats for the same ip. */
+const PROBE_WINDOW_SECONDS = 900;
+
+/*
+  Incidents are kept for a week so there is a history to look at, rather than
+  only a notification that may have been missed. Read them with:
+    npx wrangler kv key list --binding RATE_LIMIT --prefix incident:
+*/
+const INCIDENT_TTL_SECONDS = 604800;
 
 /*
   Browsers preflight this endpoint; the native app does not. `expo start --web`
@@ -89,6 +126,58 @@ function json(body: unknown, status: number, request?: Request): Response {
       ...(request ? corsHeaders(request) : {}),
     },
   });
+}
+
+/**
+ * Count one rejection for this ip and raise an incident when it crosses the
+ * threshold.
+ *
+ * Fires once per window, not on every request past the line: the counter keeps
+ * climbing but `fired:` is set the first time, so a sustained probe produces one
+ * incident rather than hundreds of notifications.
+ */
+async function noteProbe(ip: string, env: Env, request: Request): Promise<void> {
+  const counter = env.PROBE_COUNTER.get(env.PROBE_COUNTER.idFromName(ip));
+  const { count, raise } = await counter
+    .fetch("https://probe/count")
+    .then((r) => r.json<{ count: number; raise: boolean }>());
+  if (!raise) return;
+
+  const incident = {
+    kind: "token_probe",
+    ip,
+    count,
+    window_seconds: PROBE_WINDOW_SECONDS,
+    country: request.headers.get("cf-ipcountry") ?? "??",
+    agent: (request.headers.get("user-agent") ?? "").slice(0, 120),
+    at: new Date().toISOString(),
+  };
+
+  /*
+    console.error, not console.log: the Observability tab counts and surfaces
+    errors on its own, so an incident is visible there without any alert having
+    been configured. Ordinary rejections stay at log level so they do not drown it.
+  */
+  console.error({ incident_raised: true, ...incident });
+
+  await env.RATE_LIMIT.put(`incident:${incident.at}:${ip}`, JSON.stringify(incident), {
+    expirationTtl: INCIDENT_TTL_SECONDS,
+  });
+
+  if (!env.ALERT_WEBHOOK) return;
+  try {
+    await fetch(env.ALERT_WEBHOOK, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text: `Elucra proxy: ${count} rejected tokens from ${ip} (${incident.country}) in ${PROBE_WINDOW_SECONDS / 60} minutes.`,
+        incident,
+      }),
+    });
+  } catch {
+    // A webhook that is down must not take the proxy with it. The incident is
+    // already in KV and in the logs either way.
+  }
 }
 
 async function underRateLimit(ip: string, env: Env): Promise<boolean> {
@@ -149,6 +238,45 @@ function rejectionReason(body: string): string | null {
 }
 
 /*
+  A strongly-consistent counter, because nothing else here is one.
+
+  KV loses writes under a burst — 25 requests measured as 7. The rate limiting
+  binding is documented as "permissive, eventually consistent, and intentionally
+  designed to not be used as an accurate accounting system", and in testing it
+  did not trip at all for 30 requests over 48 seconds. Neither can answer "has
+  this ip been refused twenty times", which is the whole question.
+
+  A Durable Object is single-threaded per key, so the read and the write cannot
+  interleave. One instance per ip.
+*/
+export class ProbeCounter {
+  private state: DurableObjectState;
+
+  constructor(state: DurableObjectState) {
+    this.state = state;
+  }
+
+  async fetch(): Promise<Response> {
+    const now = Date.now();
+    const windowStart = (await this.state.storage.get<number>("windowStart")) ?? 0;
+    const fired = (await this.state.storage.get<boolean>("fired")) ?? false;
+    let count = (await this.state.storage.get<number>("count")) ?? 0;
+
+    // Expired window: start a new one and clear the fired flag with it.
+    if (now - windowStart > PROBE_WINDOW_SECONDS * 1000) {
+      await this.state.storage.put({ windowStart: now, count: 1, fired: false });
+      return Response.json({ count: 1, raise: false });
+    }
+
+    count += 1;
+    // Raise once per window, not on every request past the line.
+    const raise = count >= PROBE_THRESHOLD && !fired;
+    await this.state.storage.put(raise ? { count, fired: true } : { count });
+    return Response.json({ count, raise });
+  }
+}
+
+/*
   One line per rejected request, so there is something to alert on.
 
   Deliberately metadata only: never the body, never the token, never any part
@@ -183,7 +311,7 @@ function reject(
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     // The preflight carries no token: browsers send it before the real request,
     // and refusing it here would mean the real request is never sent at all.
     if (request.method === "OPTIONS") {
@@ -199,8 +327,12 @@ export default {
     // Constant-time-ish comparison is overkill for a shared token, but an early
     // length check avoids leaking its length through timing on a long guess.
     // header name is part of the deployed contract; the shipped app sends this.
+    const clientIp = request.headers.get("cf-connecting-ip") ?? "unknown";
+
     const token = request.headers.get("x-clairity-token") ?? "";
     if (token.length !== env.CLIENT_TOKEN.length || token !== env.CLIENT_TOKEN) {
+      // waitUntil, so counting the attempt never delays the refusal.
+      ctx.waitUntil(noteProbe(clientIp, env, request));
       return reject("bad_token", request, { error: { message: "Not authorised." } }, 401);
     }
 
@@ -209,8 +341,22 @@ export default {
       return reject("too_large", request, { error: { message: "That document is too large to process." } }, 413);
     }
 
-    const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
-    if (!(await underRateLimit(ip, env))) {
+    /*
+      Two limits, doing different jobs. This one is consistent and catches a
+      burst; the KV budget below is approximate and caps the hour. A real person
+      photographs a few documents in a sitting, not twelve in a minute.
+    */
+    const burst = await env.BURST_LIMITER.limit({ key: clientIp });
+    if (!burst.success) {
+      return reject(
+        "burst_limited",
+        request,
+        { error: { message: "Too many requests. Please try again in a moment." } },
+        429,
+      );
+    }
+
+    if (!(await underRateLimit(clientIp, env))) {
       return reject(
         "rate_limited",
         request,

@@ -109,11 +109,45 @@ retained and queryable rather than visible only in a live tail.
 cd server && npx wrangler tail --format json    # live
 ```
 
-**Still to do — the alerts themselves.** The log stream exists; nothing watches
-it yet. In the Cloudflare dashboard, under Notifications, the two worth having:
+### Incident detection
 
-1. A spike in `bad_token` from one IP — somebody probing an extracted token.
-2. Sustained `rate_limited` — either abuse or the limit is too low for real use.
+Detection runs in the Worker rather than in a dashboard alert, so it does not
+depend on a beta feature or a plan tier. Twenty rejected tokens from one IP
+inside fifteen minutes raises an incident, which is:
+
+- logged with `console.error`, so it surfaces in the Observability tab's error
+  count without any alert being configured;
+- written to KV under `incident:<timestamp>:<ip>`, kept seven days;
+- POSTed to `ALERT_WEBHOOK` if that secret is set. It is optional — set it with
+  `wrangler secret put ALERT_WEBHOOK` when there is somewhere to send. A webhook
+  that is down cannot take the proxy with it.
+
+Read the history:
+
+```bash
+cd server
+npx wrangler kv key list --binding RATE_LIMIT --prefix "incident:" --remote
+```
+
+**Counting had to be a Durable Object, and this is worth not undoing.** Two
+simpler things were tried and both failed silently, which is the dangerous way
+to fail:
+
+- **KV counters lose writes.** A burst of read-modify-write collapses because
+  reads are eventually consistent: 25 requests measured as 7. The hourly spend
+  budget still uses KV, and still undercounts — it errs toward letting traffic
+  through, which is acceptable for a cost ceiling and not acceptable for a
+  security threshold.
+- **The rate limiting binding is explicitly approximate.** Cloudflare documents
+  it as "permissive, eventually consistent, and intentionally designed to not be
+  used as an accurate accounting system". In testing it did not trip at all for
+  30 requests over 48 seconds. It is still used as `BURST_LIMITER`, where
+  approximate is the right trade, but it cannot answer "has this IP been refused
+  twenty times".
+
+A Durable Object is single-threaded per key, so the read and write cannot
+interleave. Verified: 25 rapid requests produced exactly one incident recording
+a count of 20.
 
 ## The site
 

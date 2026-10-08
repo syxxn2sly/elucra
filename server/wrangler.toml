@@ -9,6 +9,17 @@ compatibility_date = "2026-07-01"
 binding = "RATE_LIMIT"
 id = "bac8b6bd2d504578b4388bb463fd4806"
 
+# Burst detection, consistent where the KV counters are not. The binding is
+# capped at a 60s period, which is fine for both of these: they catch bursts,
+# while the KV counter below carries the hourly spend budget.
+[[ratelimits]]
+name = "BURST_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 12
+  period = 60
+
 # Secrets are NOT set here — wrangler.toml is committed. Set them with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
 #   npx wrangler secret put CLIENT_TOKEN
@@ -18,3 +29,13 @@ id = "bac8b6bd2d504578b4388bb463fd4806"
 [observability]
 enabled = true
 head_sampling_rate = 1
+
+# Exact rejection counting. See the comment on ProbeCounter in worker.ts for why
+# neither KV nor the rate limiting binding could do this.
+[[durable_objects.bindings]]
+name = "PROBE_COUNTER"
+class_name = "ProbeCounter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ProbeCounter"]
