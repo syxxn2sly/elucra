@@ -166,12 +166,14 @@ async function noteProbe(ip: string, env: Env, request: Request): Promise<void> 
 
   if (!env.ALERT_WEBHOOK) return;
 
+  const minutes = PROBE_WINDOW_SECONDS / 60;
   const summary =
     `Elucra proxy: ${count} rejected tokens from ${ip} (${incident.country})` +
-    ` in ${PROBE_WINDOW_SECONDS / 60} minutes. Agent: ${incident.agent || "none"}`;
+    ` in ${minutes} minute${minutes === 1 ? "" : "s"}.` +
+    ` Agent: ${incident.agent || "none"}`;
 
   try {
-    await fetch(env.ALERT_WEBHOOK, {
+    const posted = await fetch(env.ALERT_WEBHOOK, {
       method: "POST",
       headers: { "content-type": "application/json" },
       /*
@@ -183,9 +185,21 @@ async function noteProbe(ip: string, env: Env, request: Request): Promise<void> 
       */
       body: JSON.stringify({ content: summary, text: summary, incident }),
     });
-  } catch {
-    // A webhook that is down must not take the proxy with it. The incident is
-    // already in KV and in the logs either way.
+    /*
+      Log the status. Failures here are swallowed on purpose so a dead webhook
+      cannot take the proxy down, but that also means a webhook that has been
+      revoked or had its payload rejected looks exactly like one that works.
+      Recording the status is the only way to find that out before it matters.
+    */
+    if (!posted.ok) {
+      console.error({ webhook_failed: true, status: posted.status, ip });
+    }
+  } catch (error) {
+    console.error({
+      webhook_failed: true,
+      reason: error instanceof Error ? error.message : "unknown",
+      ip,
+    });
   }
 }
 
