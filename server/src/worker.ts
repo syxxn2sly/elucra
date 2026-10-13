@@ -165,14 +165,23 @@ async function noteProbe(ip: string, env: Env, request: Request): Promise<void> 
   });
 
   if (!env.ALERT_WEBHOOK) return;
+
+  const summary =
+    `Elucra proxy: ${count} rejected tokens from ${ip} (${incident.country})` +
+    ` in ${PROBE_WINDOW_SECONDS / 60} minutes. Agent: ${incident.agent || "none"}`;
+
   try {
     await fetch(env.ALERT_WEBHOOK, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        text: `Elucra proxy: ${count} rejected tokens from ${ip} (${incident.country}) in ${PROBE_WINDOW_SECONDS / 60} minutes.`,
-        incident,
-      }),
+      /*
+        Both `content` and `text`, because the two services that take a plain
+        webhook URL disagree. Discord reads `content` and rejects a body without
+        it as an empty message; Slack reads `text`. Each ignores the other's
+        field, so one body satisfies both and the URL can be swapped without a
+        redeploy.
+      */
+      body: JSON.stringify({ content: summary, text: summary, incident }),
     });
   } catch {
     // A webhook that is down must not take the proxy with it. The incident is
